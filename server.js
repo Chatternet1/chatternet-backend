@@ -1,37 +1,47 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
-
 const app = express();
-// Use host-provided port (Render/Heroku) or 3000 locally
-const PORT = process.env.PORT || 3000;
 
-// Allow your website to call the API
+const PORT = process.env.PORT || 3000;
+const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
+
 app.use(cors());
 app.use(bodyParser.json());
 
-// Where we store data (JSON file)
-const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
-
-// Load data (or create empty structure)
-let data = { users: [], posts: [], polls: [], blogs: [], media: [], music: [], groups: [], events: [] };
+// --- Load & persist ---
+let data = {
+  users: [],
+  posts: [],
+  messages: [] // <-- NEW
+};
 if (fs.existsSync(DATA_FILE)) {
-  try { data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); } catch {}
+  try {
+    const raw = JSON.parse(fs.readFileSync(DATA_FILE));
+    data = { ...data, ...raw, messages: raw.messages || [] };
+  } catch { /* keep defaults */ }
 }
-function saveData(){ try { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); } catch(e){ console.error('saveData error', e); } }
+function save() {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
 
-// Health check
-app.get('/api/health', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+// --- Helpers ---
+const nowISO = () => new Date().toISOString();
+const byId = (id) => data.users.find(u => u.id === id);
 
-/* ===== USERS ===== */
+// --- Health ---
+app.get('/api/health', (_req, res) => res.json({ ok: true, time: nowISO() }));
+
+// --- Users ---
 app.post('/api/signup', (req, res) => {
-  const { email, password, name='' } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+  const { email, password, name = '' } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: 'Email & password required' });
   if (data.users.find(u => u.email === email)) return res.status(400).json({ error: 'Email exists' });
-  const user = { id: Date.now().toString(), email, password, name, bio:'', avatar:'', friends:[], friendRequests:[] };
-  data.users.push(user); saveData();
+  const user = { id: Date.now().toString(), email, password, name, bio: '', avatar: '', friends: [], friendRequests: [] };
+  data.users.push(user); save();
   res.json({ user });
 });
 app.post('/api/login', (req, res) => {
@@ -40,38 +50,58 @@ app.post('/api/login', (req, res) => {
   if (!user) return res.status(400).json({ error: 'Invalid login' });
   res.json({ user });
 });
-app.get('/api/users', (_req,res)=>res.json(data.users));
-app.get('/api/users/:id', (req,res)=>res.json(data.users.find(u=>u.id===req.params.id) || {}));
-app.put('/api/users/:id', (req,res)=>{
-  const user = data.users.find(u=>u.id===req.params.id);
-  if(!user) return res.status(404).json({error:'User not found'});
-  Object.assign(user, req.body); saveData(); res.json(user);
+app.get('/api/users', (_req, res) => res.json(data.users));
+app.get('/api/users/:id', (req, res) => res.json(byId(req.params.id) || {}));
+app.put('/api/users/:id', (req, res) => {
+  const u = byId(req.params.id);
+  if (!u) return res.status(404).json({ error: 'User not found' });
+  Object.assign(u, req.body || {}); save(); res.json(u);
 });
 
-/* ===== POSTS ===== */
-app.get('/api/posts', (_req,res)=>res.json(data.posts));
-app.post('/api/posts', (req,res)=>{
-  const post = { id: Date.now().toString(), createdAt: new Date().toISOString(), ...req.body };
-  data.posts.push(post); saveData(); res.json(post);
+// --- Posts (minimal) ---
+app.get('/api/posts', (_req, res) => res.json(data.posts || []));
+app.post('/api/posts', (req, res) => {
+  const post = { id: Date.now().toString(), createdAt: nowISO(), comments: [], likes: [], ...req.body };
+  data.posts.push(post); save(); res.json(post);
+});
+app.put('/api/posts/:id', (req, res) => {
+  const i = (data.posts || []).findIndex(p => p.id === req.params.id);
+  if (i < 0) return res.status(404).json({ error: 'Not found' });
+  data.posts[i] = { ...data.posts[i], ...req.body }; save(); res.json(data.posts[i]);
 });
 
-/* ===== (Optional) other collections you already had ===== */
-app.get('/api/polls', (_req,res)=>res.json(data.polls));
-app.post('/api/polls', (req,res)=>{ const poll = { id: Date.now().toString(), votes1:0, votes2:0, ...req.body }; data.polls.push(poll); saveData(); res.json(poll); });
+// === MESSAGES (NEW) ===
+//  Shape: { id, fromId, toId, text, time }
+app.get('/api/messages', (req, res) => {
+  const { userId, peerId } = req.query;
+  if (!userId || !peerId) return res.status(400).json({ error: 'userId & peerId required' });
+  const list = (data.messages || [])
+    .filter(m => (m.fromId === userId && m.toId === peerId) || (m.fromId === peerId && m.toId === userId))
+    .sort((a, b) => new Date(a.time) - new Date(b.time));
+  res.json(list);
+});
+app.post('/api/messages', (req, res) => {
+  const { fromId, toId, text } = req.body || {};
+  if (!fromId || !toId || !text) return res.status(400).json({ error: 'fromId, toId, text required' });
+  if (!byId(fromId) || !byId(toId)) return res.status(400).json({ error: 'Invalid user id(s)' });
+  const msg = { id: Date.now().toString(), fromId, toId, text, time: nowISO() };
+  data.messages.push(msg); save(); res.json(msg);
+});
+// Optional convenience: recent threads for a user
+app.get('/api/threads/:userId', (req, res) => {
+  const { userId } = req.params;
+  const mine = (data.messages || []).filter(m => m.fromId === userId || m.toId === userId);
+  const peers = new Map();
+  mine.forEach(m => {
+    const peerId = m.fromId === userId ? m.toId : m.fromId;
+    const last = peers.get(peerId);
+    if (!last || new Date(m.time) > new Date(last.time)) peers.set(peerId, m);
+  });
+  const out = Array.from(peers.entries()).map(([peerId, last]) => ({
+    peer: byId(peerId) || { id: peerId, name: 'Unknown', email: '' },
+    last
+  })).sort((a, b) => new Date(b.last.time) - new Date(a.last.time));
+  res.json(out);
+});
 
-app.get('/api/blogs', (_req,res)=>res.json(data.blogs));
-app.post('/api/blogs', (req,res)=>{ const blog = { id: Date.now().toString(), ...req.body }; data.blogs.push(blog); saveData(); res.json(blog); });
-
-app.get('/api/media', (_req,res)=>res.json(data.media));
-app.post('/api/media', (req,res)=>{ const m = { id: Date.now().toString(), ...req.body }; data.media.push(m); saveData(); res.json(m); });
-
-app.get('/api/music', (_req,res)=>res.json(data.music));
-app.post('/api/music', (req,res)=>{ const m = { id: Date.now().toString(), ...req.body }; data.music.push(m); saveData(); res.json(m); });
-
-app.get('/api/groups', (_req,res)=>res.json(data.groups));
-app.post('/api/groups', (req,res)=>{ const g = { id: Date.now().toString(), ...req.body }; data.groups.push(g); saveData(); res.json(g); });
-
-app.get('/api/events', (_req,res)=>res.json(data.events));
-app.post('/api/events', (req,res)=>{ const e = { id: Date.now().toString(), ...req.body }; data.events.push(e); saveData(); res.json(e); });
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`API listening on ${PORT}`));
