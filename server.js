@@ -8,16 +8,19 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ---- middleware
-app.use(cors({ origin: true, credentials: true }));
-app.use(bodyParser.json());
+// Allow your Weebly site to call the API
+app.use(cors());
 
-// ---- data file
+// IMPORTANT: raise body size limits so avatars / covers (base64) can be saved
+app.use(bodyParser.json({ limit: '20mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '20mb' }));
+
+// ---- DATA ----
 const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
 
 function defaultData() {
   return {
-    users: [],          // {id,email,password,name,bio,avatar,friends[],friendRequests[]}
+    users: [],          // {id,email,password,name,bio,avatar,cover,friends[],friendRequests[]}
     posts: [],          // {id,title,content,authorName,createdAt,media?,comments[],likes[]}
     messages: [],       // {id,fromId,toId,text,time}
     polls: [],
@@ -40,69 +43,76 @@ function load() {
 }
 
 let data = load();
-function save() { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); }
+
+function save() {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+}
 
 const nowISO = () => new Date().toISOString();
-const byId = (id) => data.users.find(u => u.id === id);
+const byId = (id) => (data.users || []).find(u => u.id === id);
 
-// ---- health
+// ---- HEALTH ----
 app.get('/api/health', (req, res) => res.json({ ok: true, time: nowISO() }));
 
-// ---- users
+// ---- USERS ----
 app.post('/api/signup', (req, res) => {
   const { email, password, name = '' } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email & password required' });
-  if (data.users.find(u => u.email === email)) return res.status(400).json({ error: 'Email exists' });
-  const user = {
-    id: Date.now().toString(),
-    email, password, name,
-    bio: '', avatar: '', friends: [], friendRequests: []
-  };
+  if ((data.users || []).find(u => u.email === email)) return res.status(400).json({ error: 'Email exists' });
+  const user = { id: Date.now().toString(), email, password, name, bio: '', avatar: '', cover: '', friends: [], friendRequests: [] };
   data.users.push(user); save();
   res.json({ user });
 });
 
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body || {};
-  const user = data.users.find(u => u.email === email && u.password === password);
+  const user = (data.users || []).find(u => u.email === email && u.password === password);
   if (!user) return res.status(400).json({ error: 'Invalid login' });
   res.json({ user });
 });
 
-app.get('/api/users', (req, res) => res.json(data.users));
-app.get('/api/users/:id', (req, res) => res.json(byId(req.params.id) || {}));
-app.put('/api/users/:id', (req, res) => {
+app.get('/api/users', (req, res) => res.json(data.users || []));
+
+app.get('/api/users/:id', (req, res) => {
   const u = byId(req.params.id);
   if (!u) return res.status(404).json({ error: 'User not found' });
-  Object.assign(u, req.body || {}); save();
   res.json(u);
 });
 
-// ---- posts
-app.get('/api/posts', (req, res) => res.json(data.posts));
+app.put('/api/users/:id', (req, res) => {
+  const u = byId(req.params.id);
+  if (!u) return res.status(404).json({ error: 'User not found' });
+  // Merge simple fields; arrays/objects replace as provided
+  const incoming = req.body || {};
+  Object.assign(u, incoming);
+  save();
+  res.json(u);
+});
+
+// ---- POSTS ----
+app.get('/api/posts', (req, res) => res.json(data.posts || []));
 
 app.post('/api/posts', (req, res) => {
-  const body = req.body || {};
+  const b = req.body || {};
   const post = {
     id: Date.now().toString(),
-    title: body.title || '',
-    content: body.content || '',
-    authorName: body.authorName || 'Me',
-    createdAt: body.createdAt || nowISO(),
-    media: body.media || null,
-    comments: Array.isArray(body.comments) ? body.comments : [],
-    likes: Array.isArray(body.likes) ? body.likes : []
+    title: b.title || '',
+    content: b.content || '',
+    authorName: b.authorName || 'Me',
+    createdAt: b.createdAt || nowISO(),
+    media: b.media || null,
+    comments: Array.isArray(b.comments) ? b.comments : [],
+    likes: Array.isArray(b.likes) ? b.likes : []
   };
   data.posts.push(post); save();
   res.json(post);
 });
 
-// IMPORTANT: used by the Feed to persist likes & comments (and bot replies)
+// persist likes/comments/bot replies
 app.put('/api/posts/:id', (req, res) => {
   const id = req.params.id;
   const i = (data.posts || []).findIndex(p => p.id === id);
   if (i < 0) return res.status(404).json({ error: 'Not found' });
-
   const incoming = req.body || {};
   data.posts[i] = {
     ...data.posts[i],
@@ -114,8 +124,8 @@ app.put('/api/posts/:id', (req, res) => {
   res.json(data.posts[i]);
 });
 
-// ---- messages
-// GET /api/messages?userId=&peerId=  -> conversation
+// ---- MESSAGES ----
+// GET /api/messages?userId=...&peerId=...
 app.get('/api/messages', (req, res) => {
   const { userId, peerId } = req.query;
   if (!userId || !peerId) return res.status(400).json({ error: 'userId & peerId required' });
@@ -128,7 +138,7 @@ app.get('/api/messages', (req, res) => {
   res.json(list);
 });
 
-// POST /api/messages {fromId,toId,text}
+// POST /api/messages  {fromId,toId,text}
 app.post('/api/messages', (req, res) => {
   const { fromId, toId, text } = req.body || {};
   if (!fromId || !toId || !text) return res.status(400).json({ error: 'fromId, toId, text required' });
@@ -137,10 +147,10 @@ app.post('/api/messages', (req, res) => {
   res.json(msg);
 });
 
-// threads list for a user
+// Optional: thread list for a user
 app.get('/api/threads/:userId', (req, res) => {
   const userId = req.params.userId;
-  const peers = new Map();
+  const peers = new Map(); // peerId -> last message
   (data.messages || []).forEach(m => {
     if (m.fromId === userId || m.toId === userId) {
       const peerId = m.fromId === userId ? m.toId : m.fromId;
