@@ -6,16 +6,15 @@ const fs = require('fs');
 const path = require('path');
 
 const app = express();
-
-// --- Config ---
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
 
-// --- Middleware ---
-app.use(cors());
+// ---- middleware
+app.use(cors({ origin: true, credentials: true }));
 app.use(bodyParser.json());
 
-// --- Data store ---
+// ---- data file
+const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
+
 function defaultData() {
   return {
     users: [],          // {id,email,password,name,bio,avatar,friends[],friendRequests[]}
@@ -36,78 +35,51 @@ function load() {
       const raw = fs.readFileSync(DATA_FILE, 'utf8');
       return JSON.parse(raw);
     }
-  } catch (e) {
-    console.error('Load data error:', e);
-  }
+  } catch (e) {}
   return defaultData();
 }
 
 let data = load();
-
-function save() {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-  } catch (e) {
-    console.error('Save data error:', e);
-  }
-}
+function save() { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); }
 
 const nowISO = () => new Date().toISOString();
-const userById = (id) => (data.users || []).find(u => u.id === id);
+const byId = (id) => data.users.find(u => u.id === id);
 
-// --- Root & health ---
-app.get('/', (req, res) => res.redirect('/api/health'));
+// ---- health
 app.get('/api/health', (req, res) => res.json({ ok: true, time: nowISO() }));
 
-// --- USERS ---
+// ---- users
 app.post('/api/signup', (req, res) => {
   const { email, password, name = '' } = req.body || {};
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email & password required' });
-  }
-  if ((data.users || []).find(u => u.email === email)) {
-    return res.status(400).json({ error: 'Email exists' });
-  }
+  if (!email || !password) return res.status(400).json({ error: 'Email & password required' });
+  if (data.users.find(u => u.email === email)) return res.status(400).json({ error: 'Email exists' });
   const user = {
     id: Date.now().toString(),
-    email,
-    password,
-    name,
-    bio: '',
-    avatar: '',
-    friends: [],
-    friendRequests: []
+    email, password, name,
+    bio: '', avatar: '', friends: [], friendRequests: []
   };
-  data.users.push(user);
-  save();
+  data.users.push(user); save();
   res.json({ user });
 });
 
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body || {};
-  const user = (data.users || []).find(u => u.email === email && u.password === password);
+  const user = data.users.find(u => u.email === email && u.password === password);
   if (!user) return res.status(400).json({ error: 'Invalid login' });
   res.json({ user });
 });
 
-app.get('/api/users', (req, res) => res.json(data.users || []));
-
-app.get('/api/users/:id', (req, res) => {
-  const u = userById(req.params.id);
-  if (!u) return res.status(404).json({ error: 'User not found' });
-  res.json(u);
-});
-
+app.get('/api/users', (req, res) => res.json(data.users));
+app.get('/api/users/:id', (req, res) => res.json(byId(req.params.id) || {}));
 app.put('/api/users/:id', (req, res) => {
-  const u = userById(req.params.id);
+  const u = byId(req.params.id);
   if (!u) return res.status(404).json({ error: 'User not found' });
-  Object.assign(u, req.body || {});
-  save();
+  Object.assign(u, req.body || {}); save();
   res.json(u);
 });
 
-// --- POSTS ---
-app.get('/api/posts', (req, res) => res.json(data.posts || []));
+// ---- posts
+app.get('/api/posts', (req, res) => res.json(data.posts));
 
 app.post('/api/posts', (req, res) => {
   const body = req.body || {};
@@ -121,62 +93,54 @@ app.post('/api/posts', (req, res) => {
     comments: Array.isArray(body.comments) ? body.comments : [],
     likes: Array.isArray(body.likes) ? body.likes : []
   };
-  data.posts.push(post);
-  save();
+  data.posts.push(post); save();
   res.json(post);
 });
 
-// *** Persist likes & comments ***
+// IMPORTANT: used by the Feed to persist likes & comments (and bot replies)
 app.put('/api/posts/:id', (req, res) => {
   const id = req.params.id;
-  const posts = data.posts || [];
-  const i = posts.findIndex(p => p.id === id);
+  const i = (data.posts || []).findIndex(p => p.id === id);
   if (i < 0) return res.status(404).json({ error: 'Not found' });
 
   const incoming = req.body || {};
-  posts[i] = {
-    ...posts[i],
+  data.posts[i] = {
+    ...data.posts[i],
     ...incoming,
-    comments: Array.isArray(incoming.comments) ? incoming.comments : (posts[i].comments || []),
-    likes: Array.isArray(incoming.likes) ? incoming.likes : (posts[i].likes || [])
+    comments: Array.isArray(incoming.comments) ? incoming.comments : (data.posts[i].comments || []),
+    likes: Array.isArray(incoming.likes) ? incoming.likes : (data.posts[i].likes || [])
   };
   save();
-  res.json(posts[i]);
+  res.json(data.posts[i]);
 });
 
-// --- MESSAGES ---
-// GET conversation between two users
-// /api/messages?userId=...&peerId=...
+// ---- messages
+// GET /api/messages?userId=&peerId=  -> conversation
 app.get('/api/messages', (req, res) => {
   const { userId, peerId } = req.query;
-  if (!userId || !peerId) {
-    return res.status(400).json({ error: 'userId & peerId required' });
-  }
+  if (!userId || !peerId) return res.status(400).json({ error: 'userId & peerId required' });
   const list = (data.messages || [])
     .filter(m =>
       (m.fromId === userId && m.toId === peerId) ||
       (m.fromId === peerId && m.toId === userId)
     )
-    .sort((a, b) => new Date(a.time) - new Date(b.time));
+    .sort((a,b) => new Date(a.time) - new Date(b.time));
   res.json(list);
 });
 
-// POST message  {fromId,toId,text}
+// POST /api/messages {fromId,toId,text}
 app.post('/api/messages', (req, res) => {
   const { fromId, toId, text } = req.body || {};
-  if (!fromId || !toId || !text) {
-    return res.status(400).json({ error: 'fromId, toId, text required' });
-  }
+  if (!fromId || !toId || !text) return res.status(400).json({ error: 'fromId, toId, text required' });
   const msg = { id: Date.now().toString(), fromId, toId, text, time: nowISO() };
-  data.messages.push(msg);
-  save();
+  data.messages.push(msg); save();
   res.json(msg);
 });
 
-// Lightweight thread list for a user
+// threads list for a user
 app.get('/api/threads/:userId', (req, res) => {
   const userId = req.params.userId;
-  const peers = new Map(); // peerId -> lastMessage
+  const peers = new Map();
   (data.messages || []).forEach(m => {
     if (m.fromId === userId || m.toId === userId) {
       const peerId = m.fromId === userId ? m.toId : m.fromId;
@@ -188,10 +152,4 @@ app.get('/api/threads/:userId', (req, res) => {
   res.json(out);
 });
 
-// --- 404 for unknown API routes (JSON) ---
-app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
-
-// --- Start ---
-app.listen(PORT, () => {
-  console.log(`API listening on ${PORT}`);
-});
+app.listen(PORT, () => console.log(`API listening on ${PORT}`));
