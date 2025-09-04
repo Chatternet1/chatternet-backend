@@ -1,94 +1,139 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>Chatternet — Home</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root{--brand:#3498db;--brand2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif}
-  .top{background:var(--brand);color:#fff;padding:14px 16px;font-weight:800}
-  .page{max-width:900px;margin:18px auto;padding:0 12px 28px}
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:16px;margin:12px 0}
-  a.btn{display:inline-block;padding:12px 14px;border-radius:10px;border:1px solid #d7d7d7;background:#fff;text-decoration:none;margin:6px 8px 0 0}
-  a.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  .muted{color:var(--muted)}
-  input,button{padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
-  button{background:var(--brand);color:#fff;cursor:pointer}
-</style>
-</head>
-<body>
-  <div class="top">Chatternet — Home</div>
-  <div class="page">
-    <div class="card">
-      <div style="font-weight:800">Quick links</div>
-      <div style="margin-top:8px">
-        <a class="btn" href="messages.html">Open Messages</a>
-        <a class="btn" href="/api/health" target="_blank">API Health (JSON)</a>
-      </div>
-    </div>
+// server.js
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
 
-    <div class="card">
-      <div style="font-weight:800;margin-bottom:6px">Who am I?</div>
-      <div class="muted">Enter any email + name. If the email doesn’t exist yet, this page will create it on the backend.</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
-        <input id="email" placeholder="your@email.com" style="flex:2;min-width:240px">
-        <input id="name"  placeholder="Display name (optional)" style="flex:1;min-width:180px">
-        <button id="saveWho">Save</button>
-      </div>
-      <div id="who" class="muted" style="margin-top:8px"></div>
-    </div>
+const app = express();
+const PORT = process.env.PORT || 10000;
 
-    <div class="card">
-      <div style="font-weight:800">Status</div>
-      <pre id="status" style="white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace"></pre>
-    </div>
-  </div>
+// allow bigger JSON (e.g., data-URL avatars)
+app.use(cors());
+app.use(bodyParser.json({ limit: '6mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '6mb' }));
 
-<script>
-const LS={SESSION:'ct_session_v1',PROFILE:'ct_profile_data_v1'};
-const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
-const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+// serve static frontend from /public
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (_req, res) => res.redirect('/index.html'));
 
-function currentEmail(){ const s=load(LS.SESSION,null); return s&&s.user ? s.user : null; }
-function currentName(){ const p=load(LS.PROFILE,{})['Me']; return p&&p.displayName ? p.displayName : 'Me'; }
+// ---- DATA ----
+const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
 
-async function ensureBackendUser(email, name){
-  const res=await fetch('/api/users'); const users=await res.json();
-  let u=(users||[]).find(x=>x.email===email);
-  if(u) return u;
-  const up=await fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:'local',name})});
-  const j=await up.json(); if(j&&j.user) return j.user;
-  throw new Error('Signup failed: '+(j.error||'unknown'));
+function defaultData() {
+  return {
+    users: [],
+    posts: [],
+    messages: [],
+    polls: [],
+    blogs: [],
+    media: [],
+    groups: [],
+    events: []
+  };
 }
 
-async function ping(){
-  try{
-    const r=await fetch('/api/health'); const j=await r.json();
-    document.getElementById('status').textContent='OK '+JSON.stringify(j,null,2);
-  }catch(e){
-    document.getElementById('status').textContent='API not reachable.\n'+e;
-  }
+function load() {
+  try {
+    if (fs.existsSync(DATA_FILE)) {
+      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return defaultData();
 }
+let data = load();
+function save() { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); }
+const nowISO = () => new Date().toISOString();
+const byId = id => (data.users || []).find(u => u.id === id);
 
-document.getElementById('saveWho').onclick=()=>{
-  const email=document.getElementById('email').value.trim();
-  const name=document.getElementById('name').value.trim()||'Me';
-  if(!email) return alert('Enter an email.');
-  save(LS.SESSION,{user:email});
-  const prof=load(LS.PROFILE,{}); prof['Me']=Object.assign({},prof['Me']||{}, {displayName:name}); save(LS.PROFILE,prof);
-  document.getElementById('who').textContent=`Saved: ${name} <${email}>`;
-  ensureBackendUser(email,name).catch(()=>{});
-};
+// ---- HEALTH ----
+app.get('/api/health', (_req, res) => res.json({ ok: true, time: nowISO() }));
 
-(function boot(){
-  const email=currentEmail()||'me@local.test';
-  document.getElementById('email').value=email;
-  document.getElementById('name').value=currentName();
-  document.getElementById('who').textContent=`Using ${currentName()} <${email}>`;
-  ping();
-})();
-</script>
-</body>
-</html>
+// ---- USERS ----
+app.post('/api/signup', (req, res) => {
+  const { email, password, name = '' } = req.body || {};
+  if (!email || !password) return res.status(400).json({ error: 'Email & password required' });
+  if ((data.users || []).find(u => u.email === email)) return res.status(400).json({ error: 'Email exists' });
+  const user = {
+    id: Date.now().toString(),
+    email, password, name,
+    bio: '', avatar: '', cover: '',
+    friends: [], friendRequests: [],
+    privacy: { visibility: 'private', pic: true, fr: true, dm: true, dmAudience: 'everyone', online: false, tags: true, search: true, activity: false, location: false },
+    settings: {
+      darkMode: false, compact: false, highContrast: false, reduceMotion: false, fontSize: 'medium', theme: 'blue', language: 'en',
+      notifications: { event: true, friend: true, post: true, sound: false, volume: 0.5 }
+    },
+    createdAt: nowISO()
+  };
+  data.users.push(user); save();
+  res.json({ user });
+});
+
+app.post('/api/login', (req, res) => {
+  const { email, password } = req.body || {};
+  const user = (data.users || []).find(u => u.email === email && u.password === password);
+  if (!user) return res.status(400).json({ error: 'Invalid login' });
+  res.json({ user });
+});
+
+app.get('/api/users', (_req, res) => res.json(data.users));
+app.get('/api/users/:id', (req, res) => {
+  const u = byId(req.params.id);
+  if (!u) return res.status(404).json({ error: 'User not found' });
+  res.json(u);
+});
+app.put('/api/users/:id', (req, res) => {
+  const id = req.params.id;
+  const i = (data.users || []).findIndex(u => u.id === id);
+  if (i < 0) return res.status(404).json({ error: 'User not found' });
+  const incoming = req.body || {};
+  data.users[i] = {
+    ...data.users[i],
+    ...incoming,
+    friends: Array.isArray(incoming.friends) ? incoming.friends : (data.users[i].friends || []),
+    friendRequests: Array.isArray(incoming.friendRequests) ? incoming.friendRequests : (data.users[i].friendRequests || []),
+    privacy: { ...(data.users[i].privacy || {}), ...(incoming.privacy || {}) },
+    settings: {
+      ...(data.users[i].settings || {}),
+      ...(incoming.settings || {}),
+      notifications: {
+        ...((data.users[i].settings || {}).notifications || {}),
+        ...(((incoming.settings || {}).notifications) || {})
+      }
+    }
+  };
+  save();
+  res.json(data.users[i]);
+});
+
+// ---- MESSAGES ----
+app.get('/api/messages', (req, res) => {
+  const { userId, peerId } = req.query;
+  if (!userId || !peerId) return res.status(400).json({ error: 'userId & peerId required' });
+  const list = (data.messages || [])
+    .filter(m => (m.fromId === userId && m.toId === peerId) || (m.fromId === peerId && m.toId === userId))
+    .sort((a, b) => new Date(a.time) - new Date(b.time));
+  res.json(list);
+});
+
+app.post('/api/messages', (req, res) => {
+  const { fromId, toId, text } = req.body || {};
+  if (!fromId || !toId || !text) return res.status(400).json({ error: 'fromId, toId, text required' });
+  const msg = { id: Date.now().toString(), fromId, toId, text, time: nowISO() };
+  data.messages.push(msg); save(); res.json(msg);
+});
+
+app.get('/api/threads/:userId', (req, res) => {
+  const userId = req.params.userId; const peers = new Map();
+  (data.messages || []).forEach(m => {
+    if (m.fromId === userId || m.toId === userId) {
+      const peer = m.fromId === userId ? m.toId : m.fromId;
+      const prev = peers.get(peer);
+      if (!prev || new Date(m.time) > new Date(prev.time)) peers.set(peer, m);
+    }
+  });
+  const out = Array.from(peers.entries()).map(([peerId, last]) => ({ peerId, last })); res.json(out);
+});
+
+app.listen(PORT, () => console.log(`API listening on ${PORT}`));
