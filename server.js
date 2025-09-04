@@ -1,3 +1,9 @@
+# clone (or init an empty repo first)
+git clone https://github.com/Chatternet1/chatternet-backend.git
+cd chatternet-backend
+
+# server.js
+cat > server.js <<'EOF'
 // server.js
 const express = require('express');
 const cors = require('cors');
@@ -89,7 +95,7 @@ app.put('/api/users/:id', (req, res) => {
   if (i < 0) return res.status(404).json({ error: 'User not found' });
   const incoming = req.body || {};
 
-  // Avoid replacing whole arrays unless provided; allow adding arbitrary profile/settings/privacy fields
+  // Merge profile/settings/notifications safely
   data.users[i] = {
     ...data.users[i],
     ...incoming,
@@ -132,7 +138,7 @@ app.put('/api/posts/:id', (req, res) => {
   save(); res.json(data.posts[i]);
 });
 
-// ---- MESSAGES (simple) ----
+// ---- MESSAGES ----
 app.get('/api/messages', (req,res)=>{
   const { userId, peerId } = req.query;
   if(!userId||!peerId) return res.status(400).json({error:'userId & peerId required'});
@@ -153,3 +159,33 @@ app.get('/api/threads/:userId', (req,res)=>{
 });
 
 app.listen(PORT, ()=> console.log(`API listening on ${PORT}`));
+EOF
+
+# package.json
+cat > package.json <<'EOF'
+{
+  "name": "chatternet-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
+EOF
+
+# (optional) .gitignore — keeps local data out of the repo
+cat > .gitignore <<'EOF'
+node_modules/
+npm-debug.log*
+data.json
+.DS_Store
+EOF
