@@ -24,7 +24,6 @@
     <div class="card">
       <div style="font-weight:800">Quick links</div>
       <div style="margin-top:8px">
-        <a class="btn primary" href="feed.html">Open Feed</a>
         <a class="btn" href="messages.html">Open Messages</a>
         <a class="btn" href="/api/health" target="_blank">API Health (JSON)</a>
       </div>
@@ -48,7 +47,7 @@
   </div>
 
 <script>
-const LS={ACC:'ct_accounts_v2',SESSION:'ct_session_v1',PROFILE:'ct_profile_data_v1'};
+const LS={SESSION:'ct_session_v1',PROFILE:'ct_profile_data_v1'};
 const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
 const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
@@ -72,6 +71,7 @@ async function ping(){
     document.getElementById('status').textContent='API not reachable.\n'+e;
   }
 }
+
 document.getElementById('saveWho').onclick=()=>{
   const email=document.getElementById('email').value.trim();
   const name=document.getElementById('name').value.trim()||'Me';
@@ -81,8 +81,9 @@ document.getElementById('saveWho').onclick=()=>{
   document.getElementById('who').textContent=`Saved: ${name} <${email}>`;
   ensureBackendUser(email,name).catch(()=>{});
 };
+
 (function boot(){
-  const email=currentEmail()||'me@example.com';
+  const email=currentEmail()||'me@local.test';
   document.getElementById('email').value=email;
   document.getElementById('name').value=currentName();
   document.getElementById('who').textContent=`Using ${currentName()} <${email}>`;
