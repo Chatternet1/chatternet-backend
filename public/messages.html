@@ -5,49 +5,44 @@
 <title>Chatternet — Messages</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root{--brand:#3498db;--brand2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif}
-  .top{background:var(--brand);color:#fff;padding:12px 16px;display:flex;gap:10px;align-items:center}
-  .top a{color:#fff;text-decoration:none;background:rgba(255,255,255,.18);padding:6px 10px;border-radius:8px}
+  :root{--brand:#3498db;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif}
+  .top{background:var(--brand);color:#fff;padding:14px 16px;font-weight:800;display:flex;align-items:center;gap:10px}
+  .top a{color:#fff;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 10px;border-radius:8px}
   .top .who{margin-left:auto;opacity:.9}
-  .page{max-width:1200px;margin:18px auto;padding:0 12px 28px}
-  .grid{display:grid;grid-template-columns:360px 1fr;gap:14px}
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px}
+  .shell{display:grid;grid-template-columns:320px 1fr;gap:12px}
   .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
-  .muted{color:var(--muted)}
-  input,button,textarea{padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
-  button{background:#fff}
-  button.primary{background:var(--brand);border:1px solid var(--brand);color:#fff;cursor:pointer}
-  .row{padding:10px;border:1px solid #e7e7e7;border-radius:10px;background:#fafafa;margin:8px 0;cursor:pointer}
-  .row.active{outline:2px solid #bfd7ff;background:#f5f9ff}
-  .msg{padding:10px;border-radius:10px;margin:8px 0;max-width:75%}
-  .me{background:#e7f0ff;margin-left:auto}
-  .them{background:#f5f5f5;margin-right:auto}
-  .head{display:flex;align-items:center;gap:10px}
-  .grow{flex:1}
+  .muted{color:var(--muted)}input,button{padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  button.primary{background:#3498db;border:1px solid #3498db;color:#fff;cursor:pointer}
+  .thread{padding:10px;border:1px solid #ececec;border-radius:10px;background:#fafafa;margin:8px 0;cursor:pointer}
+  .thread.active{outline:2px solid #bfd7ff}.msg{padding:10px;border-radius:10px;margin:6px 0;max-width:80%}
+  .me{background:#e7f0ff;margin-left:auto}.them{background:#f5f5f5;margin-right:auto}
+  .head{display:flex;align-items:center;gap:10px}.grow{flex:1}
 </style>
 </head>
 <body>
   <div class="top">
-    <a href="index.html">Home</a>
+    <span>Chatternet — Messages</span>
+    <a href="/index.html">Home</a>
+    <a href="/feed.html">Feed</a>
     <a href="/api/health" target="_blank">API Health</a>
-    <div class="who" id="who"></div>
+    <span id="who" class="who"></span>
   </div>
 
   <div class="page">
-    <div class="grid">
+    <div class="shell">
       <!-- LEFT -->
       <section class="card">
         <div class="head">
           <div style="font-weight:800">Conversations</div>
-          <div class="grow"></div>
-          <button id="btnRefreshThreads">Refresh</button>
+          <button id="refreshThreads" class="primary">Refresh</button>
         </div>
 
         <div style="margin:8px 0" class="muted">Start or open a conversation</div>
         <div class="head" style="gap:8px">
-          <input id="peerEmail" placeholder="Peer email (e.g. alice@demo.test)" style="flex:1">
-          <button id="btnOpen" class="primary">Open</button>
+          <input id="peerEmail" placeholder="Peer email (e.g. bob@demo.test)" />
+          <button id="openThread" class="primary">Open</button>
         </div>
 
         <div id="threads" style="margin-top:10px"></div>
@@ -55,18 +50,18 @@
       </section>
 
       <!-- RIGHT -->
-      <section class="card">
+      <section class="card" id="chatCard">
         <div class="head">
           <div id="chatTitle" style="font-weight:800">No conversation selected</div>
           <div class="grow"></div>
-          <button id="btnRefreshChat">Refresh</button>
+          <button id="refreshChat">Refresh</button>
         </div>
 
-        <div id="messages" style="min-height:360px;border:1px dashed #ddd;border-radius:12px;padding:10px;margin:10px 0;overflow:auto;background:#fafafa"></div>
+        <div id="messages" style="min-height:340px;border:1px dashed #ddd;border-radius:12px;padding:10px;margin:10px 0;overflow:auto;background:#fafafa"></div>
 
         <div class="head" style="gap:8px">
-          <input id="msgInput" placeholder="Write a message" style="flex:1">
-          <button id="btnSend" class="primary">Send</button>
+          <input id="msgInput" placeholder="Write a message" />
+          <button id="sendBtn" class="primary">Send</button>
         </div>
 
         <div id="status" class="muted" style="margin-top:6px"></div>
@@ -75,17 +70,16 @@
   </div>
 
 <script>
-/* ===== helpers / storage ===== */
-const LS={SESSION:'ct_session_v1',PROFILE:'ct_profile_data_v1'};
+/* ===== helpers ===== */
+const LS={MEID:'ct_backend_me_id'};
 const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
 const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const nowISO=()=>new Date().toISOString();
 const rel=s=>{const d=(Date.now()-new Date(s).getTime())/1e3;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
-function meEmail(){ const s=load(LS.SESSION,null); return s&&s.user ? s.user : 'me@local.test'; }
-function meName(){ const p=load(LS.PROFILE,{})['Me']; return (p&&p.displayName)||'Me'; }
+function meEmail(){ return 'me@local'; }         // simple local identity
+function meName(){ return 'Me'; }
 document.getElementById('who').textContent = `${meName()} <${meEmail()}>`;
 
-/* ===== backend helpers ===== */
+/* ===== user helpers (backend) ===== */
 async function listUsers(){ try{ const r=await fetch('/api/users'); return await r.json(); }catch{return [];} }
 async function ensureUser(email, name){
   const users=await listUsers();
@@ -95,119 +89,83 @@ async function ensureUser(email, name){
   const j=await r.json(); return j.user || j;
 }
 async function meBackend(){
-  const email=meEmail(), name=meName();
-  const user=await ensureUser(email, name);
+  let id=load(LS.MEID,null);
+  let user=null;
+  if(id){
+    const users=await listUsers();
+    user=users.find(u=>u.id===id);
+  }
+  if(!user){
+    user=await ensureUser(meEmail(), meName());
+    save(LS.MEID, user.id);
+  }
   return user;
 }
 
-/* ===== API ===== */
-async function getThreads(userId){
-  const r=await fetch('/api/threads/'+encodeURIComponent(userId));
-  return await r.json();
-}
-async function getMessages(userId, peerId){
-  const u=new URLSearchParams({userId,peerId});
-  const r=await fetch('/api/messages?'+u.toString());
-  return await r.json();
-}
-async function sendMessage(fromId,toId,text){
-  const r=await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fromId,toId,text})});
-  if(!r.ok) throw new Error(await r.text());
-  return await r.json();
-}
+/* ===== messages API ===== */
+async function getThreads(uid){ const r=await fetch('/api/threads/'+encodeURIComponent(uid)); return await r.json(); }
+async function getMessages(a,b){ const q=new URLSearchParams({userId:a,peerId:b}); const r=await fetch('/api/messages?'+q.toString()); return await r.json(); }
+async function sendMessage(a,b,t){ const r=await fetch('/api/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fromId:a,toId:b,text:t})}); return await r.json(); }
 
 /* ===== UI state ===== */
-let ME=null;
-let USERS_INDEX=new Map(); // id -> user
-let CURRENT_PEER=null;
+let ME=null; let USERS_INDEX=new Map(); let CURRENT_PEER=null;
 
 /* ===== render threads ===== */
 function renderThreads(items){
-  const box=document.getElementById('threads');
-  const empty=document.getElementById('threadsEmpty');
-  box.innerHTML='';
-  if(!items.length){ empty.style.display='block'; return; }
-  empty.style.display='none';
+  const box=document.getElementById('threads'); const empty=document.getElementById('threadsEmpty');
+  box.innerHTML=''; if(!items.length){ empty.style.display='block'; return; } empty.style.display='none';
   items.sort((a,b)=>new Date(b.last.time)-new Date(a.last.time));
   items.forEach(t=>{
-    const peer=USERS_INDEX.get(t.peerId)||{name:'Unknown',email:''};
+    const peer=USERS_INDEX.get(t.peerId)||{name:'Unknown',email:'(missing)'};
     const div=document.createElement('div');
-    div.className='row';
-    div.setAttribute('data-peer', t.peerId);
-    div.innerHTML=`<div style="font-weight:700">${escape(peer.name||peer.email)}</div>
-      <div class="muted" style="font-size:13px">${escape(peer.email||'')} • ${new Date(t.last.time).toLocaleString()} • ${rel(t.last.time)}</div>
-      <div style="margin-top:4px">${escape(t.last.text||'')}</div>`;
-    if(CURRENT_PEER && CURRENT_PEER.id === t.peerId) div.classList.add('active');
+    div.className='thread'+(CURRENT_PEER&&CURRENT_PEER.id===t.peerId?' active':'');
+    div.innerHTML='<div style="font-weight:700">'+escape(peer.name||peer.email)+'</div>'
+                 +'<div class="muted">'+escape(peer.email||'')+' • '+new Date(t.last.time).toLocaleString()+' • '+rel(t.last.time)+'</div>'
+                 +'<div style="margin-top:4px">'+escape(t.last.text||'')+'</div>';
+    div.onclick=()=>openConversation(t.peerId);
     box.appendChild(div);
   });
 }
 
-/* ===== event delegation for clicks ===== */
-document.getElementById('threads').addEventListener('click', (e)=>{
-  const row = e.target.closest('[data-peer]');
-  if(!row) return;
-  const peerId = row.getAttribute('data-peer');
-  const user = USERS_INDEX.get(peerId);
-  if(!user) return;
-  openConversation(user);
-});
-
-/* ===== open one conversation ===== */
-async function openConversation(peer){
-  CURRENT_PEER = peer;
-  document.getElementById('chatTitle').textContent = peer ? `${peer.name||peer.email}` : 'Conversation';
-  [...document.querySelectorAll('#threads .row')].forEach(el=>{
-    el.classList.toggle('active', el.getAttribute('data-peer')===peer.id);
-  });
-  const list = await getMessages(ME.id, peer.id);
-  renderMessages(list);
+/* ===== open conversation ===== */
+async function openConversation(peerId){
+  CURRENT_PEER = USERS_INDEX.get(peerId);
+  document.getElementById('chatTitle').textContent = CURRENT_PEER ? (CURRENT_PEER.name||CURRENT_PEER.email) : 'Conversation';
+  document.querySelectorAll('.thread').forEach(el=>el.classList.remove('active'));
+  renderMessages(await getMessages(ME.id, peerId));
 }
 
 /* ===== render messages ===== */
 function renderMessages(list){
-  const box=document.getElementById('messages');
-  box.innerHTML='';
-  if(!list.length){ box.innerHTML='<div class="muted" style="text-align:center;padding:12px">No messages yet.</div>'; return; }
+  const box=document.getElementById('messages'); box.innerHTML='';
+  if(!list.length){ box.innerHTML='<div class="muted" style="text-align:center;padding:12px">No messages. Say hi!</div>'; return; }
   list.forEach(m=>{
-    const mine=m.fromId===ME.id;
-    const who=USERS_INDEX.get(m.fromId)||{};
-    const div=document.createElement('div');
-    div.className='msg '+(mine?'me':'them');
-    div.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:4px">${escape(who.name||who.email||'You')} • ${new Date(m.time).toLocaleString()} • ${rel(m.time)}</div>
-                   <div>${escape(m.text)}</div>`;
+    const mine=m.fromId===ME.id; const who=USERS_INDEX.get(m.fromId)||{};
+    const div=document.createElement('div'); div.className='msg '+(mine?'me':'them');
+    div.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:4px">'+escape(who.name||who.email||'You')+' • '+new Date(m.time).toLocaleString()+' • '+rel(m.time)+'</div>'
+                 +'<div>'+escape(m.text)+'</div>';
     box.appendChild(div);
   });
   box.scrollTop=box.scrollHeight;
 }
 
 /* ===== send ===== */
-async function doSend(){
-  const input=document.getElementById('msgInput');
-  const text=input.value.trim();
-  if(!text) return setStatus('Type a message.');
-  if(!CURRENT_PEER) return setStatus('Open a conversation first.');
-  setStatus('Sending…');
-  try{
-    await sendMessage(ME.id, CURRENT_PEER.id, text);
-    input.value='';
-    const list = await getMessages(ME.id, CURRENT_PEER.id);
-    renderMessages(list);
-    const ts = await getThreads(ME.id);
-    renderThreads(ts);
-    setStatus('');
-  }catch(e){
-    setStatus('Failed to send.');
-  }
+async function handleSend(){
+  const input=document.getElementById('msgInput'); const text=input.value.trim();
+  if(!text){ setStatus('Type a message.'); return; }
+  if(!CURRENT_PEER){ setStatus('Open a conversation first.'); return; }
+  setStatus('Sending...');
+  try{ await sendMessage(ME.id, CURRENT_PEER.id, text); input.value=''; renderMessages(await getMessages(ME.id, CURRENT_PEER.id)); setStatus(''); }
+  catch{ setStatus('Failed to send.'); }
 }
 function setStatus(t){ document.getElementById('status').textContent=t||''; }
 
 /* ===== boot ===== */
-(async function boot(){
-  document.getElementById('btnSend').onclick=doSend;
-  document.getElementById('msgInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); }});
-  document.getElementById('btnRefreshChat').onclick=async()=>{ if(CURRENT_PEER) renderMessages(await getMessages(ME.id, CURRENT_PEER.id)); };
-  document.getElementById('btnRefreshThreads').onclick=loadThreads;
-  document.getElementById('btnOpen').onclick=openByEmail;
+(async function start(){
+  document.getElementById('sendBtn').onclick=handleSend;
+  document.getElementById('refreshChat').onclick=async()=>{ if(CURRENT_PEER) renderMessages(await getMessages(ME.id, CURRENT_PEER.id)); };
+  document.getElementById('refreshThreads').onclick=loadThreads;
+  document.getElementById('openThread').onclick=openByEmail;
   document.getElementById('peerEmail').addEventListener('keydown',e=>{ if(e.key==='Enter') openByEmail(); });
 
   ME = await meBackend();
@@ -215,29 +173,18 @@ function setStatus(t){ document.getElementById('status').textContent=t||''; }
   await loadThreads();
 })();
 
-async function refreshUsersIndex(){
-  const list=await listUsers();
-  USERS_INDEX = new Map(list.map(u=>[u.id,u]));
-}
-async function loadThreads(){
-  await refreshUsersIndex();
-  const ts=await getThreads(ME.id);
-  renderThreads(ts);
-}
-
+async function refreshUsersIndex(){ const list=await listUsers(); USERS_INDEX=new Map(list.map(u=>[u.id,u])); }
+async function loadThreads(){ await refreshUsersIndex(); const ts=await getThreads(ME.id); renderThreads(ts); }
 async function openByEmail(){
   const email=(document.getElementById('peerEmail').value||'').trim();
-  if(!email) return setStatus('Enter a peer email.');
-  setStatus('Opening…');
-  const peer = await ensureUser(email, email.split('@')[0]);
-  await refreshUsersIndex();
-  await openConversation(peer);
-  await loadThreads();
-  setStatus('');
+  if(!email){ setStatus('Enter a peer email.'); return; }
+  setStatus('Opening…'); const peer=await ensureUser(email,email.split('@')[0]);
+  await refreshUsersIndex(); await openConversation(peer.id); await loadThreads(); setStatus('');
 }
 
 /* ===== utils ===== */
-function escape(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;');}
+function escape(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 </script>
 </body>
 </html>
+
