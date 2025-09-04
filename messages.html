@@ -87,7 +87,7 @@
       <button id="btnNotif" type="button">Notifications</button>
       <button id="btnInbox" type="button">Inbox</button>
       <button id="btnMsgs" type="button" disabled>Messages</button>
-      <img id="myProfile" alt="My profile" />
+      <img id="myProfile" alt="My profile" src="https://i.pravatar.cc/100?u=me" />
     </div>
   </div>
 
@@ -108,7 +108,7 @@
           </div>
           <button class="btn" id="openProfile" type="button">Open Profile</button>
         </div>
-        <div id="tbody" class="tbody"><div class="muted">Select a chat on the left to start messaging.</div></div>
+        <div id="tbody" class="tbody"><div class="notif-item">Select a chat on the left to start messaging.</div></div>
         <div class="tcompose">
           <textarea id="msg" placeholder="Write a message"></textarea>
           <button id="send" class="btn primary" type="button">Send</button>
@@ -162,219 +162,217 @@
 
 <script>
 /********************
- * CONFIG & STORAGE *
+ * CONFIG (no localStorage)
  ********************/
 const API='https://chatternet-backend-1.onrender.com/api';
-const LS={
-  SESSION:'ct_session_v2',
-  PROFILE:'ct_profile_data_v1',
-  USERS:'ct_users_v3',
-  NOTIF:'ct_notifications_v1',
-  INBOX:'ct_inbox_v1',
-  LOCAL:'ct_msg_local_v1',
-  LAST:'ct_last_peer_v1',
-  VIEW:'ct_profile_view_v1'
-};
-const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
-const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const uid =(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
-const nowISO=()=>new Date().toISOString();
 
-/****************
- * HEADER AVATAR *
- ****************/
-const ME_LABEL='Me';
-function myAvatarFromProfile(){
-  const prof=(load(LS.PROFILE,{}))[ME_LABEL]||{};
-  return prof.avatar || prof.avatarURL || prof.photo || null;
-}
-function applyHeaderAvatar(url){
-  const img=document.getElementById('myProfile');
-  const src=url || myAvatarFromProfile() || 'https://i.pravatar.cc/100?u=me';
-  if(img){ img.src=src; img.alt='My profile'; }
-}
-applyHeaderAvatar();
-window.addEventListener('storage',e=>{ if([LS.PROFILE,LS.USERS].includes(e.key)) applyHeaderAvatar(); });
+// In-memory state only (no Local Storage)
+let SESSION = null;    // { userId, email, token? }
+let ME_USER = null;    // full /users/:id
+let ALL_USERS = [];    // fetched from /users
+let THREAD_SNIPPETS = {}; // {peerId: {text, time}}
+
+// Ephemeral notifications/inbox (session-only)
+const NOTIFS=[]; const INBOX=[];
 
 /********
- * GATE *
+ * UTILS *
  ********/
-let SESSION=load(LS.SESSION,null); // {userId,email,token?}
-let ME_USER=null; // full /users/:id record for header + API usage
-
-function showGate(on){ document.getElementById('gate').style.display=on?'flex':'none'; }
-function tab(which){
-  document.getElementById('tabLogin').classList.toggle('active',which==='login');
-  document.getElementById('tabSignup').classList.toggle('active',which==='signup');
-  document.getElementById('loginForm').style.display=which==='login'?'block':'none';
-  document.getElementById('signupForm').style.display=which==='signup'?'block':'none';
-}
-
-document.getElementById('tabLogin').onclick=()=>tab('login');
-document.getElementById('tabSignup').onclick=()=>tab('signup');
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const nowISO=()=>new Date().toISOString();
+const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll(\"'\",\"&#39;\");
+function avatarOf(u){ return (u && u.avatar) ? u.avatar : ('https://i.pravatar.cc/100?u='+encodeURIComponent(u?.email||u?.name||'user')); }
 
 async function api(path,opts={}){
   const headers={'Content-Type':'application/json'};
-  if(SESSION?.token) headers['Authorization'] = `Bearer ${SESSION.token}`;
-  const r=await fetch(`${API}${path}`,{headers,...opts});
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
+  if(SESSION?.token) headers['Authorization']='Bearer '+SESSION.token;
+  const r=await fetch(API+path,{headers,credentials:'include',...opts});
+  const t=await r.text();
+  let j={};
+  try{ j = t? JSON.parse(t) : {}; }catch{}
+  if(!r.ok) throw new Error(j.error||t||('HTTP '+r.status));
+  return j;
 }
+
+// Endpoints
 const getUsers    = ()=>api('/users');
-const getUserById = (id)=>api(`/users/${encodeURIComponent(id)}`);
-const getThreads  = (uid)=>api(`/threads/${encodeURIComponent(uid)}`);
+const getUserById = (id)=>api('/users/'+encodeURIComponent(id));
+const getThreads  = (uid)=>api('/threads/'+encodeURIComponent(uid));
 const getMessages = (a,b)=>api(`/messages?userId=${encodeURIComponent(a)}&peerId=${encodeURIComponent(b)}`);
 const postMessage = (a,b,t)=>api('/messages',{method:'POST',body:JSON.stringify({fromId:a,toId:b,text:t})});
 
-async function afterAuth(user){
-  // Persist session
-  SESSION = { userId: user.id ?? user.userId ?? user._id ?? user.uid ?? null, email: user.email, token: user.token || SESSION?.token || null };
-  if(!SESSION.userId && user.id==null){
-    // Some APIs return {user:{...}}; try unwrap
-    if(user.user && (user.user.id || user.user._id)){
-      SESSION.userId = user.user.id || user.user._id;
-      SESSION.email = user.user.email || SESSION.email;
-    }
-  }
-  save(LS.SESSION, SESSION);
+/****************
+ * HEADER & MODALS
+ ****************/
+function setHeaderAvatar(){
+  const img = $('#myProfile');
+  if(!img) return;
+  img.src = avatarOf(ME_USER||{name:'Me'});
+}
+$('#myProfile').onclick=()=>location.href='profile.html';
+$('#btnMsgs').onclick=()=>location.href='messages.html';
 
-  // Fetch full user and mirror into PROFILE/USERS so header avatar stays in sync
+function addNotif(text){ NOTIFS.unshift({id:Date.now(),text,time:nowISO()}); }
+function addInbox(text){ INBOX.unshift({id:Date.now(),text,time:nowISO()}); }
+
+function renderNotif(){
+  const el=$('#notifList'); el.innerHTML='';
+  if(!NOTIFS.length){ el.innerHTML='<div class=\"notif-item\">No notifications yet.</div>'; return; }
+  NOTIFS.forEach(n=>{ const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}`; el.appendChild(d); });
+}
+$('#btnNotif').onclick=()=>{ renderNotif(); $('#notifBg').style.display='flex'; };
+$('#clearNotif').onclick=()=>{ NOTIFS.length=0; renderNotif(); };
+$('#closeNotif').onclick=()=>{ $('#notifBg').style.display='none'; };
+
+function renderInbox(){
+  const el=$('#inboxList'); el.innerHTML='';
+  if(!INBOX.length){ el.innerHTML='<div class=\"notif-item\">Inbox is empty.</div>'; return; }
+  INBOX.forEach(n=>{ const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}`; el.appendChild(d); });
+}
+$('#btnInbox').onclick=()=>{ renderInbox(); $('#inboxBg').style.display='flex'; };
+$('#closeInbox').onclick=()=>{ $('#inboxBg').style.display='none'; };
+
+/*****************
+ * AUTH GATE
+ *****************/
+function showGate(on){ $('#gate').style.display = on ? 'flex' : 'none'; }
+function setTab(which){
+  $('#tabLogin').classList.toggle('active',which==='login');
+  $('#tabSignup').classList.toggle('active',which==='signup');
+  $('#loginForm').style.display = which==='login' ? 'block' : 'none';
+  $('#signupForm').style.display = which==='signup' ? 'block' : 'none';
+}
+$('#tabLogin').onclick=()=>setTab('login');
+$('#tabSignup').onclick=()=>setTab('signup');
+
+function showError(id,msg){ const el=$(id); if(el) el.textContent=msg; }
+
+async function doLogin(){
+  const email=$('#liEmail').value.trim();
+  const password=$('#liPass').value.trim();
+  showError('#liErr','');
+  if(!email||!password){ showError('#liErr','Enter email and password.'); return; }
   try{
-    const me = await getUserById(SESSION.userId);
-    ME_USER = me;
+    const j = await api('/login',{method:'POST',body:JSON.stringify({email,password})});
+    const payload = j.user || j;
+    SESSION = { userId: payload.id || payload.userId || payload._id || payload.uid, email: payload.email || email, token: j.token || payload.token || null };
+    await afterAuth();
+  }catch(e){ showError('#liErr', String(e.message||e).replace(/\\n.*/,'')); }
+}
+async function doSignup(){
+  const name=$('#suName').value.trim();
+  const email=$('#suEmail').value.trim();
+  const password=$('#suPass').value.trim();
+  showError('#suErr','');
+  if(!name||!email||!password){ showError('#suErr','Please complete all fields.'); return; }
+  try{
+    await api('/signup',{method:'POST',body:JSON.stringify({name,email,password})});
+    const j = await api('/login',{method:'POST',body:JSON.stringify({email,password})});
+    const payload = j.user || j;
+    SESSION = { userId: payload.id || payload.userId || payload._id || payload.uid, email: payload.email || email, token: j.token || payload.token || null };
+    await afterAuth();
+  }catch(e){ showError('#suErr', String(e.message||e).replace(/\\n.*/,'')); }
+}
+$('#doLogin').onclick=doLogin;
+$('#doSignup').onclick=doSignup;
 
-    // Update USERS v3 (merge or add)
-    const all = load(LS.USERS,[]);
-    const idx = all.findIndex(u=>String(u.id)===String(me.id));
-    if(idx>=0) all[idx]= {...all[idx], ...me}; else all.unshift(me);
-    save(LS.USERS, all);
-
-    // Update PROFILE v1 for header avatar under key "Me"
-    const prof = load(LS.PROFILE,{});
-    prof[ME_LABEL] = {
-      displayName: me.name || me.displayName || ME_LABEL,
-      avatar: me.avatar || me.avatarURL || me.photo || prof[ME_LABEL]?.avatar
-    };
-    save(LS.PROFILE, prof);
-    applyHeaderAvatar();
-  }catch(e){ console.warn('Failed to mirror profile:', e); }
-
+async function afterAuth(){
+  if(!SESSION?.userId){ showGate(true); return; }
+  ME_USER = await getUserById(SESSION.userId).catch(()=>null);
+  if(!ME_USER){ showGate(true); return; }
+  setHeaderAvatar();
+  addNotif('Signed in as '+(ME_USER.name||ME_USER.email||'you'));
   showGate(false);
   bootApp();
 }
 
-// Login/Signup handlers
-async function doLogin(){
-  const email=document.getElementById('liEmail').value.trim();
-  const password=document.getElementById('liPass').value.trim();
-  const err=document.getElementById('liErr'); err.textContent='';
-  if(!email||!password){ err.textContent='Enter email and password.'; return; }
-  try{
-    const j = await api('/login',{method:'POST',body:JSON.stringify({email,password})});
-    // Accept either {token,user} or {user} or {id}
-    const payload = j.user || j;
-    SESSION = { userId: payload.id || payload.userId || payload._id || payload.uid, email: payload.email || email, token: j.token || payload.token || null };
-    save(LS.SESSION, SESSION);
-    await afterAuth(payload);
-  }catch(e){ err.textContent = parseErr(e); }
-}
-async function doSignup(){
-  const name=document.getElementById('suName').value.trim();
-  const email=document.getElementById('suEmail').value.trim();
-  const password=document.getElementById('suPass').value.trim();
-  const err=document.getElementById('suErr'); err.textContent='';
-  if(!name||!email||!password){ err.textContent='Please complete all fields.'; return; }
-  try{
-    await api('/signup',{method:'POST',body:JSON.stringify({name,email,password})});
-    // Auto-login
-    const j = await api('/login',{method:'POST',body:JSON.stringify({email,password})});
-    const payload = j.user || j;
-    SESSION = { userId: payload.id || payload.userId || payload._id || payload.uid, email: payload.email || email, token: j.token || payload.token || null };
-    save(LS.SESSION, SESSION);
-    await afterAuth(payload);
-  }catch(e){ err.textContent = parseErr(e); }
-}
-function parseErr(e){ try{ const t=String(e.message||e); return t.replace(/\s*
-.*/,''); }catch{ return 'Something went wrong.'; } }
-
-document.getElementById('doLogin').onclick=doLogin;
-document.getElementById('doSignup').onclick=doSignup;
-
-document.getElementById('myProfile').onclick=()=>{ try{localStorage.setItem(LS.VIEW,JSON.stringify({name:ME_LABEL}));}catch{} location.href='profile.html'; };
-document.getElementById('btnMsgs').onclick=()=>location.href='messages.html';
-
-/*********************
- * NOTIF & INBOX UI  *
- *********************/
-function addNotif(text){ const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text,time:nowISO()}); save(LS.NOTIF,arr); }
-function renderNotif(){ const el=document.getElementById('notifList'); el.innerHTML=''; const arr=load(LS.NOTIF,[]); if(!arr.length){el.innerHTML='<div class="notif-item">No notifications yet.</div>';return;} arr.forEach(n=>{const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=\`<strong>\${new Date(n.time).toLocaleString()}</strong><br>\${escapeHtml(n.text)}\`; el.appendChild(d);});}
-document.getElementById('btnNotif').onclick=()=>{ renderNotif(); document.getElementById('notifBg').style.display='flex'; };
-document.getElementById('clearNotif').onclick=()=>{ save(LS.NOTIF,[]); renderNotif(); };
-document.getElementById('closeNotif').onclick=()=>{ document.getElementById('notifBg').style.display='none'; };
-
-function renderInbox(){ const el=document.getElementById('inboxList'); el.innerHTML=''; const arr=load(LS.INBOX,[]); if(!arr.length){el.innerHTML='<div class="notif-item">Inbox is empty.</div>';return;} arr.forEach(n=>{const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=\`<strong>\${new Date(n.time).toLocaleString()}</strong><br>\${escapeHtml(n.text)}\`; el.appendChild(d);});}
-document.getElementById('btnInbox').onclick=()=>{ renderInbox(); document.getElementById('inboxBg').style.display='flex'; };
-document.getElementById('closeInbox').onclick=()=>{ document.getElementById('inboxBg').style.display='none'; };
-
 /*****************
  * CHATS / THREAD *
  *****************/
-const BOTS=[{name:'Bill Thomas',u:'bill.thomas'},{name:'Kate White',u:'kate.white'},{name:'Michael Reed',u:'michael.reed'},{name:'Olivia Perez',u:'olivia.perez'},{name:'David Carter',u:'david.carter'},{name:'Emily Johnson',u:'emily.johnson'},{name:'Jason Brooks',u:'jason.brooks'},{name:'Sophia Turner',u:'sophia.turner'},{name:'Daniel Foster',u:'daniel.foster'},{name:'Grace Lee',u:'grace.lee'}];
-const botAvatar=n=>\`https://i.pravatar.cc/100?u=\${encodeURIComponent((BOTS.find(x=>x.name===n)||{}).u||n)}\`;
-function smartReply(t){t=(t||'').toLowerCase();if(t.includes('hello')||t.includes('hi'))return'Hi! □';if(t.includes('movie'))return'I love movies—what genre?';if(t.includes('music')||t.includes('song'))return'Great taste! Any favorites?';if(t.endsWith('?'))return'Good question. It depends!';return'Nice! □';}
+// Optional bots (in-memory only, for testing when no one else is online)
+const BOTS=[
+  {name:'Bill Thomas',u:'bill.thomas'},
+  {name:'Kate White',u:'kate.white'},
+  {name:'Michael Reed',u:'michael.reed'},
+  {name:'Olivia Perez',u:'olivia.perez'},
+  {name:'Daniel Foster',u:'daniel.foster'}
+];
+const BOT_USERS = BOTS.map(b=>({id:'bot:'+b.u, name:b.name, email:b.u+'@example.com', avatar:'https://i.pravatar.cc/100?u='+encodeURIComponent(b.u)}));
+const isBot = u => String(u.id||'').startsWith('bot:');
+const botReply = t => {
+  const s=(t||'').trim().toLowerCase();
+  if(!s) return '🙂';
+  if(s.includes('hello')||s.includes('hi')) return 'Hi!';
+  if(s.includes('?')) return 'Good question. It depends!';
+  return 'Nice!';
+};
 
-let USERS=[], CURRENT=null, LOCAL=load(LS.LOCAL,{});
-const listEl=document.getElementById('list'), tbody=document.getElementById('tbody'), thAva=document.getElementById('thAva'), thName=document.getElementById('thName'), thSub=document.getElementById('thSub'), input=document.getElementById('msg');
+let USERS=[];           // merged list
+let CURRENT=null;       // current peer
+const listEl=$('#list'), tbody=$('#tbody'), thAva=$('#thAva'), thName=$('#thName'), thSub=$('#thSub'), input=$('#msg');
 
-function isBot(u){ return String(u.id||'').startsWith('bot:'); }
-function ensureBots(list){ const seen=new Set(list.map(u=>u.name)); BOTS.forEach(b=>{ if(!seen.has(b.name)){ list.push({id:\`bot:\${b.u}\`,name:b.name,avatar:botAvatar(b.name)}); } }); return list; }
-function avatarOf(u){ return u.avatar || (isBot(u)?botAvatar(u.name):\`https://i.pravatar.cc/100?u=\${encodeURIComponent(u.email||u.name)}\`); }
-function lkey(peer){ return \`\${ME_USER?.id || 'me-local'}::\${peer.id}\`; }
-function getLocal(peer){ return LOCAL[lkey(peer)]||[]; }
-function saveLocal(peer,list){ LOCAL[lkey(peer)]=list; save(LS.LOCAL,LOCAL); }
+// In-memory bot conversations only
+const BOT_LOCAL = {}; // key=peerId, value=[{fromId,toId,text,time}]
+
+function lkey(peer){ return String(peer.id); }
+function getLocal(peer){ return BOT_LOCAL[lkey(peer)]||[]; }
+function addLocal(peer,msg){ BOT_LOCAL[lkey(peer)] = (BOT_LOCAL[lkey(peer)]||[]).concat([msg]); }
 
 function row(u,last=''){
   const d=document.createElement('div'); d.className='row'; d.dataset.id=u.id;
-  d.innerHTML=\`<img class="ava" src="\${avatarOf(u)}" alt=""><div style="min-width:0"><div class="name">\${escapeHtml(u.name)}</div><div class="last">\${escapeHtml(last||' ')}</div></div>\`;
-  d.onclick=()=>openChat(u); return d;
+  d.innerHTML=`<img class=\"ava\" src=\"${avatarOf(u)}\" alt=\"\"><div style=\"min-width:0\"><div class=\"name\">${esc(u.name)}</div><div class=\"last\">${esc(last||' ')}</div></div>`;
+  d.onclick=()=>openChat(u);
+  return d;
 }
-function renderList(map={}){
-  const q=(document.getElementById('search').value||'').toLowerCase();
+function renderList(){
+  const q=($('#search').value||'').toLowerCase();
   listEl.innerHTML='';
-  USERS.filter(u=>u.id!==ME_USER.id).filter(u=>u.name.toLowerCase().includes(q)).forEach(u=>{
-    const last = map[u.id]?.text || (getLocal(u).slice(-1)[0]?.text)||'';
-    listEl.appendChild(row(u,last));
-  });
+  USERS.filter(u=>String(u.id)!==String(ME_USER.id))
+       .filter(u=>u.name.toLowerCase().includes(q))
+       .forEach(u=>{
+         const last = THREAD_SNIPPETS[u.id]?.text || (isBot(u) ? (getLocal(u).slice(-1)[0]?.text||'') : '');
+         listEl.appendChild(row(u,last));
+       });
   [...listEl.children].forEach(el=>el.classList.toggle('active', el.dataset.id===(CURRENT?.id||'')));
 }
+
 async function renderThread(){
-  if(!CURRENT){ tbody.innerHTML='<div class="notif-item">Select a chat on the left to start messaging.</div>'; return; }
+  if(!CURRENT){ tbody.innerHTML='<div class=\"notif-item\">Select a chat on the left to start messaging.</div>'; return; }
   thAva.src=avatarOf(CURRENT); thName.textContent=CURRENT.name; thSub.textContent=isBot(CURRENT)?'Bot':'';
-  document.getElementById('openProfile').onclick=()=>{ try{localStorage.setItem(LS.VIEW,JSON.stringify({name:CURRENT.name}));}catch{} location.href='profile.html'; };
+  $('#openProfile').onclick=()=>{ location.href='profile.html?user='+encodeURIComponent(CURRENT.id); };
   tbody.innerHTML='';
-  const add=(me,t,time)=>{ const w=document.createElement('div'); w.innerHTML=\`<div class="b \${me?'me':'them'}">\${escapeHtml(t)}</div><div class="stamp">\${new Date(time).toLocaleString()}</div>\`; tbody.appendChild(w); };
+  const add=(me,t,time)=>{
+    const w=document.createElement('div');
+    w.innerHTML=`<div class=\"b ${me?'me':'them'}\">${esc(t)}</div><div class=\"stamp\">${new Date(time).toLocaleString()}</div>`;
+    tbody.appendChild(w);
+  };
+
   let msgs=[];
   if(isBot(CURRENT)){
-    msgs=getLocal(CURRENT);
+    msgs = getLocal(CURRENT);
   }else{
-    try{ msgs=await getMessages(ME_USER.id,CURRENT.id); }catch{ msgs=[]; }
+    try{ msgs = await getMessages(ME_USER.id, CURRENT.id); }catch{ msgs=[]; }
   }
-  msgs.forEach(m=>add(m.fromId===ME_USER.id, m.text, m.time));
+  msgs.forEach(m=>add(String(m.fromId)===String(ME_USER.id), m.text, m.time||m.createdAt||nowISO()));
   tbody.scrollTop=tbody.scrollHeight;
 }
+
 async function openChat(u){
-  CURRENT=u; save(LS.LAST,{id:u.id,name:u.name});
+  CURRENT=u;
   [...listEl.children].forEach(el=>el.classList.toggle('active', el.dataset.id===u.id));
   await renderThread();
 }
 
-document.getElementById('send').onclick=async()=>{
+$('#send').onclick=async()=>{
   const t=(input.value||'').trim(); if(!t||!CURRENT) return; input.value='';
   if(isBot(CURRENT)){
-    const l=getLocal(CURRENT); l.push({id:uid('m'),fromId:ME_USER.id,toId:CURRENT.id,text:t,time:nowISO()}); saveLocal(CURRENT,l); await renderThread();
-    setTimeout(()=>{ const L=getLocal(CURRENT); L.push({id:uid('m'),fromId:CURRENT.id,toId:ME_USER.id,text:smartReply(t),time:nowISO()}); saveLocal(CURRENT,L); renderThread(); }, 600+Math.random()*1200);
+    addLocal(CURRENT,{id:'m'+Date.now(),fromId:ME_USER.id,toId:CURRENT.id,text:t,time:nowISO()}); 
+    await renderThread();
+    setTimeout(()=>{ addLocal(CURRENT,{id:'m'+Date.now(),fromId:CURRENT.id,toId:ME_USER.id,text:botReply(t),time:nowISO()}); renderThread(); }, 600+Math.random()*600);
   }else{
-    try{ await postMessage(ME_USER.id,CURRENT.id,t); await renderThread(); }catch(e){ alert('Failed to send: '+(e.message||e)); }
+    try{ await postMessage(ME_USER.id,CURRENT.id,t); await renderThread(); }
+    catch(e){ alert('Failed to send: '+(e.message||e)); }
   }
 };
 
@@ -382,59 +380,46 @@ document.getElementById('send').onclick=async()=>{
  * BOOT *
  ********/
 async function bootApp(){
-  // Must have a session and ME_USER
-  if(!SESSION){ showGate(true); return; }
-  if(!ME_USER){
-    try{ ME_USER = await getUserById(SESSION.userId); }catch{ showGate(true); return; }
+  try{
+    if(!SESSION?.userId){ showGate(true); return; }
+    if(!ME_USER){ ME_USER = await getUserById(SESSION.userId); }
+    setHeaderAvatar();
+
+    // pull users & threads
+    ALL_USERS = await getUsers().catch(()=>[]);
+    if(!ALL_USERS.find(u=>String(u.id)===String(ME_USER.id))) ALL_USERS.unshift(ME_USER);
+
+    // merge in bots (for demo)
+    USERS = [...ALL_USERS, ...BOT_USERS];
+
+    // thread snippets
+    THREAD_SNIPPETS = {};
+    try{
+      const th = await getThreads(ME_USER.id);
+      th.forEach(t=>{ if(t.peerId) THREAD_SNIPPETS[t.peerId] = {text: t.last?.text||'', time: new Date(t.last?.time||0).getTime()}; });
+    }catch{}
+
+    renderList();
+
+    // Auto-open first non-self user if none selected
+    const target = USERS.find(u=>String(u.id)!==String(ME_USER.id));
+    if(target) openChat(target);
+  }catch(e){
+    console.error(e);
+    showGate(true);
   }
-
-  // Load all users + threads map
-  let users = await getUsers().catch(()=>[]);
-  // Ensure our own record present (in case API omits it)
-  if(!users.find(u=>String(u.id)===String(ME_USER.id))){ users.unshift(ME_USER); }
-  USERS = ensureBots(users.map(u=>({...u,avatar:u.avatar||\`https://i.pravatar.cc/100?u=\${encodeURIComponent(u.email||u.name)}\`)}));
-
-  // Build threads snippet map
-  let map={};
-  try{ const threads=await getThreads(ME_USER.id); threads.forEach(t=> map[t.peerId]={text:t.last?.text||'',time:new Date(t.last?.time||0).getTime()}); }catch{}
-  renderList(map);
-
-  // Deep link: ?with=<id or name>
-  const p=new URLSearchParams(location.search).get('with');
-  const last=load(LS.LAST,null);
-  let target=null;
-  if(p){ target=USERS.find(u=>u.id==p)||USERS.find(u=>u.name.toLowerCase()===p.toLowerCase()); }
-  else if(last){ target=USERS.find(u=>u.id===last.id)||USERS.find(u=>u.name===last.name); }
-  else { target=USERS.find(u=>u.id!==ME_USER.id); }
-  if(target) openChat(target);
 }
 
 /************************
- * INITIAL AUTH CHECK   *
+ * INITIAL (no persisted session -> show gate)
  ************************/
-(async function init(){
-  // Show gate if no session
-  SESSION = load(LS.SESSION,null);
-  if(!SESSION?.userId){ showGate(true); return; }
-  try{
-    ME_USER = await getUserById(SESSION.userId);
-    // Mirror to PROFILE/USERS for header consistency
-    const prof = load(LS.PROFILE,{}); prof[ME_LABEL] = {
-      displayName: ME_USER.name || ME_LABEL,
-      avatar: ME_USER.avatar || ME_USER.avatarURL || ME_USER.photo || prof[ME_LABEL]?.avatar
-    }; save(LS.PROFILE, prof); applyHeaderAvatar();
-    const all = load(LS.USERS,[]); const idx = all.findIndex(u=>String(u.id)===String(ME_USER.id)); if(idx>=0) all[idx]= {...all[idx], ...ME_USER}; else all.unshift(ME_USER); save(LS.USERS, all);
-    showGate(false);
-    bootApp();
-  }catch(e){ console.warn('Session invalid, re-auth required', e); showGate(true); }
+(function init(){
+  // No persisted session — always show gate first
+  showGate(true);
 })();
 
-/********
- * UTILS *
- ********/
-function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;');}
-
-document.getElementById('search').addEventListener('input',()=>renderList({}));
+// Search
+$('#search').addEventListener('input',()=>renderList());
 </script>
 </body>
 </html>
