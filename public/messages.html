@@ -5,435 +5,183 @@
 <title>Chatternet — Messages</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root{
-    --brand:#3498db; --brand-2:#2980b9;
-    --bg:#f0f2f5; --card:#fff; --ink:#0f172a;
-    --muted:#667085; --line:#e6eaf2; --shadow:0 6px 16px rgba(0,0,0,.08);
-    --font:'Segoe UI', Arial, system-ui, sans-serif;
-  }
-  *{box-sizing:border-box}
-  html,body,*,*::before,*::after{font-family:var(--font)!important;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-  body{margin:0;background:var(--bg);color:var(--ink)}
-
-  /* ===== Header ===== */
-  .top-bar{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
-  .top-actions{display:flex;gap:8px;align-items:center}
-  .top-actions a, .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer;text-decoration:none}
-  .top-actions button:hover, .top-actions a:hover{background:#eef4ff}
-  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
-
+  :root{--brand:#3498db;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif}
+  .top{background:var(--brand);color:#fff;padding:14px 16px;font-weight:800;display:flex;gap:10px;align-items:center}
+  .top a{color:#fff;text-decoration:none;background:rgba(255,255,255,.18);padding:6px 10px;border-radius:8px}
   .page{max-width:1100px;margin:18px auto;padding:0 12px 28px}
-  .stack{display:grid;grid-template-columns:320px 1fr;gap:14px}
-  @media (max-width:900px){.stack{grid-template-columns:1fr}}
-
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:var(--shadow);padding:0}
-
-  /* ===== Left: Chats list ===== */
-  .chat-list{height:72vh;display:flex;flex-direction:column;border-radius:14px;overflow:hidden}
-  .chat-head{display:flex;align-items:center;gap:8px;padding:12px;border-bottom:1px solid #ececec;background:#fff}
-  .chat-head input{flex:1;padding:10px;border:1px solid #d7d7d7;border-radius:12px}
-  .items{flex:1;overflow:auto;background:#fafafa}
-  .row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #eee;background:#fff;cursor:pointer}
-  .row:hover{background:#f7f9ff}
-  .row.active{background:#eef4ff}
-  .ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-  .name{font-weight:800;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em;word-spacing:.18em}
-  .last{color:#64748b;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-  /* ===== Right: Thread ===== */
-  .thread{height:72vh;display:flex;flex-direction:column;border-radius:14px;overflow:hidden}
-  .thead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #ececec;background:#fff}
-  .tname{font-weight:800;letter-spacing:.02em;word-spacing:.18em}
-  .tbody{flex:1;overflow:auto;background:#f9fbff;padding:14px}
-  .b{display:inline-block;max-width:70%;padding:10px 12px;border-radius:12px;box-shadow:0 1px 2px rgba(0,0,0,.05);word-break:break-word;white-space:pre-wrap}
-  .me{background:#e6f2ff;margin:8px 0 8px auto}
-  .them{background:#fff;margin:8px 0}
-  .stamp{font-size:11px;color:#94a3b8;margin-top:4px}
-  .tcompose{display:flex;gap:8px;padding:12px;border-top:1px solid #ececec;background:#fff}
-  .tcompose textarea{flex:1;min-height:44px;max-height:120px;padding:10px;border:1px solid #d7d7d7;border-radius:12px;resize:vertical}
-  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:12px;background:#fff;cursor:pointer}
-  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  .btn.primary:hover{background:var(--brand-2)}
-
-  /* ===== Modals ===== */
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2000}
-  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
-  .notif-item{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
-
-  /* ===== Gate (blocks until authed) ===== */
-  .gate{position:fixed;inset:0;background:linear-gradient(180deg,#f6faff,#eef4ff);display:flex;align-items:center;justify-content:center;z-index:4000}
-  .gate .panel{background:#fff;border:1px solid #e6eaf2;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.08);width:96%;max-width:520px;padding:18px}
-  .gate h3{margin:0 0 10px 0;font-weight:800}
-  .gate .tabs{display:flex;gap:8px;margin-bottom:10px}
-  .gate .tabs button{flex:1;padding:10px 12px;border-radius:10px;border:1px solid #d7d7d7;background:#fff;cursor:pointer}
-  .gate .tabs button.active{background:var(--brand);border-color:var(--brand);color:#fff}
-  .gate .field{display:flex;flex-direction:column;gap:6px;margin:8px 0}
-  .gate input{padding:10px;border:1px solid #d7d7d7;border-radius:10px}
-  .gate .row{display:flex;gap:8px}
-  .gate .primary{width:100%}
-  .gate .note{color:#64748b;font-size:12px;margin-top:6px}
-  .gate .err{color:#b00020;font-size:13px;margin-top:4px}
+  .grid{display:grid;grid-template-columns:320px 1fr;gap:14px}
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .muted{color:var(--muted)} input,button{padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  button.primary{background:#3498db;border:1px solid #3498db;color:#fff;cursor:pointer}
+  .thread{padding:10px;border:1px solid #ececec;border-radius:10px;background:#fafafa;margin:8px 0;cursor:pointer}
+  .thread.active{outline:2px solid #bfd7ff}
+  .msg{padding:10px;border-radius:10px;margin:6px 0;max-width:80%}
+  .me{background:#e7f0ff;margin-left:auto} .them{background:#f5f5f5;margin-right:auto}
+  .row{display:flex;gap:8px;align-items:center}
 </style>
 </head>
 <body>
-  <!-- ===== Header ===== -->
-  <div class="top-bar">
-    <h2>Messages</h2>
-    <div class="top-actions">
-      <a href="index.html">Home</a>
-      <a href="feed.html">Feed</a>
-      <a href="settings.html">Settings</a>
-      <button id="btnNotif" type="button">Notifications</button>
-      <button id="btnInbox" type="button">Inbox</button>
-      <button id="btnMsgs" type="button" disabled>Messages</button>
-      <img id="myProfile" alt="My profile" />
-    </div>
+  <div class="top">
+    <span>Chatternet — Messages</span>
+    <a href="/api/health" target="_blank">API Health</a>
+    <span id="who" style="margin-left:auto;opacity:.9"></span>
   </div>
 
-  <!-- ===== Page ===== -->
   <div class="page">
-    <div class="stack">
-      <div class="card chat-list">
-        <div class="chat-head"><input id="search" placeholder="Search chats…"></div>
-        <div id="list" class="items"></div>
-      </div>
-
-      <div class="card thread">
-        <div class="thead">
-          <img id="thAva" class="ava" alt="">
-          <div style="flex:1">
-            <div class="tname" id="thName">Select a chat</div>
-            <div class="muted" id="thSub"></div>
-          </div>
-          <button class="btn" id="openProfile" type="button">Open Profile</button>
+    <div class="grid">
+      <!-- LEFT: Threads -->
+      <section class="card">
+        <div class="row" style="justify-content:space-between">
+          <div style="font-weight:800">Conversations</div>
+          <button id="btnRefreshThreads" class="primary" type="button">Refresh</button>
         </div>
-        <div id="tbody" class="tbody"><div class="muted">Select a chat on the left to start messaging.</div></div>
-        <div class="tcompose">
-          <textarea id="msg" placeholder="Write a message"></textarea>
-          <button id="send" class="btn primary" type="button">Send</button>
+
+        <div class="muted" style="margin:8px 0">Start or open a conversation</div>
+        <div class="row">
+          <input id="peerEmail" placeholder="Peer email (e.g. bob@demo.test)" style="flex:1" />
+          <button id="btnOpen" class="primary" type="button">Open</button>
         </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ===== Notifications Modal ===== -->
-  <div class="modal-bg" id="notifBg">
-    <div class="sheet">
-      <h3>Notifications</h3>
-      <div id="notifList"></div>
-      <button id="clearNotif" class="btn primary" style="margin-top:8px;" type="button">Clear</button>
-      <button id="closeNotif" class="btn" style="margin-top:8px;" type="button">Close</button>
-    </div>
-  </div>
-  <!-- ===== Inbox Modal ===== -->
-  <div class="modal-bg" id="inboxBg">
-    <div class="sheet">
-      <h3>Inbox</h3>
-      <div id="inboxList"></div>
-      <button id="closeInbox" class="btn" style="margin-top:8px;" type="button">Close</button>
-    </div>
-  </div>
+        <div id="threads" style="margin-top:10px"></div>
+        <div id="threadsEmpty" class="muted" style="display:none;text-align:center;padding:8px">No conversations yet.</div>
+      </section>
 
-  <!-- ===== Gate (inline, blocks until authed) ===== -->
-  <div id="gate" class="gate" style="display:none">
-    <div class="panel">
-      <h3>Welcome to Chatternet</h3>
-      <div class="tabs">
-        <button id="tabLogin" class="active" type="button">Log in</button>
-        <button id="tabSignup" type="button">Sign up</button>
-      </div>
-      <div id="loginForm">
-        <div class="field"><label>Email</label><input id="liEmail" type="email" placeholder="you@example.com"></div>
-        <div class="field"><label>Password</label><input id="liPass" type="password" placeholder="••••••••"></div>
-        <button id="doLogin" class="btn primary" type="button">Log in</button>
-        <div id="liErr" class="err"></div>
-      </div>
-      <div id="signupForm" style="display:none">
-        <div class="field"><label>Name</label><input id="suName" placeholder="Jane Doe"></div>
-        <div class="field"><label>Email</label><input id="suEmail" type="email" placeholder="jane@example.com"></div>
-        <div class="field"><label>Password</label><input id="suPass" type="password" placeholder="Choose a password"></div>
-        <button id="doSignup" class="btn primary" type="button">Create account</button>
-        <div class="note">We'll log you in right after sign-up.</div>
-        <div id="suErr" class="err"></div>
-      </div>
+      <!-- RIGHT: Chat -->
+      <section class="card">
+        <div class="row" style="justify-content:space-between">
+          <div id="chatTitle" style="font-weight:800">No conversation selected</div>
+          <button id="btnRefreshChat" type="button">Refresh</button>
+        </div>
+
+        <div id="messages" style="min-height:340px;border:1px dashed #ddd;border-radius:12px;padding:10px;margin:10px 0;overflow:auto;background:#fafafa"></div>
+
+        <div class="row">
+          <input id="msgInput" placeholder="Write a message" style="flex:1" />
+          <button id="btnSend" class="primary" type="button">Send</button>
+        </div>
+
+        <div id="status" class="muted" style="margin-top:6px"></div>
+      </section>
     </div>
   </div>
 
 <script>
-/********************
- * CONFIG & STORAGE *
- ********************/
-const API='https://chatternet-backend-1.onrender.com/api';
-const LS={
-  SESSION:'ct_session_v2',
-  PROFILE:'ct_profile_data_v1',
-  USERS:'ct_users_v3',
-  NOTIF:'ct_notifications_v1',
-  INBOX:'ct_inbox_v1',
-  LOCAL:'ct_msg_local_v1',
-  LAST:'ct_last_peer_v1',
-  VIEW:'ct_profile_view_v1'
-};
-const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+/* ===== Basic helpers (no fancy quotes, pure ASCII) ===== */
+const LS = { PROFILE:'ct_profile_data_v1', SESSION:'ct_session_v2', MEID:'ct_backend_me_id' };
+const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
 const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const uid =(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
-const nowISO=()=>new Date().toISOString();
+const rel = s => { const d=(Date.now()-new Date(s).getTime())/1e3; if(d<60)return'just now'; if(d<3600)return Math.floor(d/60)+'m'; if(d<86400)return Math.floor(d/3600)+'h'; return Math.floor(d/86400)+'d'; };
+const escapeHtml = s => String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 
-/****************
- * HEADER AVATAR *
- ****************/
-const ME_LABEL='Me';
-function myAvatarFromProfile(){
-  const prof=(load(LS.PROFILE,{}))[ME_LABEL]||{};
-  return prof.avatar || prof.avatarURL || prof.photo || null;
-}
-function applyHeaderAvatar(url){
-  const img=document.getElementById('myProfile');
-  const src=url || myAvatarFromProfile() || 'https://i.pravatar.cc/100?u=me';
-  if(img){ img.src=src; img.alt='My profile'; }
-}
-applyHeaderAvatar();
-window.addEventListener('storage',e=>{ if([LS.PROFILE,LS.USERS].includes(e.key)) applyHeaderAvatar(); });
+function meEmail(){ const s=load(LS.SESSION,null); return (s&&s.user)||'me@local.test'; }
+function meName(){ const p=(load(LS.PROFILE,{}))['Me']; return (p&&p.displayName)||'Me'; }
+document.getElementById('who').textContent = meName()+' <'+meEmail()+'>';
 
-/********
- * GATE *
- ********/
-let SESSION=load(LS.SESSION,null); // {userId,email,token?}
-let ME_USER=null; // full /users/:id record for header + API usage
+/* ===== Minimal user helpers against your backend ===== */
+// same-origin calls: fetch('/api/...')  -> your Render service
+async function api(path, opts){ const r=await fetch(path, { headers:{'Content-Type':'application/json'}, ...opts }); if(!r.ok){ throw new Error(await r.text()); } return r.json(); }
+const listUsers   = ()=>api('/api/users');
+const signup      = (email,name)=>api('/api/signup',{method:'POST',body:JSON.stringify({email,password:'local',name})});
 
-function showGate(on){ document.getElementById('gate').style.display=on?'flex':'none'; }
-function tab(which){
-  document.getElementById('tabLogin').classList.toggle('active',which==='login');
-  document.getElementById('tabSignup').classList.toggle('active',which==='signup');
-  document.getElementById('loginForm').style.display=which==='login'?'block':'none';
-  document.getElementById('signupForm').style.display=which==='signup'?'block':'none';
+async function ensureUser(email, name){
+  const users = await listUsers();
+  const found = users.find(u=>u.email===email);
+  if(found) return found;
+  const j = await signup(email, name||email.split('@')[0]);
+  return j.user || j;
 }
 
-document.getElementById('tabLogin').onclick=()=>tab('login');
-document.getElementById('tabSignup').onclick=()=>tab('signup');
+/* ===== Messages API ===== */
+const getThreads  = (uid)=>api('/api/threads/'+encodeURIComponent(uid));
+const getMessages = (uid,pid)=>api('/api/messages?'+new URLSearchParams({userId:uid,peerId:pid}).toString());
+const sendMessage = (fromId,toId,text)=>api('/api/messages',{method:'POST',body:JSON.stringify({fromId,toId,text})});
 
-async function api(path,opts={}){
-  const headers={'Content-Type':'application/json'};
-  if(SESSION?.token) headers['Authorization'] = `Bearer ${SESSION.token}`;
-  const r=await fetch(`${API}${path}`,{headers,...opts});
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-const getUsers    = ()=>api('/users');
-const getUserById = (id)=>api(`/users/${encodeURIComponent(id)}`);
-const getThreads  = (uid)=>api(`/threads/${encodeURIComponent(uid)}`);
-const getMessages = (a,b)=>api(`/messages?userId=${encodeURIComponent(a)}&peerId=${encodeURIComponent(b)}`);
-const postMessage = (a,b,t)=>api('/messages',{method:'POST',body:JSON.stringify({fromId:a,toId:b,text:t})});
+/* ===== UI state ===== */
+let ME=null, USERS_INDEX=new Map(), CURRENT_PEER=null;
+const el = id => document.getElementById(id);
+const setStatus = t => { el('status').textContent = t||''; };
 
-async function afterAuth(user){
-  // Persist session
-  SESSION = { userId: user.id ?? user.userId ?? user._id ?? user.uid ?? null, email: user.email, token: user.token || SESSION?.token || null };
-  if(!SESSION.userId && user.id==null){
-    // Some APIs return {user:{...}}; try unwrap
-    if(user.user && (user.user.id || user.user._id)){
-      SESSION.userId = user.user.id || user.user._id;
-      SESSION.email = user.user.email || SESSION.email;
-    }
-  }
-  save(LS.SESSION, SESSION);
-
-  // Fetch full user and mirror into PROFILE/USERS so header avatar stays in sync
-  try{
-    const me = await getUserById(SESSION.userId);
-    ME_USER = me;
-
-    // Update USERS v3 (merge or add)
-    const all = load(LS.USERS,[]);
-    const idx = all.findIndex(u=>String(u.id)===String(me.id));
-    if(idx>=0) all[idx]= {...all[idx], ...me}; else all.unshift(me);
-    save(LS.USERS, all);
-
-    // Update PROFILE v1 for header avatar under key "Me"
-    const prof = load(LS.PROFILE,{});
-    prof[ME_LABEL] = {
-      displayName: me.name || me.displayName || ME_LABEL,
-      avatar: me.avatar || me.avatarURL || me.photo || prof[ME_LABEL]?.avatar
-    };
-    save(LS.PROFILE, prof);
-    applyHeaderAvatar();
-  }catch(e){ console.warn('Failed to mirror profile:', e); }
-
-  showGate(false);
-  bootApp();
-}
-
-// Login/Signup handlers
-async function doLogin(){
-  const email=document.getElementById('liEmail').value.trim();
-  const password=document.getElementById('liPass').value.trim();
-  const err=document.getElementById('liErr'); err.textContent='';
-  if(!email||!password){ err.textContent='Enter email and password.'; return; }
-  try{
-    const j = await api('/login',{method:'POST',body:JSON.stringify({email,password})});
-    // Accept either {token,user} or {user} or {id}
-    const payload = j.user || j;
-    SESSION = { userId: payload.id || payload.userId || payload._id || payload.uid, email: payload.email || email, token: j.token || payload.token || null };
-    save(LS.SESSION, SESSION);
-    await afterAuth(payload);
-  }catch(e){ err.textContent = parseErr(e); }
-}
-async function doSignup(){
-  const name=document.getElementById('suName').value.trim();
-  const email=document.getElementById('suEmail').value.trim();
-  const password=document.getElementById('suPass').value.trim();
-  const err=document.getElementById('suErr'); err.textContent='';
-  if(!name||!email||!password){ err.textContent='Please complete all fields.'; return; }
-  try{
-    await api('/signup',{method:'POST',body:JSON.stringify({name,email,password})});
-    // Auto-login
-    const j = await api('/login',{method:'POST',body:JSON.stringify({email,password})});
-    const payload = j.user || j;
-    SESSION = { userId: payload.id || payload.userId || payload._id || payload.uid, email: payload.email || email, token: j.token || payload.token || null };
-    save(LS.SESSION, SESSION);
-    await afterAuth(payload);
-  }catch(e){ err.textContent = parseErr(e); }
-}
-function parseErr(e){ try{ const t=String(e.message||e); return t.replace(/\s*\n.*/,''); }catch{ return 'Something went wrong.'; } }
-
-document.getElementById('doLogin').onclick=doLogin;
-document.getElementById('doSignup').onclick=doSignup;
-
-document.getElementById('myProfile').onclick=()=>{ try{localStorage.setItem(LS.VIEW,JSON.stringify({name:ME_LABEL}));}catch{} location.href='profile.html'; };
-document.getElementById('btnMsgs').onclick=()=>location.href='messages.html';
-
-/*********************
- * NOTIF & INBOX UI  *
- *********************/
-function addNotif(text){ const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text,time:nowISO()}); save(LS.NOTIF,arr); }
-function renderNotif(){ const el=document.getElementById('notifList'); el.innerHTML=''; const arr=load(LS.NOTIF,[]); if(!arr.length){el.innerHTML='<div class="notif-item">No notifications yet.</div>';return;} arr.forEach(n=>{const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${escapeHtml(n.text)}`; el.appendChild(d);});}
-document.getElementById('btnNotif').onclick=()=>{ renderNotif(); document.getElementById('notifBg').style.display='flex'; };
-document.getElementById('clearNotif').onclick=()=>{ save(LS.NOTIF,[]); renderNotif(); };
-document.getElementById('closeNotif').onclick=()=>{ document.getElementById('notifBg').style.display='none'; };
-
-function renderInbox(){ const el=document.getElementById('inboxList'); el.innerHTML=''; const arr=load(LS.INBOX,[]); if(!arr.length){el.innerHTML='<div class="notif-item">Inbox is empty.</div>';return;} arr.forEach(n=>{const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${escapeHtml(n.text)}`; el.appendChild(d);});}
-document.getElementById('btnInbox').onclick=()=>{ renderInbox(); document.getElementById('inboxBg').style.display='flex'; };
-document.getElementById('closeInbox').onclick=()=>{ document.getElementById('inboxBg').style.display='none'; };
-
-/*****************
- * CHATS / THREAD *
- *****************/
-const BOTS=[{name:'Bill Thomas',u:'bill.thomas'},{name:'Kate White',u:'kate.white'},{name:'Michael Reed',u:'michael.reed'},{name:'Olivia Perez',u:'olivia.perez'},{name:'David Carter',u:'david.carter'},{name:'Emily Johnson',u:'emily.johnson'},{name:'Jason Brooks',u:'jason.brooks'},{name:'Sophia Turner',u:'sophia.turner'},{name:'Daniel Foster',u:'daniel.foster'},{name:'Grace Lee',u:'grace.lee'}];
-const botAvatar=n=>`https://i.pravatar.cc/100?u=${encodeURIComponent((BOTS.find(x=>x.name===n)||{}).u||n)}`;
-function smartReply(t){t=(t||'').toLowerCase();if(t.includes('hello')||t.includes('hi'))return'Hi! □';if(t.includes('movie'))return'I love movies—what genre?';if(t.includes('music')||t.includes('song'))return'Great taste! Any favorites?';if(t.endsWith('?'))return'Good question. It depends!';return'Nice! □';}
-
-let USERS=[], CURRENT=null, LOCAL=load(LS.LOCAL,{});
-const listEl=document.getElementById('list'), tbody=document.getElementById('tbody'), thAva=document.getElementById('thAva'), thName=document.getElementById('thName'), thSub=document.getElementById('thSub'), input=document.getElementById('msg');
-
-function isBot(u){ return String(u.id||'').startsWith('bot:'); }
-function ensureBots(list){ const seen=new Set(list.map(u=>u.name)); BOTS.forEach(b=>{ if(!seen.has(b.name)){ list.push({id:`bot:${b.u}`,name:b.name,avatar:botAvatar(b.name)}); } }); return list; }
-function avatarOf(u){ return u.avatar || (isBot(u)?botAvatar(u.name):`https://i.pravatar.cc/100?u=${encodeURIComponent(u.email||u.name)}`); }
-function lkey(peer){ return `${ME_USER?.id || 'me-local'}::${peer.id}`; }
-function getLocal(peer){ return LOCAL[lkey(peer)]||[]; }
-function saveLocal(peer,list){ LOCAL[lkey(peer)]=list; save(LS.LOCAL,LOCAL); }
-
-function row(u,last=''){
-  const d=document.createElement('div'); d.className='row'; d.dataset.id=u.id;
-  d.innerHTML=`<img class="ava" src="${avatarOf(u)}" alt=""><div style="min-width:0"><div class="name">${escapeHtml(u.name)}</div><div class="last">${escapeHtml(last||' ')}</div></div>`;
-  d.onclick=()=>openChat(u); return d;
-}
-function renderList(map={}){
-  const q=(document.getElementById('search').value||'').toLowerCase();
-  listEl.innerHTML='';
-  USERS.filter(u=>u.id!==ME_USER.id).filter(u=>u.name.toLowerCase().includes(q)).forEach(u=>{
-    const last = map[u.id]?.text || (getLocal(u).slice(-1)[0]?.text)||'';
-    listEl.appendChild(row(u,last));
+/* ===== Rendering ===== */
+function renderThreads(items){
+  const box=el('threads'), empty=el('threadsEmpty'); box.innerHTML='';
+  if(!items.length){ empty.style.display='block'; return; } empty.style.display='none';
+  items.sort((a,b)=>new Date(b.last.time)-new Date(a.last.time));
+  items.forEach(t=>{
+    const peer=USERS_INDEX.get(t.peerId)||{name:'Unknown',email:t.peerId};
+    const div=document.createElement('div');
+    div.className='thread'+(CURRENT_PEER&&CURRENT_PEER.id===t.peerId?' active':'');
+    div.innerHTML='<div style="font-weight:700">'+escapeHtml(peer.name||peer.email)+'</div>'+
+                  '<div class="muted">'+escapeHtml(peer.email||'')+' • '+new Date(t.last.time).toLocaleString()+' • '+rel(t.last.time)+'</div>'+
+                  '<div style="margin-top:4px">'+escapeHtml(t.last.text||'')+'</div>';
+    div.onclick=()=>openConversation(t.peerId);
+    box.appendChild(div);
   });
-  [...listEl.children].forEach(el=>el.classList.toggle('active', el.dataset.id===(CURRENT?.id||'')));
-}
-async function renderThread(){
-  if(!CURRENT){ tbody.innerHTML='<div class="notif-item">Select a chat on the left to start messaging.</div>'; return; }
-  thAva.src=avatarOf(CURRENT); thName.textContent=CURRENT.name; thSub.textContent=isBot(CURRENT)?'Bot':'';
-  document.getElementById('openProfile').onclick=()=>{ try{localStorage.setItem(LS.VIEW,JSON.stringify({name:CURRENT.name}));}catch{} location.href='profile.html'; };
-  tbody.innerHTML='';
-  const add=(me,t,time)=>{ const w=document.createElement('div'); w.innerHTML=`<div class="b ${me?'me':'them'}">${escapeHtml(t)}</div><div class="stamp">${new Date(time).toLocaleString()}</div>`; tbody.appendChild(w); };
-  let msgs=[];
-  if(isBot(CURRENT)){
-    msgs=getLocal(CURRENT);
-  }else{
-    try{ msgs=await getMessages(ME_USER.id,CURRENT.id); }catch{ msgs=[]; }
-  }
-  msgs.forEach(m=>add(m.fromId===ME_USER.id, m.text, m.time));
-  tbody.scrollTop=tbody.scrollHeight;
-}
-async function openChat(u){
-  CURRENT=u; save(LS.LAST,{id:u.id,name:u.name});
-  [...listEl.children].forEach(el=>el.classList.toggle('active', el.dataset.id===u.id));
-  await renderThread();
 }
 
-document.getElementById('send').onclick=async()=>{
-  const t=(input.value||'').trim(); if(!t||!CURRENT) return; input.value='';
-  if(isBot(CURRENT)){
-    const l=getLocal(CURRENT); l.push({id:uid('m'),fromId:ME_USER.id,toId:CURRENT.id,text:t,time:nowISO()}); saveLocal(CURRENT,l); await renderThread();
-    setTimeout(()=>{ const L=getLocal(CURRENT); L.push({id:uid('m'),fromId:CURRENT.id,toId:ME_USER.id,text:smartReply(t),time:nowISO()}); saveLocal(CURRENT,L); renderThread(); }, 600+Math.random()*1200);
-  }else{
-    try{ await postMessage(ME_USER.id,CURRENT.id,t); await renderThread(); }catch(e){ alert('Failed to send: '+(e.message||e)); }
-  }
-};
-
-/********
- * BOOT *
- ********/
-async function bootApp(){
-  // Must have a session and ME_USER
-  if(!SESSION){ showGate(true); return; }
-  if(!ME_USER){
-    try{ ME_USER = await getUserById(SESSION.userId); }catch{ showGate(true); return; }
-  }
-
-  // Load all users + threads map
-  let users = await getUsers().catch(()=>[]);
-  // Ensure our own record present (in case API omits it)
-  if(!users.find(u=>String(u.id)===String(ME_USER.id))){ users.unshift(ME_USER); }
-  USERS = ensureBots(users.map(u=>({...u,avatar:u.avatar||`https://i.pravatar.cc/100?u=${encodeURIComponent(u.email||u.name)}`})));
-
-  // Build threads snippet map
-  let map={};
-  try{ const threads=await getThreads(ME_USER.id); threads.forEach(t=> map[t.peerId]={text:t.last?.text||'',time:new Date(t.last?.time||0).getTime()}); }catch{}
-  renderList(map);
-
-  // Deep link: ?with=<id or name>
-  const p=new URLSearchParams(location.search).get('with');
-  const last=load(LS.LAST,null);
-  let target=null;
-  if(p){ target=USERS.find(u=>u.id==p)||USERS.find(u=>u.name.toLowerCase()===p.toLowerCase()); }
-  else if(last){ target=USERS.find(u=>u.id===last.id)||USERS.find(u=>u.name===last.name); }
-  else { target=USERS.find(u=>u.id!==ME_USER.id); }
-  if(target) openChat(target);
+function renderMessages(list){
+  const box=el('messages'); box.innerHTML='';
+  if(!list.length){ box.innerHTML='<div class="muted" style="text-align:center;padding:12px">No messages. Say hi!</div>'; return; }
+  list.forEach(m=>{
+    const mine=m.fromId===ME.id; const who=USERS_INDEX.get(m.fromId)||{};
+    const div=document.createElement('div'); div.className='msg '+(mine?'me':'them');
+    div.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:4px">'+escapeHtml(who.name||who.email||'You')+' • '+new Date(m.time).toLocaleString()+' • '+rel(m.time)+'</div>'+
+                  '<div>'+escapeHtml(m.text)+'</div>';
+    box.appendChild(div);
+  });
+  box.scrollTop=box.scrollHeight;
 }
 
-/************************
- * INITIAL AUTH CHECK   *
- ************************/
-(async function init(){
-  // Show gate if no session
-  SESSION = load(LS.SESSION,null);
-  if(!SESSION?.userId){ showGate(true); return; }
-  try{
-    ME_USER = await getUserById(SESSION.userId);
-    // Mirror to PROFILE/USERS for header consistency
-    const prof = load(LS.PROFILE,{}); prof[ME_LABEL] = {
-      displayName: ME_USER.name || ME_LABEL,
-      avatar: ME_USER.avatar || ME_USER.avatarURL || ME_USER.photo || prof[ME_LABEL]?.avatar
-    }; save(LS.PROFILE, prof); applyHeaderAvatar();
-    const all = load(LS.USERS,[]); const idx = all.findIndex(u=>String(u.id)===String(ME_USER.id)); if(idx>=0) all[idx]= {...all[idx], ...ME_USER}; else all.unshift(ME_USER); save(LS.USERS, all);
-    showGate(false);
-    bootApp();
-  }catch(e){ console.warn('Session invalid, re-auth required', e); showGate(true); }
+/* ===== Actions ===== */
+async function openConversation(peerId){
+  CURRENT_PEER = USERS_INDEX.get(peerId);
+  el('chatTitle').textContent = CURRENT_PEER ? (CURRENT_PEER.name||CURRENT_PEER.email) : 'Conversation';
+  document.querySelectorAll('.thread').forEach(n=>n.classList.remove('active'));
+  renderMessages(await getMessages(ME.id, peerId));
+}
+
+async function refreshUsersIndex(){ const list=await listUsers(); USERS_INDEX=new Map(list.map(u=>[u.id,u])); }
+async function loadThreads(){ await refreshUsersIndex(); const ts=await getThreads(ME.id); renderThreads(ts); }
+
+async function openByEmail(){
+  const email=(el('peerEmail').value||'').trim();
+  if(!email){ setStatus('Enter a peer email.'); return; }
+  setStatus('Opening…');
+  const peer=await ensureUser(email, email.split('@')[0]);
+  await refreshUsersIndex();
+  await openConversation(peer.id);
+  await loadThreads();
+  setStatus('');
+}
+
+async function handleSend(){
+  const text=(el('msgInput').value||'').trim();
+  if(!text){ setStatus('Type a message.'); return; }
+  if(!CURRENT_PEER){ setStatus('Open a conversation first.'); return; }
+  setStatus('Sending…');
+  await sendMessage(ME.id, CURRENT_PEER.id, text);
+  el('msgInput').value='';
+  renderMessages(await getMessages(ME.id, CURRENT_PEER.id));
+  setStatus('');
+}
+
+/* ===== Boot ===== */
+(async function start(){
+  el('btnOpen').onclick = openByEmail;
+  el('btnSend').onclick = handleSend;
+  el('btnRefreshChat').onclick = async()=>{ if(CURRENT_PEER){ renderMessages(await getMessages(ME.id, CURRENT_PEER.id)); } };
+  el('btnRefreshThreads').onclick = loadThreads;
+
+  // create or recover ME on the backend based on your local session/profile
+  const meEmail = (load(LS.SESSION,null)?.user) || 'me@local.test';
+  const meName  = (load(LS.PROFILE,{}).Me?.displayName) || 'Me';
+  let meId = load(LS.MEID,null);
+  if(!meId){ const meUser = await ensureUser(meEmail, meName); meId = meUser.id; save(LS.MEID, meId); }
+  const all = await listUsers(); ME = all.find(u=>u.id===meId) || { id: meId, email: meEmail, name: meName };
+
+  await refreshUsersIndex();
+  await loadThreads();
 })();
-
-/********
- * UTILS *
- ********/
-function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;');}
-
-document.getElementById('search').addEventListener('input',()=>renderList({}));
 </script>
 </body>
 </html>
