@@ -5,72 +5,213 @@
 <title>Chatternet — Messages</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root{--brand:#3498db;--brand2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085}
+  :root{--brand:#3498db;--brand2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif}
   .top{background:var(--brand);color:#fff;padding:14px 16px;font-weight:800;display:flex;gap:10px;align-items:center}
   .top a{color:#fff;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 10px;border-radius:8px}
-  .top .me{margin-left:auto;opacity:.9}
-  .page{max-width:1200px;margin:18px auto;padding:0 12px 28px}
-  .grid{display:grid;grid-template-columns:340px 1fr;gap:12px}
+  .top .who{margin-left:auto;opacity:.9}
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px}
+  .grid{display:grid;grid-template-columns:320px 1fr;gap:12px}
   .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
-  .row{display:flex;gap:8px;align-items:center}
-  input,button{padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
-  button{background:#fff;cursor:pointer}
-  .primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  .title{font-weight:800}
   .muted{color:var(--muted)}
-  /* thread list */
-  #threads{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-  .thread{border:1px solid #e6eaf2;border-radius:10px;padding:10px;background:#fafafa;cursor:pointer}
-  .thread:hover{background:#f3f7ff}
+  input,button,textarea{padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  button{cursor:pointer}
+  button.primary{background:var(--brand);border:1px solid var(--brand);color:#fff}
+  .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .thread{padding:10px;border:1px solid #ececec;border-radius:10px;background:#fafafa;cursor:pointer}
   .thread.active{outline:2px solid #bfd7ff}
-  .line1{font-weight:700}
-  .line2{font-size:12px;color:#667085;margin-top:2px}
-  .line3{font-size:13px;margin-top:6px;color:#0f172a}
-  /* chat area */
-  #messages{min-height:360px;border:1px dashed #ddd;border-radius:12px;padding:12px;margin:10px 0;overflow:auto;background:#fafafa}
-  .msg{padding:10px;border-radius:10px;margin:6px 0;max-width:80%}
-  .msg.me{background:#e7f0ff;margin-left:auto}
-  .msg.them{background:#f5f5f5;margin-right:auto}
-  .meta{font-size:12px;color:#667085;margin-bottom:4px}
+  .head{display:flex;align-items:center;gap:10px}
+  .grow{flex:1}
+  .msg{padding:10px;border-radius:10px;margin:8px 0;max-width:80%}
+  .me{background:#e7f0ff;margin-left:auto}
+  .them{background:#f5f5f5;margin-right:auto}
 </style>
 </head>
 <body>
   <div class="top">
-    <span>Chatternet — Messages</span>
     <a href="index.html">Home</a>
     <a href="/api/health" target="_blank">API Health</a>
-    <span id="whoTop" class="me"></span>
+    <div id="who" class="who"></div>
   </div>
 
   <div class="page">
     <div class="grid">
+
       <!-- LEFT: threads -->
       <section class="card">
-        <div class="row">
-          <div class="title">Conversations</div>
-          <button id="refreshThreads" class="primary" style="margin-left:auto">Refresh</button>
+        <div class="head">
+          <div style="font-weight:800">Conversations</div>
+          <button id="btnThreads" class="primary">Refresh</button>
         </div>
 
         <div class="muted" style="margin:8px 0">Start or open a conversation</div>
-        <div class="row" style="gap:8px">
-          <input id="peerEmail" placeholder="Peer email (e.g. alice@demo.test)" style="flex:1" />
-          <button id="openThread" class="primary">Open</button>
+        <div class="head" style="gap:8px">
+          <input id="peerEmail" placeholder="Peer email (e.g. alice@demo.test)" />
+          <button id="btnOpen" class="primary">Open</button>
         </div>
 
-        <div id="threads" aria-label="thread-list"></div>
+        <div id="threads" class="list"></div>
         <div id="threadsEmpty" class="muted" style="display:none;text-align:center;padding:8px">No conversations yet.</div>
       </section>
 
       <!-- RIGHT: chat -->
       <section class="card">
-        <div class="row">
-          <div id="chatTitle" class="title">Select a chat</div>
-          <button id="refreshChat" style="margin-left:auto">Refresh</button>
+        <div class="head">
+          <div id="chatTitle" style="font-weight:800">No conversation selected</div>
+          <div class="grow"></div>
+          <button id="btnChat" class="primary">Refresh</button>
         </div>
 
-        <div id="messages"></div>
+        <div id="messages" style="min-height:340px;border:1px dashed #ddd;border-radius:12px;padding:10px;margin:10px 0;overflow:auto;background:#fafafa"></div>
 
-        <div class="row" style="gap:8px">
-          <input id="msgInput" placeholder="Write a message" style="fl
+        <div class="head" style="gap:8px">
+          <input id="msg" placeholder="Write a message" />
+          <button id="btnSend" class="primary">Send</button>
+        </div>
+
+        <div id="status" class="muted" style="margin-top:6px"></div>
+      </section>
+
+    </div>
+  </div>
+
+<script>
+/* ===== helpers ===== */
+const LS={SESSION:'ct_session_v1',PROFILE:'ct_profile_data_v1',MEID:'ct_backend_me_id'};
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const rel=s=>{const d=(Date.now()-new Date(s).getTime())/1e3;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
+function meEmail(){ const s=load(LS.SESSION,null); return s&&s.user ? s.user : 'me@local.test'; }
+function meName(){ const p=load(LS.PROFILE,{})['Me']; return (p&&p.displayName)||'Me'; }
+document.getElementById('who').textContent = `${meName()} <${meEmail()}>`;
+
+/* ===== backend user helpers ===== */
+async function getJSON(u){ const r=await fetch(u); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+async function sendJSON(u,m,b){ const r=await fetch(u,{method:m,headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+
+async function listUsers(){ return getJSON('/api/users'); }
+async function ensureUser(email,name){
+  const users=await listUsers();
+  const hit=(users||[]).find(u=>u.email===email);
+  if(hit) return hit;
+  const j=await sendJSON('/api/signup','POST',{email,password:'local',name:name||email.split('@')[0]});
+  return j.user||j;
+}
+async function meBackend(){
+  let id=load(LS.MEID,null), user=null;
+  if(id){ const users=await listUsers(); user=(users||[]).find(u=>u.id===id); }
+  if(!user){ user=await ensureUser(meEmail(), meName()); save(LS.MEID,user.id); }
+  return user;
+}
+
+/* ===== messages API ===== */
+async function getThreads(uid){ return getJSON('/api/threads/'+encodeURIComponent(uid)); }
+async function getMessages(a,b){ return getJSON('/api/messages?'+new URLSearchParams({userId:a,peerId:b}).toString()); }
+async function postMessage(a,b,t){ return sendJSON('/api/messages','POST',{fromId:a,toId:b,text:t}); }
+
+/* ===== UI state ===== */
+let ME=null, USERS=new Map(), CURRENT=null;
+
+/* ===== rendering ===== */
+function renderThreads(items){
+  const box=document.getElementById('threads');
+  const empty=document.getElementById('threadsEmpty');
+  box.innerHTML='';
+  if(!items.length){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  items.sort((a,b)=>new Date(b.last.time)-new Date(a.last.time));
+  for(const t of items){
+    const peer=USERS.get(t.peerId)||{name:'Unknown',email:'(missing)'};
+    const div=document.createElement('div');
+    div.className='thread'+(CURRENT&&CURRENT.id===t.peerId?' active':'');
+    div.dataset.peerId=t.peerId;
+    div.innerHTML=`<div style="font-weight:700">${escape(peer.name||peer.email)}</div>
+                   <div class="muted">${escape(peer.email||'')} • ${new Date(t.last.time).toLocaleString()} • ${rel(t.last.time)}</div>
+                   <div style="margin-top:4px">${escape(t.last.text||'')}</div>`;
+    box.appendChild(div);
+  }
+}
+function renderMessages(list){
+  const box=document.getElementById('messages');
+  box.innerHTML='';
+  if(!list.length){ box.innerHTML='<div class="muted" style="text-align:center;padding:12px">No messages. Say hi!</div>'; return; }
+  for(const m of list){
+    const mine = String(m.fromId)===String(ME.id);
+    const who = USERS.get(m.fromId)||{};
+    const d=document.createElement('div');
+    d.className='msg '+(mine?'me':'them');
+    d.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:4px">${escape(who.name||who.email||'You')} • ${new Date(m.time).toLocaleString()} • ${rel(m.time)}</div>
+                 <div>${escape(m.text)}</div>`;
+    box.appendChild(d);
+  }
+  box.scrollTop=box.scrollHeight;
+}
+
+/* ===== actions ===== */
+async function openConversationById(peerId){
+  CURRENT = USERS.get(peerId);
+  document.getElementById('chatTitle').textContent = CURRENT ? (CURRENT.name||CURRENT.email) : 'Conversation';
+  document.querySelectorAll('.thread').forEach(el=>el.classList.toggle('active', el.dataset.peerId===String(peerId)));
+  renderMessages(await getMessages(ME.id, peerId));
+}
+async function openByEmail(){
+  const email=(document.getElementById('peerEmail').value||'').trim();
+  if(!email) return setStatus('Enter a peer email.');
+  setStatus('Opening…');
+  const peer=await ensureUser(email,email.split('@')[0]);
+  await refreshUsers();
+  await openConversationById(peer.id);
+  await refreshThreads();
+  setStatus('');
+}
+async function refreshUsers(){
+  const list=await listUsers();
+  USERS = new Map(list.map(u=>[String(u.id),u]));
+}
+async function refreshThreads(){
+  const list=await getThreads(ME.id);
+  renderThreads(list||[]);
+}
+async function refreshChat(){
+  if(CURRENT) renderMessages(await getMessages(ME.id, CURRENT.id));
+}
+async function handleSend(){
+  const input=document.getElementById('msg');
+  const text=(input.value||'').trim();
+  if(!text) return setStatus('Type a message.');
+  if(!CURRENT) return setStatus('Open a conversation first.');
+  setStatus('Sending…');
+  await postMessage(ME.id, CURRENT.id, text);
+  input.value='';
+  await refreshChat();
+  setStatus('');
+}
+function setStatus(t){ document.getElementById('status').textContent=t||''; }
+
+/* ===== event delegation for left list ===== */
+document.getElementById('threads').addEventListener('click', e=>{
+  const item = e.target.closest('.thread');
+  if(!item) return;
+  const pid=item.dataset.peerId;
+  if(pid) openConversationById(pid);
+});
+
+/* ===== boot ===== */
+(async function start(){
+  document.getElementById('btnSend').onclick=handleSend;
+  document.getElementById('btnChat').onclick=refreshChat;
+  document.getElementById('btnThreads').onclick=refreshThreads;
+  document.getElementById('btnOpen').onclick=openByEmail;
+  document.getElementById('peerEmail').addEventListener('keydown',e=>{ if(e.key==='Enter') openByEmail(); });
+
+  ME = await meBackend();
+  await refreshUsers();
+  await refreshThreads();
+})();
+
+/* ===== utils ===== */
+function escape(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;');}
+</script>
+</body>
+</html>
