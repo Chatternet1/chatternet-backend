@@ -21,30 +21,14 @@ app.get('/', (_req, res) => res.redirect('/index.html'));
 const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
 
 function defaultData() {
-  return {
-    users: [],
-    posts: [],
-    messages: [],
-    polls: [],
-    blogs: [],
-    media: [],
-    groups: [],
-    events: []
-  };
+  return { users: [], posts: [], messages: [], polls: [], blogs: [], media: [], groups: [], events: [] };
 }
-// User schema (flexible):
-// { id, email, password, name, bio, avatar, cover,
-//   friends:[], friendRequests:[],
-//   privacy: { visibility, pic, fr, dm, dmAudience, online, tags, search, activity, location },
-//   settings: { darkMode, compact, highContrast, reduceMotion, fontSize, theme, language, notifications:{...} },
-//   createdAt }
-
 function load() {
   try {
     if (fs.existsSync(DATA_FILE)) {
       return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
     }
-  } catch (e) {}
+  } catch {}
   return defaultData();
 }
 let data = load();
@@ -83,7 +67,7 @@ app.post('/api/login', (req, res) => {
   res.json({ user });
 });
 
-app.get('/api/users', (_req, res) => res.json(data.users));
+app.get('/api/users', (_req, res) => res.json(data.users || []));
 app.get('/api/users/:id', (req, res) => {
   const u = byId(req.params.id);
   if (!u) return res.status(404).json({ error: 'User not found' });
@@ -113,7 +97,7 @@ app.put('/api/users/:id', (req, res) => {
   res.json(data.users[i]);
 });
 
-// ---- POSTS ----
+// ---- POSTS (minimal) ----
 app.get('/api/posts', (_req, res) => res.json(data.posts || []));
 app.post('/api/posts', (req, res) => {
   const b = req.body || {};
