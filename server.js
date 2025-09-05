@@ -131,8 +131,7 @@ function ensureEchoBot() {
       bio: 'I repeat what you say. Try /time',
       avatar: '',
       cover: '',
-      friends: [],
-      friendRequests: [],
+      friends: [], friendRequests: [],
       privacy: { visibility: 'public', dm: true, dmAudience: 'everyone' },
       settings: { notifications: {} },
       createdAt: nowISO()
@@ -153,6 +152,42 @@ function botReplyText(text) {
   if (t.startsWith('/time')) return 'Server time: ' + nowISO();
   return `Echo: ${text}`;
 }
+
+// --- FRIENDS ---
+app.get('/api/friends/:userId', (req, res) => {
+  const me = byId(req.params.userId);
+  if (!me) return res.status(404).json({ error: 'User not found' });
+  const friends = (me.friends || []).map(id => byId(id)).filter(Boolean);
+  const requests = (me.friendRequests || []).map(id => byId(id)).filter(Boolean);
+  res.json({ friends, requests });
+});
+
+app.post('/api/friends/request', (req, res) => {
+  const { fromId, toId } = req.body || {};
+  const from = byId(fromId), to = byId(toId);
+  if (!from || !to) return res.status(400).json({ error: 'fromId/toId invalid' });
+  if (String(fromId) === String(toId)) return res.status(400).json({ error: 'cannot friend yourself' });
+  to.friendRequests ||= [];
+  if (!to.friendRequests.includes(from.id) && !(to.friends||[]).includes(from.id)) {
+    to.friendRequests.push(from.id);
+  }
+  save();
+  res.json({ ok: true, to });
+});
+
+app.post('/api/friends/respond', (req, res) => {
+  const { fromId, toId, action } = req.body || {}; // action: 'accept' | 'decline'
+  const from = byId(fromId), to = byId(toId);
+  if (!from || !to) return res.status(400).json({ error: 'fromId/toId invalid' });
+  to.friendRequests = (to.friendRequests || []).filter(id => String(id) !== String(from.id));
+  if (action === 'accept') {
+    to.friends ||= []; from.friends ||= [];
+    if (!to.friends.includes(from.id)) to.friends.push(from.id);
+    if (!from.friends.includes(to.id)) from.friends.push(to.id);
+  }
+  save();
+  res.json({ ok: true, to, from });
+});
 
 // --- MESSAGES ---
 app.get('/api/messages', (req, res) => {
@@ -196,6 +231,25 @@ app.get('/api/threads/:userId', (req, res) => {
     }
   });
   const out = Array.from(peers.entries()).map(([peerId, last]) => ({ peerId, last })); res.json(out);
+});
+
+// --- POSTS (for /feed.html) ---
+app.get('/api/posts', (_req, res) => {
+  const list = (data.posts || []).slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  res.json(list);
+});
+app.post('/api/posts', (req, res) => {
+  const { title = '', content = '', authorName = '', media = null } = req.body || {};
+  if (!content && !title && !media) return res.status(400).json({ error: 'content or title required' });
+  const post = { id: Date.now().toString(), title, content, authorName, media, createdAt: nowISO(), likes: [] };
+  (data.posts ||= []).unshift(post); save();
+  res.json(post);
+});
+app.delete('/api/posts/:id', (req, res) => {
+  const before = (data.posts || []).length;
+  data.posts = (data.posts || []).filter(p => String(p.id) !== String(req.params.id));
+  if (data.posts.length === before) return res.status(404).json({ error: 'Post not found' });
+  save(); res.json({ ok: true });
 });
 
 // --- EVENTS ---
