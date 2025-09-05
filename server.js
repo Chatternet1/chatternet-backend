@@ -66,14 +66,18 @@ app.post('/api/signup', (req, res) => {
     email, password, name,
     bio: '', avatar: '', cover: '',
     friends: [], friendRequests: [],
-    privacy: { visibility: 'private', pic: true, fr: true, dm: true, dmAudience: 'everyone', online: false, tags: true, search: true, activity: false, location: false },
+    privacy: {
+      visibility: 'private', pic: true, fr: true, dm: true, dmAudience: 'everyone',
+      online: false, tags: true, search: true, activity: false, location: false
+    },
     settings: {
-      darkMode: false, compact: false, highContrast: false, reduceMotion: false, fontSize: 'medium', theme: 'blue', language: 'en',
+      darkMode: false, compact: false, highContrast: false, reduceMotion: false,
+      fontSize: 'medium', theme: 'blue', language: 'en',
       notifications: { event: true, friend: true, post: true, sound: false, volume: 0.5 }
     },
     createdAt: nowISO()
   };
-  data.users.push(user); save();
+  (data.users ||= []).push(user); save();
   res.json({ user });
 });
 
@@ -194,4 +198,69 @@ app.get('/api/threads/:userId', (req, res) => {
   const out = Array.from(peers.entries()).map(([peerId, last]) => ({ peerId, last })); res.json(out);
 });
 
+// --- EVENTS ---
+function ensureEvent(ev = {}) {
+  return {
+    id: ev.id || Date.now().toString(),
+    title: ev.title || 'Event',
+    date: ev.date || '',
+    time: ev.time || '',
+    location: ev.location || '',
+    privacy: ev.privacy || 'Public',
+    desc: ev.desc || '',
+    imgSrc: ev.imgSrc || '',
+    creator: ev.creator || 'Me',
+    createdAt: ev.createdAt || nowISO(),
+    invites: Array.isArray(ev.invites) ? ev.invites : [],
+    rsvp: ev.rsvp || { Going: [], Maybe: [], NotGoing: [] },
+    discussion: Array.isArray(ev.discussion) ? ev.discussion : []
+  };
+}
+
+app.get('/api/events', (_req, res) => {
+  res.json((data.events || []).map(ensureEvent));
+});
+
+app.get('/api/events/:id', (req, res) => {
+  const ev = (data.events || []).find(e => String(e.id) === String(req.params.id));
+  if (!ev) return res.status(404).json({ error: 'Event not found' });
+  res.json(ensureEvent(ev));
+});
+
+app.post('/api/events', (req, res) => {
+  const { title } = req.body || {};
+  if (!title) return res.status(400).json({ error: 'title required' });
+  const ev = ensureEvent({ ...req.body, id: Date.now().toString(), createdAt: nowISO() });
+  (data.events ||= []).unshift(ev);
+  save();
+  res.json(ev);
+});
+
+app.put('/api/events/:id', (req, res) => {
+  const id = String(req.params.id);
+  const list = (data.events ||= []);
+  const i = list.findIndex(e => String(e.id) === id);
+  if (i < 0) return res.status(404).json({ error: 'Event not found' });
+
+  const incoming = req.body || {};
+  list[i] = ensureEvent({
+    ...list[i],
+    ...incoming,
+    rsvp: { ...(list[i].rsvp || { Going: [], Maybe: [], NotGoing: [] }), ...(incoming.rsvp || {}) },
+    invites: Array.isArray(incoming.invites) ? incoming.invites : (list[i].invites || []),
+    discussion: Array.isArray(incoming.discussion) ? incoming.discussion : (list[i].discussion || [])
+  });
+  save();
+  res.json(list[i]);
+});
+
+app.delete('/api/events/:id', (req, res) => {
+  const before = (data.events || []).length;
+  data.events = (data.events || []).filter(e => String(e.id) !== String(req.params.id));
+  if (data.events.length === before) return res.status(404).json({ error: 'Event not found' });
+  save();
+  res.json({ ok: true });
+});
+
+// --- start
 app.listen(PORT, () => console.log(`API listening on ${PORT}`));
