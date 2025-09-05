@@ -2,225 +2,109 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Chatternet — Messages</title>
 <style>
-  :root{--brand:#3498db;--brand-2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;color:var(--ink);background:var(--bg)}
-  a{color:inherit;text-decoration:none}
-
-  /* Top */
-  .top{position:sticky;top:0;z-index:10;display:flex;gap:10px;align-items:center;padding:10px 14px;background:var(--brand);color:#fff}
-  .top a{background:#ffffff;color:#0f172a;padding:8px 10px;border-radius:8px}
-  .top .me{margin-left:auto;font-weight:700}
-
-  /* Layout */
-  .wrap{max-width:1100px;margin:14px auto;padding:0 12px 18px}
-  .shell{display:grid;grid-template-columns:320px 1fr;gap:12px}
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08)}
-  .side{min-height:70vh}
-  .main{min-height:70vh;display:flex;flex-direction:column}
-
-  /* Threads */
-  .side .head{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
-  .search{flex:1;padding:9px 10px;border:1px solid #d7d7d7;border-radius:10px}
-  .new-row{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line)}
-  select,button,input,textarea{font-family:inherit;font-size:14px}
-  select{padding:9px 10px;border:1px solid #d7d7d7;border-radius:10px;flex:1}
-  .btn{padding:9px 12px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
-  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  .list{padding:6px 6px 10px 6px;overflow:auto;max-height:calc(70vh - 112px)}
-  .thread{display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;cursor:pointer}
-  .thread:hover{background:#f6f7fb}
-  .thread.active{background:#e9f2ff;border:1px solid #cfe1ff}
-  .avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #e6e8f2}
-  .name{font-weight:700}
-  .muted{color:#667085;font-size:12px}
-
-  /* Chat */
-  .chat-head{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
-  .chat-body{flex:1;overflow:auto;padding:12px;background:#f7f9fc}
-  .bubble{max-width:68%;margin:8px 0;padding:10px 12px;border-radius:14px;line-height:1.35;background:#fff;border:1px solid #e9eef6}
-  .me-msg{margin-left:auto;background:#dff0ff;border-color:#c3e2ff}
-  .chat-foot{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#fff;border-bottom-left-radius:14px;border-bottom-right-radius:14px}
-  .input{flex:1;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
-  .empty{padding:18px;color:#667085;text-align:center}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#f6f7fb;color:#0f172a}
+  .wrap{display:grid;grid-template-columns:280px 1fr;gap:12px;padding:16px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+  .row{display:flex;align-items:center;gap:8px}
+  .btn{padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer}
+  .btn.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
+  .thread{padding:8px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;margin:6px 0}
+  .thread:hover{background:#f8fafc}
+  .msg{padding:6px 10px;border-radius:10px;margin:6px 0;max-width:70%}
+  .mine{background:#e0f2fe;margin-left:auto}
+  .theirs{background:#f1f5f9}
 </style>
 </head>
 <body>
-  <div class="top">
-    <div style="font-weight:800">Messages</div>
-    <a href="/index.html">Home</a>
-    <a href="/friends.html">Friends</a>
-    <a href="/feed.html">Feed</a>
-    <a href="/settings.html">Settings</a>
-    <div class="me" id="meName">—</div>
-  </div>
-
-  <div class="wrap">
-    <div class="shell">
-      <!-- left: threads -->
-      <div class="card side">
-        <div class="head">
-          <input id="tSearch" class="search" placeholder="Search people…">
-        </div>
-        <div class="new-row">
-          <select id="startWith"></select>
-          <button class="btn" id="startBtn">Start chat</button>
-        </div>
-        <div id="tList" class="list"></div>
-      </div>
-
-      <!-- right: chat -->
-      <div class="card main" id="chatShell">
-        <div class="chat-head" id="chatHead">Select a person to start</div>
-        <div class="chat-body" id="chatBody"><div class="empty">No conversation selected.</div></div>
-        <div class="chat-foot">
-          <input id="msgInput" class="input" placeholder="Type a message…">
-          <button class="btn primary" id="sendBtn">Send</button>
-          <button class="btn" id="refreshBtn">Refresh</button>
-        </div>
+<div class="wrap">
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <strong>Threads</strong>
+      <div class="row">
+        <button id="refresh" class="btn">Refresh</button>
+        <button id="chatbot" class="btn">Chat with Echo Bot</button>
+        <a class="btn" href="/index.html">Home</a>
       </div>
     </div>
+    <div id="threads"></div>
   </div>
 
-  <script src="/api.js"></script>
-  <script src="/auth.js"></script>
-  <script>
-  (async function(){
-    // ----- bootstrap -----
-    const me = await auth.ensure();
-    document.getElementById('meName').textContent = me.name || me.email;
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <strong id="peerName">Select a thread</strong>
+      <div class="row">
+        <input id="text" placeholder="Type a message…" style="width:360px;padding:8px;border:1px solid #cbd5e1;border-radius:8px">
+        <button id="send" class="btn primary">Send</button>
+      </div>
+    </div>
+    <div id="msgs" style="margin-top:8px;max-height:60vh;overflow:auto"></div>
+  </div>
+</div>
 
-    const allUsers = await Api.get('/users');            // includes bot
-    const byId = id => allUsers.find(u => String(u.id)===String(id));
-    const esc = s => String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+<script src="/api.js"></script>
+<script src="/auth.js"></script>
+<script>
+let ME=null, USERS=[], PEER=null;
 
-    // keep selection
-    const SEL_KEY='ct_chat_peer';
-    let selectedPeerId = localStorage.getItem(SEL_KEY) || '';
+function drawThreads(list){
+  const box=document.getElementById('threads'); box.innerHTML='';
+  if(!list.length){ box.innerHTML='<div class="muted">No threads yet.</div>'; return; }
+  list.forEach(t=>{
+    const peerId = (t.last.fromId===ME.id) ? t.last.toId : t.last.fromId;
+    const peer = USERS.find(u=>String(u.id)===String(peerId));
+    const el=document.createElement('div'); el.className='thread';
+    el.textContent=(peer?.name||peer?.email||('User '+peerId));
+    el.onclick=()=>openPeer(peer);
+    box.appendChild(el);
+  });
+}
 
-    // friends + bot
-    const meNow = byId(me.id);
-    const friendIds = new Set((meNow.friends||[]).map(String));
-    const botUser = allUsers.find(u => u.bot);
-    const candidateIds = new Set([...friendIds]);
-    if (botUser) candidateIds.add(String(botUser.id));
+function drawMsgs(items){
+  const box=document.getElementById('msgs'); box.innerHTML='';
+  items.forEach(m=>{
+    const wrap=document.createElement('div');
+    wrap.className='msg ' + (String(m.fromId)===String(ME.id)?'mine':'theirs');
+    wrap.textContent=m.text;
+    box.appendChild(wrap);
+  });
+  box.scrollTop = box.scrollHeight;
+}
 
-    // populate "start chat" select
-    const startSel = document.getElementById('startWith');
-    function fillStartOptions(){
-      startSel.innerHTML='';
-      Array.from(candidateIds).map(id=>byId(id)).filter(Boolean).forEach(u=>{
-        const o=document.createElement('option');
-        o.value=u.id; o.textContent=(u.name||u.email||'User');
-        startSel.appendChild(o);
-      });
-      if(!selectedPeerId && startSel.options.length) selectedPeerId=startSel.value;
-    }
-    fillStartOptions();
+async function openPeer(peer){
+  PEER=peer; document.getElementById('peerName').textContent = peer.name||peer.email||('User '+peer.id);
+  const msgs = await Api.messages.list(ME.id, peer.id);
+  drawMsgs(msgs);
+}
 
-    // ----- threads -----
-    async function loadThreads(){
-      const raw = await Api.get(`/threads/${encodeURIComponent(me.id)}`) || [];
-      // include friends without messages yet (so you can start chat by clicking)
-      const withFriends = new Map();
-      raw.forEach(t => withFriends.set(String(t.peerId), t));
-      candidateIds.forEach(id=>{
-        if(!withFriends.has(String(id))) withFriends.set(String(id), {peerId:String(id), last:null});
-      });
-      let list = Array.from(withFriends.values());
-      // sort by last message time (newest first), nulls at bottom by name
-      list.sort((a,b)=>{
-        if(a.last && b.last) return new Date(b.last.time)-new Date(a.last.time);
-        if(a.last) return -1; if(b.last) return 1;
-        const an=(byId(a.peerId)?.name||'').toLowerCase();
-        const bn=(byId(b.peerId)?.name||'').toLowerCase();
-        return an.localeCompare(bn);
-      });
-      renderThreads(list);
-      // auto-open first if none selected
-      if(!selectedPeerId && list.length){ selectedPeerId = String(list[0].peerId); localStorage.setItem(SEL_KEY,selectedPeerId); }
-      if(selectedPeerId) openChat(selectedPeerId);
-    }
+async function refreshThreads(){
+  USERS = await Api.users.list();
+  const t = await Api.messages.threads(ME.id);
+  drawThreads(t);
+}
 
-    const tSearch = document.getElementById('tSearch');
-    tSearch.addEventListener('input', ()=>loadThreads());
+async function sendMsg(){
+  const input = document.getElementById('text');
+  const txt = input.value.trim(); if(!txt || !PEER) return;
+  await Api.messages.send(ME.id, PEER.id, txt);
+  input.value='';
+  await openPeer(PEER);
+  await refreshThreads();
+}
 
-    function renderThreads(list){
-      const box=document.getElementById('tList'); box.innerHTML='';
-      const q=(tSearch.value||'').toLowerCase();
-      list.filter(t=>{
-        const u=byId(t.peerId); const hay=(u?.name||u?.email||'').toLowerCase();
-        return !q || hay.includes(q);
-      }).forEach(t=>{
-        const u=byId(t.peerId); if(!u) return;
-        const row=document.createElement('div'); row.className='thread';
-        if(String(t.peerId)===String(selectedPeerId)) row.classList.add('active');
-        const img=document.createElement('img'); img.className='avatar';
-        img.src=u.avatar || `https://i.pravatar.cc/100?u=${encodeURIComponent(u.email||u.name||u.id)}`;
-        const info=document.createElement('div'); info.style.flex='1';
-        info.innerHTML=`<div class="name">${esc(u.name||u.email||'User')}${u.bot?' <span class="muted">(Bot)</span>':''}</div>
-                        <div class="muted">${t.last ? esc(t.last.text).slice(0,60) : 'No messages yet'}</div>`;
-        row.appendChild(img); row.appendChild(info);
-        row.onclick=()=>{ selectedPeerId=String(t.peerId); localStorage.setItem(SEL_KEY,selectedPeerId); openChat(selectedPeerId); highlight(); };
-        box.appendChild(row);
-      });
-      function highlight(){ [...box.children].forEach(ch=>ch.classList.remove('active')); 
-        [...box.children].forEach(ch=>{ if(ch.onclick && String(selectedPeerId)===(ch.onclick.peerId||'') ){} }); }
-    }
-
-    // ----- chat view -----
-    async function openChat(peerId){
-      const peer = byId(peerId); if(!peer) return;
-      const head=document.getElementById('chatHead');
-      head.innerHTML = `<img class="avatar" style="width:36px;height:36px" src="${peer.avatar||`https://i.pravatar.cc/100?u=${encodeURIComponent(peer.email||peer.name||peer.id)}`}" />
-                        <div style="font-weight:700">${esc(peer.name||peer.email||'User')}${peer.bot?' <span class="muted">(Bot)</span>':''}</div>`;
-      await renderMessages(peerId);
-    }
-
-    async function renderMessages(peerId){
-      const body=document.getElementById('chatBody');
-      body.innerHTML='';
-      const msgs = await Api.get(`/messages?userId=${encodeURIComponent(me.id)}&peerId=${encodeURIComponent(peerId)}`) || [];
-      if(!msgs.length){ body.innerHTML='<div class="empty">Say hi 👋</div>'; return; }
-      msgs.forEach(m=>{
-        const mine = String(m.fromId)===String(me.id);
-        const b=document.createElement('div'); b.className='bubble'+(mine?' me-msg':'');
-        b.innerHTML = esc(m.text);
-        body.appendChild(b);
-      });
-      // scroll to bottom
-      body.scrollTop = body.scrollHeight;
-    }
-
-    // send
-    document.getElementById('sendBtn').onclick = async ()=>{
-      const peerId = selectedPeerId;
-      if(!peerId) return alert('Select someone to chat with.');
-      const input = document.getElementById('msgInput');
-      const text = input.value.trim(); if(!text) return;
-      await Api.post('/messages', { fromId: me.id, toId: peerId, text });
-      input.value='';
-      await renderMessages(peerId);   // refresh (bot reply will appear too)
-      await loadThreads();           // update left preview + order
-    };
-
-    document.getElementById('refreshBtn').onclick = async ()=>{
-      if(selectedPeerId) await renderMessages(selectedPeerId);
-      await loadThreads();
-    };
-
-    // start chat from select
-    document.getElementById('startBtn').onclick = ()=>{
-      const id = startSel.value; if(!id) return;
-      selectedPeerId=String(id); localStorage.setItem(SEL_KEY,selectedPeerId); openChat(selectedPeerId);
-    };
-
-    // first load
-    await loadThreads();
-  })();
-  </script>
+(async()=>{
+  ME = await Auth.ensureAccount();
+  document.getElementById('refresh').onclick = refreshThreads;
+  document.getElementById('send').onclick = sendMsg;
+  document.getElementById('chatbot').onclick = async ()=>{
+    const bot = await Auth.getEchoBot();
+    if(!bot){ alert('Bot not found'); return; }
+    openPeer(bot);
+  };
+  await refreshThreads();
+})();
+</script>
 </body>
 </html>
