@@ -5,7 +5,7 @@
 <title>Chatternet — Messages</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root{--brand:#3498db;--brand2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2}
+  :root{--brand:#3498db;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif}
   .top{background:var(--brand);color:#fff;padding:14px 16px;font-weight:800;display:flex;gap:8px;align-items:center}
@@ -14,7 +14,7 @@
   .page{max-width:1100px;margin:18px auto;padding:0 12px 28px}
   .grid{display:grid;grid-template-columns:320px 1fr;gap:12px}
   .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
-  input,button,textarea{font-size:14px;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
+  input,button{font-size:14px;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
   button{cursor:pointer}
   .btn{background:#fff}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
@@ -30,10 +30,9 @@
   .them{background:#f5f5f5;margin-right:auto}
   .stamp{font-size:12px;color:#8a9bb0;margin-bottom:4px}
   .status{margin-top:8px;color:#8a9bb0}
-  .errorbar{position:fixed;left:0;right:0;bottom:0;background:#fee2e2;color:#991b1b;
-    border-top:1px solid #fecaca;padding:10px 12px;display:none;z-index:9999}
+  .errorbar{position:fixed;left:0;right:0;bottom:0;background:#fee2e2;color:#991b1b;border-top:1px solid #fecaca;padding:10px 12px;display:none;z-index:9999}
   .errorbar .row{display:flex;gap:10px;align-items:center}
-  .errorbar button{background:#fff}
+  .setup{position:sticky;top:0;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;padding:8px 10px;border-radius:10px;margin:10px 0;display:none}
 </style>
 </head>
 <body>
@@ -45,14 +44,21 @@
 
   <div class="page">
     <div class="grid">
-      <!-- LEFT: threads / open -->
+      <!-- LEFT -->
       <section class="card">
+        <div id="setup" class="setup">
+          <b>Set me up:</b>
+          <input id="meEmail" placeholder="your@email.com" style="margin-left:8px">
+          <input id="meName"  placeholder="Display name" style="margin-left:6px">
+          <button class="btn primary" data-act="doSetup">Save</button>
+        </div>
+
         <div class="head"><div style="font-weight:800">Conversations</div><div class="grow"></div>
           <button class="btn" data-act="refreshThreads">Refresh</button></div>
 
         <div class="muted" style="margin:10px 0">Start or open a conversation</div>
         <div class="head" style="gap:8px">
-          <input id="peerEmail" placeholder="Peer email (e.g. alice@demo.test)" />
+          <input id="peerEmail" placeholder="Peer email (e.g. bot@demo.test)" />
           <button class="btn primary" data-act="open">Open</button>
         </div>
 
@@ -60,7 +66,7 @@
         <div id="noThreads" class="muted" style="display:none;text-align:center;padding:8px">No conversations yet.</div>
       </section>
 
-      <!-- RIGHT: chat -->
+      <!-- RIGHT -->
       <section class="card">
         <div class="head">
           <div id="chatTitle" style="font-weight:800">No conversation selected</div>
@@ -80,7 +86,6 @@
     </div>
   </div>
 
-  <!-- tiny error bar so you never get “dead clicks” again -->
   <div id="errbar" class="errorbar">
     <div class="row">
       <div id="errmsg" class="grow"></div>
@@ -90,166 +95,142 @@
   </div>
 
 <script>
-/*** ======= little helpers (same keys we used on Home) ======= ***/
+/* ---- local storage helpers ---- */
 const LS={SESSION:'ct_session_v1',PROFILE:'ct_profile_data_v1',MEID:'ct_backend_me_id'};
 const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
 const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const nowISO=()=>new Date().toISOString();
-const rel=s=>{const d=(Date.now()-new Date(s).getTime())/1e3;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
-const fail=e=>{const b=document.getElementById('errbar');document.getElementById('errmsg').textContent=String(e?.message||e);b.style.display='block';};
-const clearFail=()=>{document.getElementById('errbar').style.display='none';};
-
 function currentEmail(){ const s=load(LS.SESSION,null); return s&&s.user ? s.user : null; }
 function currentName(){ const p=load(LS.PROFILE,{})['Me']; return (p&&p.displayName)||'Me'; }
-document.getElementById('who').textContent = `${currentName()} <${currentEmail()||'not set'}>`;
+const nowISO=()=>new Date().toISOString();
+function esc(s){s=String(s);return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function rel(s){const d=(Date.now()-new Date(s).getTime())/1e3;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';}
+const fail=e=>{document.getElementById('errmsg').textContent=String(e&&e.message||e);document.getElementById('errbar').style.display='block';};
+const clearFail=()=>{document.getElementById('errbar').style.display='none';};
+window.onerror=(m)=>fail(m);
 
-/*** ======= tiny API ======= ***/
+/* ---- tiny API ---- */
 const api=(p,opts={})=>fetch(p,{headers:{'Content-Type':'application/json'},...opts}).then(r=>{if(!r.ok)throw new Error('API '+r.status);return r.json();});
-const listUsers=()=>api('/api/users');
-const signup=(email,name)=>api('/api/signup',{method:'POST',body:JSON.stringify({email,password:'local',name})});
-const getThreads=(uid)=>api(`/api/threads/${encodeURIComponent(uid)}`);
+const listUsers = ()=>api('/api/users');
+const signup    = (email,name)=>api('/api/signup',{method:'POST',body:JSON.stringify({email,password:'local',name})});
+const getThreads= (uid)=>api(`/api/threads/${encodeURIComponent(uid)}`);
 const getMessages=(a,b)=>api(`/api/messages?userId=${encodeURIComponent(a)}&peerId=${encodeURIComponent(b)}`);
 const postMessage=(fromId,toId,text)=>api('/api/messages',{method:'POST',body:JSON.stringify({fromId,toId,text})});
 
-/*** ======= state ======= ***/
-let ME=null;             // {id,email,name}
-let USERS=new Map();     // id -> user
-let BY_EMAIL=new Map();  // email -> user
-let CURRENT=null;        // {id,email,name} peer
+/* ---- state ---- */
+let ME=null; // me on backend
+let USERS=new Map(), BY_EMAIL=new Map();
+let CURRENT=null;
+
+/* ---- UI helpers ---- */
 const $=s=>document.querySelector(s);
-
 function setStatus(t){ $('#status').textContent=t||''; }
+function showSetup(on){
+  const has=currentEmail();
+  const el=$('#setup');
+  el.style.display = on||!has ? 'block':'none';
+  if(on||!has){ $('#meEmail').value=currentEmail()||''; $('#meName').value=currentName()||'Me'; }
+}
 
-/*** ======= bootstrap user on backend ======= ***/
+/* ---- bootstrap me ---- */
 async function ensureMe(){
-  const email=currentEmail(); if(!email) throw new Error('Go to Home and Save your email first.');
+  const email=currentEmail();
+  if(!email) throw new Error('No email saved. Use the “Set me up” bar or go to Home.');
   const name=currentName()||'Me';
   const users=await listUsers();
   let u=(users||[]).find(x=>x.email===email);
   if(!u){ const j=await signup(email,name); u=j.user||j; }
-  ME=u; // build lookups
+  ME=u;
   USERS.clear(); BY_EMAIL.clear();
-  (users.concat([u])).forEach(x=>{USERS.set(x.id,x); BY_EMAIL.set(x.email,x);});
-  save(LS.MEID, u.id);
+  users.concat([u]).forEach(x=>{USERS.set(x.id,x); BY_EMAIL.set(x.email,x);});
+  save(LS.MEID,u.id);
 }
 
-/*** ======= UI renderers ======= ***/
+/* ---- rendering ---- */
 function renderThreads(items){
-  const box=$('#threads'), empty=$('#noThreads');
-  box.innerHTML='';
+  const box=$('#threads'), empty=$('#noThreads'); box.innerHTML='';
   if(!items.length){ empty.style.display='block'; return; }
   empty.style.display='none';
   items.sort((a,b)=>new Date(b.last.time)-new Date(a.last.time));
   items.forEach(t=>{
     const peer=USERS.get(t.peerId)||{name:'Unknown',email:'?'};
-    const div=document.createElement('div');
-    div.className='thread'+(CURRENT && CURRENT.id===t.peerId ? ' active' : '');
-    div.dataset.act='openPeer'; div.dataset.peerId=t.peerId;
-    div.innerHTML=`<div style="font-weight:700">${esc(peer.name||peer.email)}</div>
-                   <div class="muted">${esc(peer.email||'')}
-                   • ${new Date(t.last.time).toLocaleString()} • ${rel(t.last.time)}</div>
-                   <div style="margin-top:4px">${esc(t.last.text||'')}</div>`;
-    box.appendChild(div);
+    const d=document.createElement('div');
+    d.className='thread'+(CURRENT && CURRENT.id===t.peerId ? ' active':'');
+    d.dataset.act='openPeer'; d.dataset.peerId=t.peerId;
+    d.innerHTML=`<div style="font-weight:700">${esc(peer.name||peer.email)}</div>
+      <div class="muted">${esc(peer.email||'')} • ${new Date(t.last.time).toLocaleString()} • ${rel(t.last.time)}</div>
+      <div style="margin-top:4px">${esc(t.last.text||'')}</div>`;
+    box.appendChild(d);
   });
 }
-
 function renderMessages(list){
   const box=$('#messages'); box.innerHTML='';
   if(!list.length){ box.innerHTML='<div class="muted" style="text-align:center;padding:12px">No messages yet. Say hi!</div>'; return; }
   list.forEach(m=>{
-    const mine = m.fromId===ME.id;
-    const who  = USERS.get(m.fromId)||{};
-    const wrap = document.createElement('div');
-    wrap.className='msg '+(mine?'me':'them');
-    wrap.innerHTML = `<div class="stamp">${esc(who.name||who.email||'You')} • ${new Date(m.time).toLocaleString()} • ${rel(m.time)}</div>
-                      <div>${esc(m.text)}</div>`;
-    box.appendChild(wrap);
+    const mine=m.fromId===ME.id, who=USERS.get(m.fromId)||{};
+    const w=document.createElement('div'); w.className='msg '+(mine?'me':'them');
+    w.innerHTML=`<div class="stamp">${esc(who.name||who.email||'You')} • ${new Date(m.time).toLocaleString()} • ${rel(m.time)}</div>
+                 <div>${esc(m.text)}</div>`;
+    box.appendChild(w);
   });
   box.scrollTop=box.scrollHeight;
 }
 
-/*** ======= actions ======= ***/
-async function refreshUsers(){
-  const us=await listUsers(); USERS.clear(); BY_EMAIL.clear();
-  us.forEach(u=>{USERS.set(u.id,u); BY_EMAIL.set(u.email,u);});
-}
-
-async function openConversationByEmail(){
+/* ---- actions ---- */
+async function refreshUsers(){ const us=await listUsers(); USERS.clear(); BY_EMAIL.clear(); us.forEach(u=>{USERS.set(u.id,u); BY_EMAIL.set(u.email,u);}); }
+async function openByEmail(){
   clearFail(); setStatus('Opening…');
   const email=($('#peerEmail').value||'').trim(); if(!email){ setStatus('Enter a peer email.'); return; }
-  // create peer if missing
-  let peer = BY_EMAIL.get(email);
-  if(!peer){ const j=await signup(email,email.split('@')[0]); peer=j.user||j; USERS.set(peer.id,peer); BY_EMAIL.set(peer.email,peer); }
-  CURRENT=peer; $('#chatTitle').textContent = peer.name||peer.email;
-  const msgs=await getMessages(ME.id, peer.id);
-  renderMessages(msgs);
+  let peer=BY_EMAIL.get(email); if(!peer){ const j=await signup(email,email.split('@')[0]); peer=j.user||j; USERS.set(peer.id,peer); BY_EMAIL.set(peer.email,peer); }
+  CURRENT=peer; $('#chatTitle').textContent=peer.name||peer.email;
+  renderMessages(await getMessages(ME.id,peer.id));
   await loadThreads(true);
   setStatus('');
 }
-
-async function loadThreads(skipUsers){
-  clearFail();
-  if(!skipUsers) await refreshUsers().catch(()=>{});
-  const ts=await getThreads(ME.id).catch(()=>[]);
-  renderThreads(ts);
-}
-
-async function refreshChat(){
-  if(!CURRENT) return;
-  const msgs=await getMessages(ME.id, CURRENT.id);
-  renderMessages(msgs);
-}
-
+async function loadThreads(skipUsers){ if(!skipUsers) await refreshUsers().catch(()=>{}); const ts=await getThreads(ME.id).catch(()=>[]); renderThreads(ts); }
+async function refreshChat(){ if(!CURRENT) return; renderMessages(await getMessages(ME.id,CURRENT.id)); }
 async function send(){
-  if(!CURRENT) { setStatus('Open a conversation first.'); return; }
-  const input=$('#msgInput'); const text=(input.value||'').trim();
-  if(!text){ setStatus('Type a message.'); return; }
-  setStatus('Sending…');
-  await postMessage(ME.id, CURRENT.id, text);
-  input.value=''; await refreshChat(); setStatus('');
-  // tiny built-in Echo Bot for quick testing
+  if(!CURRENT){ setStatus('Open a conversation first.'); return; }
+  const input=$('#msgInput'); const text=(input.value||'').trim(); if(!text){ setStatus('Type a message.'); return; }
+  setStatus('Sending…'); await postMessage(ME.id,CURRENT.id,text); input.value=''; await refreshChat(); setStatus('');
+  // built-in Echo Bot for testing
   if((CURRENT.email||'').toLowerCase()==='bot@demo.test'){
-    const reply = text.startsWith('/time') ? `⏰ ${new Date().toLocaleString()}` :
+    let bot=BY_EMAIL.get('bot@demo.test'); if(!bot){ const j=await signup('bot@demo.test','Echo Bot'); bot=j.user||j; USERS.set(bot.id,bot); BY_EMAIL.set(bot.email,bot); }
+    const reply = text.startsWith('/time') ? (`⏰ ${new Date().toLocaleString()}`) :
                   text.startsWith('/upper ') ? text.slice(7).toUpperCase() :
                   `Echo: ${text}`;
-    // ensure bot exists then post as bot->me
-    let bot = BY_EMAIL.get('bot@demo.test'); 
-    if(!bot){ const j=await signup('bot@demo.test','Echo Bot'); bot=j.user||j; USERS.set(bot.id,bot); BY_EMAIL.set(bot.email,bot); }
-    await postMessage(bot.id, ME.id, reply);
-    await refreshChat();
+    await postMessage(bot.id,ME.id,reply); await refreshChat();
   }
 }
 
-/*** ======= event delegation (so clicks NEVER “die”) ======= ***/
-document.addEventListener('click', (ev)=>{
-  const el = ev.target.closest('[data-act]'); if(!el) return;
-  const act = el.dataset.act;
+/* ---- event delegation so clicks never die ---- */
+document.addEventListener('click',(e)=>{
+  const el=e.target.closest('[data-act]'); if(!el) return;
+  const a=el.dataset.act;
   try{
-    if(act==='open') openConversationByEmail();
-    else if(act==='refreshThreads') loadThreads();
-    else if(act==='refreshChat') refreshChat();
-    else if(act==='send') send();
-    else if(act==='openPeer'){ CURRENT = USERS.get(el.dataset.peerId); $('#chatTitle').textContent=CURRENT?.name||CURRENT?.email||'Conversation'; refreshChat(); }
-    else if(act==='resetLS'){ localStorage.clear(); location.reload(); }
-    else if(act==='hideErr'){ clearFail(); }
-  }catch(e){ fail(e); }
+    if(a==='open') openByEmail();
+    else if(a==='refreshThreads') loadThreads();
+    else if(a==='refreshChat') refreshChat();
+    else if(a==='send') send();
+    else if(a==='openPeer'){ CURRENT=USERS.get(el.dataset.peerId); $('#chatTitle').textContent=CURRENT?.name||CURRENT?.email||'Conversation'; refreshChat(); }
+    else if(a==='resetLS'){ localStorage.clear(); location.reload(); }
+    else if(a==='hideErr'){ clearFail(); }
+    else if(a==='doSetup'){ const email=$('#meEmail').value.trim(); const name=$('#meName').value.trim()||'Me'; if(!email) return fail('Enter your email'); save(LS.SESSION,{user:email}); const prof=load(LS.PROFILE,{}); prof['Me']=Object.assign({},prof['Me']||{},{displayName:name}); save(LS.PROFILE,prof); start(); }
+  }catch(err){ fail(err); }
 });
-$('#peerEmail').addEventListener('keydown', e=>{ if(e.key==='Enter') openConversationByEmail(); });
-$('#msgInput').addEventListener('keydown', e=>{ if(e.key==='Enter') send(); });
+$('#peerEmail').addEventListener('keydown',e=>{ if(e.key==='Enter') openByEmail(); });
+$('#msgInput').addEventListener('keydown',e=>{ if(e.key==='Enter') send(); });
 
-/*** ======= boot ======= ***/
-(async function boot(){
+/* ---- start ---- */
+async function start(){
   try{
-    $('#who').textContent = `${currentName()} <${currentEmail()||'not set'}>`;
+    document.getElementById('who').textContent=`${currentName()} <${currentEmail()||'not set'}>`;
+    showSetup();
     await ensureMe();
     await loadThreads();
-    // auto-fill bot for quickest test
     if(!$('#peerEmail').value) $('#peerEmail').value='bot@demo.test';
-  }catch(e){ fail(e); }
-})();
-
-/*** ======= small utils ======= ***/
-function esc(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;');}
+  }catch(e){ showSetup(true); fail(e); }
+}
+start();
 </script>
 </body>
 </html>
