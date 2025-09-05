@@ -1,67 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Chatternet — Settings</title>
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Chatternet – Settings</title>
 <style>
-  body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#f6f7fb;color:#0f172a}
-  .wrap{max-width:720px;margin:20px auto;padding:0 12px}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f6f7fb;margin:0}
+  .wrap{max-width:720px;margin:24px auto}
   .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
-  label{display:block;margin-top:10px}
-  .btn{padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer}
-  .btn.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
+  .btn{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#3b82f6;color:#fff;cursor:pointer}
 </style>
-</head>
-<body>
+</head><body>
 <div class="wrap">
   <div class="card">
-    <p><a href="/index.html">← Home</a></p>
+    <p><a href="index.html">← Home</a></p>
     <h2>Settings</h2>
-
     <label>Visibility
-      <select id="vis">
-        <option value="public">Public</option>
-        <option value="private">Private</option>
-      </select>
+      <select id="vis"><option value="public">Public</option><option value="private">Private</option></select>
     </label>
-
-    <label><input type="checkbox" id="dm"> Allow Direct Messages</label>
-
-    <label>DM Audience
-      <select id="aud">
-        <option value="everyone">everyone</option>
-        <option value="friends">friends</option>
-      </select>
+    <br/><label><input type="checkbox" id="dm"> Allow Direct Messages</label>
+    <br/><label>DM Audience
+      <select id="aud"><option value="everyone">everyone</option><option value="friends">friends</option></select>
     </label>
-
-    <div style="margin-top:12px">
-      <button id="save" class="btn primary">Save</button>
-      <span id="status" style="margin-left:8px"></span>
-    </div>
+    <div style="margin-top:12px"><button id="save" class="btn">Save</button> <span id="status" style="margin-left:8px"></span></div>
   </div>
 </div>
 
-<script src="/api.js"></script>
-<script src="/auth.js"></script>
+<script src="api.js"></script>
+<script src="auth.js"></script>
 <script>
 (async()=>{
   const me = await Auth.ensureAccount();
   const u = await Api.users.get(me.id);
   const vis=document.getElementById('vis'), dm=document.getElementById('dm'), aud=document.getElementById('aud');
-
-  const priv = u.privacy || {};
-  vis.value = (priv.visibility||'public');
-  dm.checked = !!(priv.dm);
-  aud.value = (priv.dmAudience||'everyone');
+  const p = u.privacy || {};
+  vis.value = p.visibility || 'public';
+  dm.checked = !!p.dm;
+  aud.value  = p.dmAudience || 'everyone';
 
   document.getElementById('save').onclick = async ()=>{
-    const patch = { privacy: { visibility: vis.value, dm: dm.checked, dmAudience: aud.value } };
-    const upd = await Api.users.put(me.id, patch);
+    const patch = { privacy:{ visibility: vis.value, dm: dm.checked, dmAudience: aud.value } };
+    const up = await Api.users.put(me.id, patch);
     document.getElementById('status').textContent = 'Saved at ' + new Date().toLocaleTimeString();
-    console.log('Updated', upd);
+    console.log('Updated', up);
   };
 })();
 </script>
-</body>
-</html>
+</body></html>
