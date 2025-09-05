@@ -2,80 +2,95 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Chatternet — Feed</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root{--brand:#3498db;--brand2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;--heart:#ff3b5c}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif}
-  .top{background:var(--brand);color:#fff;padding:14px 16px;font-weight:800;display:flex;align-items:center;gap:10px}
-  .top a{color:#fff;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 10px;border-radius:8px}
-  .page{max-width:1000px;margin:18px auto;padding:0 12px 28px}
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:12px 0}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .row>*{flex:1}
-  input,textarea,select,button{padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
-  textarea{min-height:110px;resize:vertical}
-  button.primary{background:var(--brand);border:1px solid var(--brand);color:#fff;cursor:pointer}
-  button.ghost{background:#f6f9ff;border:1px solid #e5edff;cursor:pointer}
-  .muted{color:var(--muted)}
-  .post{padding:12px;border:1px solid #ececec;border-radius:12px;background:#fafafa;margin:12px 0}
-  .title{font-weight:800;font-size:18px}
-  .meta{font-size:12px;color:#667085}
-  .content{white-space:pre-wrap;margin-top:6px}
-  .media{border-radius:10px;overflow:hidden;border:1px solid var(--line);margin-top:8px;background:#fff}
-  .media img,.media video,.media iframe{display:block;width:100%}
-  .media iframe,.media video{aspect-ratio:16/9;height:auto;min-height:320px}
-  .util{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
-  .like-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid #e6e8f2;border-radius:10px;background:#f6f7fb;cursor:pointer}
-  .like-btn.active{background:#ffe7ed;border-color:#ffd3de}
-  .comments{margin-top:10px;border-top:1px solid #e5e5e5;padding-top:10px}
-  .c-item{padding:8px;border:1px solid #eee;border-radius:10px;background:#fff;margin:8px 0}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#f6f7fb;color:#0f172a}
+  .bar{background:#1d4ed8;color:#fff;padding:14px 16px;display:flex;gap:10px;align-items:center}
+  .bar a{color:#fff;text-decoration:none;padding:8px 10px;border-radius:8px}
+  .wrap{max-width:980px;margin:16px auto;padding:0 12px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px}
+  input,textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px}
+  .btn{padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer}
+  .btn.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
+  .post{border-top:1px dashed #e5e7eb;padding-top:10px;margin-top:10px}
 </style>
 </head>
 <body>
-  <div class="top">
-    <span>Chatternet — Feed</span>
-    <a href="index.html">Home</a>
-    <a href="/api/health" target="_blank">API Health</a>
-    <span id="who" style="margin-left:auto;opacity:.85"></span>
+<div class="bar">
+  <strong>Chatternet — Feed</strong>
+  <a href="/index.html">Home</a>
+  <a href="/api/health" target="_blank">API Health</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h3>Create a post</h3>
+    <div class="row">
+      <input id="title" placeholder="Title (optional)">
+    </div>
+    <div style="margin-top:8px">
+      <textarea id="content" rows="4" placeholder="Say something..."></textarea>
+    </div>
+    <div style="margin-top:8px">
+      <input id="media" placeholder="Media URL (Image / Video / YouTube — optional)">
+    </div>
+    <div style="margin-top:10px;display:flex;gap:10px">
+      <button id="publish" class="btn primary">Publish</button>
+      <button id="clear" class="btn">Clear</button>
+    </div>
   </div>
 
-  <div class="page">
-    <!-- Composer -->
-    <section class="card">
-      <div style="font-weight:800;margin-bottom:6px">Create a post</div>
-      <div class="row">
-        <input id="pTitle" placeholder="Title (optional)" />
-        <input id="pAuthor" placeholder="Author (defaults to your name)" />
-      </div>
-      <textarea id="pBody" placeholder="Say something..."></textarea>
-      <div class="row" style="margin-top:6px">
-        <input id="pMedia" placeholder="Media URL (Image / Video / YouTube — optional)" />
-      </div>
-      <div class="row" style="margin-top:6px">
-        <button class="primary" id="publishBtn">Publish</button>
-        <button class="ghost" id="clearBtn">Clear</button>
-        <div class="muted" id="status" style="padding:10px 0"></div>
-      </div>
-    </section>
-
-    <!-- Feed -->
-    <section class="card">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-weight:800">Recent posts</div>
-        <button class="ghost" id="refreshBtn" style="margin-left:auto">Refresh</button>
-      </div>
-      <div id="feed"></div>
-      <div id="empty" class="muted" style="text-align:center;padding:12px;display:none">No posts yet.</div>
-    </section>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <h3>Recent posts</h3>
+      <button id="refresh" class="btn">Refresh</button>
+    </div>
+    <div id="list"></div>
   </div>
+</div>
 
+<script src="/api.js"></script>
+<script src="/auth.js"></script>
 <script>
-/* ----- small helpers ----- */
-const LS={ACC:'ct_accounts_v2',SESSION:'ct_session_v1',PROFILE:'ct_profile_data_v1'};
-const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
-const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const nowISO=()=>new Date().toISOString();
-const rel=iso=>{const d=(Date.now()-new Date(iso).getTime())/1e3;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
-function meEmail(){ const
+function postEl(p){
+  const d=document.createElement('div'); d.className='post';
+  d.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>${p.title||'(no title)'}</strong> — <span class="muted">${new Date(p.createdAt).toLocaleString()}</span></div>
+      <button data-del="${p.id}" class="btn">Delete</button>
+    </div>
+    <div style="margin-top:6px;white-space:pre-wrap">${p.content||''}</div>
+    ${p.media?(`<div style="margin-top:8px"><a href="${p.media}" target="_blank">${p.media}</a></div>`):''}
+  `;
+  d.querySelector('[data-del]').onclick = async ()=>{ await Api.posts.remove(p.id); await refresh(); };
+  return d;
+}
+
+async function refresh(){
+  const list = await Api.posts.list();
+  const box=document.getElementById('list'); box.innerHTML='';
+  if(!list.length){ box.textContent='No posts yet.'; return; }
+  list.forEach(p=>box.appendChild(postEl(p)));
+}
+
+(async()=>{
+  const me = await Auth.ensureAccount();
+  document.getElementById('publish').onclick = async ()=>{
+    const title=document.getElementById('title').value.trim();
+    const content=document.getElementById('content').value.trim();
+    const media=document.getElementById('media').value.trim();
+    if(!title && !content && !media){ alert('Write something.'); return; }
+    await Api.posts.create({ title, content, media, authorName: me.name||'Me' });
+    document.getElementById('title').value='';
+    document.getElementById('content').value='';
+    document.getElementById('media').value='';
+    await refresh();
+  };
+  document.getElementById('clear').onclick = ()=>{ title.value=''; content.value=''; media.value=''; };
+  document.getElementById('refresh').onclick = refresh;
+  await refresh();
+})();
+</script>
+</body>
+</html>
