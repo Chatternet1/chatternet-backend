@@ -1,1 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Friends</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{--brand:#3498db;--brand2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Arial,sans-serif}
+  .top{background:var(--brand);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:8px;font-weight:800}
+  .top a{color:#fff;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 10px;border-radius:8px}
+  .top .who{margin-left:auto;opacity:.9}
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .full{grid-column:1/-1}
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .title{font-weight:800;font-size:18px;margin-bottom:8px}
+  .muted{color:var(--muted)}
+  input,button{padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  button.primary{background:var(--brand);border:1px solid var(--brand);color:#fff;cursor:pointer}
+  button.ghost{background:#f6f9ff;border:1px solid #e5edff;cursor:pointer}
+  .row{display:flex;gap:8px;align-items:center}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+  .person{padding:12px;border:1px solid #ececec;border-radius:12px;background:#fafafa}
+  .person .name{font-weight:700}
+  .pill{display:inline-block;background:#eef4ff;border:1px solid #dbe7ff;padding:2px 8px;border-radius:999px;font-size:12px;margin-left:6px}
+</style>
+</head>
+<body>
+  <div class="top">
+    <span>Chatternet — Friends</span>
+    <a href="index.html">Home</a>
+    <a href="feed.html">Feed</a>
+    <a href="messages.html">Messages</a>
+    <a href="/api/health" target="_blank">API Health</a>
+    <span id="who" class="who"></span>
+  </div>
 
+  <div class="page">
+    <section class="card full">
+      <div class="title">Your account</div>
+      <div id="meBlock" class="muted">Loading…</div>
+      <div class="row" style="margin-top:8px">
+        <input id="seedName" placeholder="Create / open user by email (e.g. kate@demo)" />
+        <button id="seedBtn" class="ghost">Create/Open</button>
+        <button id="demoBtn" class="ghost" title="Creates a few sample users">Add demo users</button>
+        <span id="status" class="muted" style="margin-left:auto"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="title">Incoming requests <span class="pill" id="incCount">0</span></div>
+      <div id="incoming" class="grid"></div>
+      <div id="incomingEmpty" class="muted" style="text-align:center;padding:8px">No incoming.</div>
+    </section>
+
+    <section class="card">
+      <div class="title">Sent requests <span class="pill" id="sentCount">0</span></div>
+      <div id="sent" class="grid"></div>
+      <div id="sentEmpty" class="muted" style="text-align:center;padding:8px">No sent requests.</div>
+    </section>
+
+    <section class="card">
+      <div class="title">Friends <span class="pill" id="friendsCount">0</span></div>
+      <div id="friends" class="grid"></div>
+      <div id="friendsEmpty" class="muted" style="text-align:center;padding:8px">No friends yet.</div>
+    </section>
+
+    <section class="card">
+      <div class="title">Discover users</div>
+      <div class="row" style="margin-bottom:8px">
+        <input id="q" placeholder="Search name or email" />
+        <button id="refreshBtn">Refresh</button>
+      </div>
+      <div id="discover" class="grid"></div>
+      <div id="discoverEmpty" class="muted" style="text-align:center;padding:8px">No users found.</div>
+    </section>
+  </div>
+
+<script>
+/* ===== helpers & identity (same keys you already use) ===== */
+const LS={ACC:'ct_accounts_v2',SESSION:'ct_session_v1',PROFILE:'ct_profile_data_v1',MEID:'ct_backend_me_id'};
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+function meEmail(){ const s=load(LS.SESSION,null); return s&&s.user ? s.user : 'me@local'; }
+function meName(){ const p=load(LS.PROFILE,{})['Me']; return (p&&p.displayName)||'Me'; }
+document.getElementById('who').textContent = `${meName()} <${meEmail()}>`;
+
+/* ===== backend calls ===== */
+async function apiUsers(){ const r=await fetch('/api/users'); return await r.json(); }
+async function apiSignup(email,name){ const r=await fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:'local',name})}); return (await r.json()).user; }
+async function apiPutUser(id,p){ const r=await fetch('/api/users/'+encodeURIComponent(id),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}); return await r.json(); }
+
+/* ===== state ===== */
+let ME=null;
+let USERS=[];          // full list
+let IDX=new Map();     // id -> user
+
+/* ===== identity bootstrap ===== */
+async function ensureUser(email,name){
+  USERS = await apiUsers();
+  IDX = new Map(USERS.map(u=>[u.id,u]));
+  let u = USERS.find(x=>x.email===email);
+  if(!u){ u = await apiSignup(email, name||email.split('@')[0]); }
+  save(LS.MEID, u.id);
+  return u;
+}
+
+async function bootMe(){
+  const knownId = load(LS.MEID,null);
+  USERS = await apiUsers();
+  IDX = new Map(USERS.map(u=>[u.id,u]));
+  let u = knownId ? USERS.find(x=>x.id===knownId) : null;
+  if(!u){ u = await ensureUser(meEmail(), meName()); USERS = await apiUsers(); IDX = new Map(USERS.map(u=>[u.id,u])); }
+  ME = u;
+  document.getElementById('meBlock').innerHTML =
+    `<div><b>${esc(ME.name||'(no name)')}</b> &lt;${esc(ME.email)}&gt;</div>
+     <div class="muted">id: ${esc(ME.id)}</div>`;
+}
+
+/* ===== UI builders ===== */
+function personCard(u, buttonsHTML){
+  const fri = (u.friends||[]).length;
+  const req = (u.friendRequests||[]).length;
+  const pills = [];
+  if(fri) pills.push(`<span class="pill">${fri} friend${fri===1?'':'s'}</span>`);
+  if(req) pills.push(`<span class="pill">${req} req</span>`);
+  return `<div class="person">
+    <div class="name">${esc(u.name||'(no name)')}</div>
+    <div class="muted">${esc(u.email)}</div>
+    <div style="margin:6px 0">${pills.join(' ')}</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${buttonsHTML||''}</div>
+  </div>`;
+}
+
+function setCount(id, n){ document.getElementById(id).textContent = String(n); }
+function setStatus(t){ document.getElementById('status').textContent=t||''; }
+
+/* ===== actions ===== */
+async function sendRequest(targetId){
+  setStatus('Sending…');
+  const t = IDX.get(targetId); if(!t) return;
+  const next = Array.from(new Set([...(t.friendRequests||[]), ME.id]));
+  await apiPutUser(t.id,{friendRequests:next});
+  await refreshAll();
+  setStatus('Request sent');
+}
+async function cancelRequest(targetId){
+  setStatus('Updating…');
+  const t = IDX.get(targetId); if(!t) return;
+  const next = (t.friendRequests||[]).filter(x=>x!==ME.id);
+  await apiPutUser(t.id,{friendRequests:next});
+  await refreshAll();
+  setStatus('Cancelled');
+}
+async function acceptRequest(fromId){
+  setStatus('Accepting…');
+  const from = IDX.get(fromId); if(!from) return;
+  const meNextFriends = Array.from(new Set([...(ME.friends||[]), fromId]));
+  const meNextReqs = (ME.friendRequests||[]).filter(x=>x!==fromId);
+  await apiPutUser(ME.id,{friends:meNextFriends, friendRequests:meNextReqs});
+  const fromNextFriends = Array.from(new Set([...(from.friends||[]), ME.id]));
+  await apiPutUser(fromId,{friends:fromNextFriends});
+  await refreshAll();
+  setStatus('Accepted');
+}
+async function declineRequest(fromId){
+  setStatus('Declining…');
+  const meNextReqs = (ME.friendRequests||[]).filter(x=>x!==fromId);
+  await apiPutUser(ME.id,{friendRequests:meNextReqs});
+  await refreshAll();
+  setStatus('Declined');
+}
+async function removeFriend(friendId){
+  setStatus('Removing…');
+  const f = IDX.get(friendId); if(!f) return;
+  await apiPutUser(ME.id,{friends:(ME.friends||[]).filter(x=>x!==friendId)});
+  await apiPutUser(friendId,{friends:(f.friends||[]).filter(x=>x!==ME.id)});
+  await refreshAll();
+  setStatus('Removed');
+}
+
+/* ===== render lists ===== */
+function renderAll(){
+  // recompute ME from latest USERS
+  ME = USERS.find(u=>u.id===ME.id) || ME;
+
+  // incoming = ids in ME.friendRequests
+  const incomingIds = new Set(ME.friendRequests||[]);
+  const incoming = USERS.filter(u=>incomingIds.has(u.id));
+  const incomingBox=document.getElementById('incoming');
+  incomingBox.innerHTML = incoming.map(u=>personCard(u,
+    `<button class="primary" onclick="acceptRequest('${u.id}')">Accept</button>
+     <button onclick="declineRequest('${u.id}')">Decline</button>`
+  )).join('');
+  document.getElementById('incomingEmpty').style.display = incoming.length?'none':'block';
+  setCount('incCount', incoming.length);
+
+  // sent = users where their friendRequests contains ME.id
+  const sent = USERS.filter(u=>u.id!==ME.id && (u.friendRequests||[]).includes(ME.id) && !(ME.friends||[]).includes(u.id));
+  const sentBox=document.getElementById('sent');
+  sentBox.innerHTML = sent.map(u=>personCard(u,
+    `<button onclick="cancelRequest('${u.id}')">Cancel request</button>`
+  )).join('');
+  document.getElementById('sentEmpty').style.display = sent.length?'none':'block';
+  setCount('sentCount', sent.length);
+
+  // friends
+  const frIds = new Set(ME.friends||[]);
+  const friends = USERS.filter(u=>frIds.has(u.id));
+  const friendsBox=document.getElementById('friends');
+  friendsBox.innerHTML = friends.map(u=>personCard(u,
+    `<button onclick="removeFriend('${u.id}')">Remove</button>`
+  )).join('');
+  document.getElementById('friendsEmpty').style.display = friends.length?'none':'block';
+  setCount('friendsCount', friends.length);
+
+  // discover
+  const q=(document.getElementById('q').value||'').toLowerCase();
+  const discover = USERS.filter(u=>{
+    if(u.id===ME.id) return false;
+    if(frIds.has(u.id)) return false;
+    if((u.friendRequests||[]).includes(ME.id)) return false;
+    if((ME.friendRequests||[]).includes(u.id)) return false;
+    if(!q) return true;
+    return (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
+  });
+  const dBox=document.getElementById('discover');
+  dBox.innerHTML = discover.map(u=>personCard(u,
+    `<button class="primary" onclick="sendRequest('${u.id}')">Add friend</button>`
+  )).join('');
+  document.getElementById('discoverEmpty').style.display = discover.length?'none':'block';
+}
+
+/* ===== refresh flow ===== */
+async function refreshAll(){
+  USERS = await apiUsers();
+  IDX = new Map(USERS.map(u=>[u.id,u]));
+  renderAll();
+}
+
+/* ===== demo helpers ===== */
+async function openOrCreate() {
+  const email=(document.getElementById('seedName').value||'').trim();
+  if(!email){ setStatus('Enter an email.'); return; }
+  setStatus('Creating/opening…');
+  await ensureUser(email,email.split('@')[0]);
+  await refreshAll();
+  setStatus('Ready');
+}
+async function addDemos(){
+  setStatus('Creating demo users…');
+  const emails=['kate@demo','bill@demo','olivia@demo','michael@demo','grace@demo'];
+  for(const e of emails){ await ensureUser(e, e.split('@')[0]); }
+  await refreshAll();
+  setStatus('Demo users added');
+}
+
+/* ===== wire & boot ===== */
+window.sendRequest=sendRequest;
+window.cancelRequest=cancelRequest;
+window.acceptRequest=acceptRequest;
+window.declineRequest=declineRequest;
+window.removeFriend=removeFriend;
+
+document.getElementById('refreshBtn').onclick=refreshAll;
+document.getElementById('q').addEventListener('input',renderAll);
+document.getElementById('seedBtn').onclick=openOrCreate;
+document.getElementById('demoBtn').onclick=addDemos;
+
+(async function(){
+  setStatus('Loading…');
+  await bootMe();
+  await refreshAll();
+  setStatus('');
+})();
+</script>
+</body>
+</html>
