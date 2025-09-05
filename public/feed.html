@@ -1,3 +1,83 @@
+a<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Chatternet – Feed</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f6f7fb;margin:0}
+  .bar{background:#1d4ed8;color:#fff;padding:14px 16px;display:flex;gap:16px;align-items:center}
+  .wrap{max-width:980px;margin:24px auto}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin:12px 0}
+  .btn{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer}
+  .btn.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
+</style>
+</head><body>
+  <div class="bar">
+    <strong>Chatternet — Feed</strong>
+    <a style="color:#fff" href="index.html">Home</a>
+    <a id="healthLink" style="color:#fff" target="_blank">API Health</a>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h3>Create a post</h3>
+      <div style="margin:8px 0"><input id="title" placeholder="Title (optional)" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px"></div>
+      <div style="margin:8px 0"><textarea id="content" rows="4" placeholder="Say something..." style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px"></textarea></div>
+      <div style="margin:8px 0"><input id="media" placeholder="Media URL (Image / Video / YouTube — optional)" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px"></div>
+      <div><button id="publish" class="btn primary">Publish</button> <button id="clear" class="btn">Clear</button></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3>Recent posts</h3><button id="refresh" class="btn">Refresh</button>
+      </div>
+      <div id="list"></div>
+    </div>
+  </div>
+
+<script src="api.js"></script>
+<script src="auth.js"></script>
+<script>
+function postEl(p){
+  const d=document.createElement('div'); d.className='card';
+  d.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong>${p.title || '(no title)'}</strong>
+      <span class="muted">${new Date(p.createdAt).toLocaleString()}</span>
+    </div>
+    <div style="margin-top:6px;white-space:pre-wrap">${p.content||''}</div>
+    ${p.media ? `<div style="margin-top:8px"><a href="${p.media}" target="_blank">${p.media}</a></div>` : ''}
+    <div style="margin-top:8px"><button data-del="${p.id}" class="btn">Delete</button></div>
+  `;
+  d.querySelector('[data-del]').onclick = async ()=>{ await Api.posts.remove(p.id); await refresh(); };
+  return d;
+}
+
+async function refresh(){
+  const list = await Api.posts.list();
+  const box = document.getElementById('list'); box.innerHTML='';
+  if(!list.length){ box.textContent='No posts yet.'; return; }
+  list.forEach(p=>box.appendChild(postEl(p)));
+}
+
+(async ()=>{
+  document.getElementById('healthLink').href = (window.API_BASE||'') + '/api/health';
+  const me = await Auth.ensureAccount();
+
+  document.getElementById('publish').onclick = async ()=>{
+    const title = document.getElementById('title').value.trim();
+    const content = document.getElementById('content').value.trim();
+    const media = document.getElementById('media').value.trim();
+    if(!content && !media){ alert('Write something'); return; }
+    await Api.posts.create({ title, content, media, authorName: me.name || 'Me', authorId: me.id });
+    ['title','content','media'].forEach(id=>document.getElementById(id).value='');
+    await refresh();
+  };
+  document.getElementById('clear').onclick = ()=>{ ['title','content','media'].forEach(id=>document.getElementById(id).value=''); };
+  document.getElementById('refresh').onclick = refresh;
+
+  await refresh();
+})();
+</script>
+</body></html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
