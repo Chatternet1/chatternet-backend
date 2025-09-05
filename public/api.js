@@ -1,25 +1,63 @@
 <script>
-// One backend for everything (served by the same Node app)
-window.API_BASE = '/api';
+/* public/api.js */
+window.Api = (() => {
+  const base = ''; // same-origin (Render serves static + API together)
 
-// Basic JSON helpers
-async function j(method, path, body) {
-  const res = await fetch(API_BASE + path, {
-    method,
-    headers: {'Content-Type':'application/json'},
-    body: body ? JSON.stringify(body) : undefined
-  });
-  if (!res.ok) {
-    let msg = 'Request failed';
-    try { const e = await res.json(); msg = e.error || msg; } catch {}
-    throw new Error(msg);
+  async function req(method, path, body) {
+    const r = await fetch(base + path, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!r.ok) {
+      let msg = 'Request failed';
+      try { const t = await r.json(); msg = t.error || JSON.stringify(t); } catch {}
+      throw new Error(msg);
+    }
+    return r.json();
   }
-  return res.json();
-}
-window.Api = {
-  get: (p)=>j('GET', p),
-  post:(p,b)=>j('POST',p,b),
-  put: (p,b)=>j('PUT', p,b),
-  del: (p)=>j('DELETE', p),
-};
+
+  const get = (p) => req('GET', p);
+  const post = (p, b) => req('POST', p, b);
+  const put = (p, b) => req('PUT', p, b);
+  const del = (p) => req('DELETE', p);
+
+  return {
+    health: () => get('/api/health'),
+
+    users: {
+      list: () => get('/api/users'),
+      get: (id) => get('/api/users/' + encodeURIComponent(id)),
+      put: (id, patch) => put('/api/users/' + encodeURIComponent(id), patch),
+      signup: (email, password, name) => post('/api/signup', { email, password, name }),
+      login: (email, password) => post('/api/login', { email, password })
+    },
+
+    friends: {
+      list: (userId) => get('/api/friends/' + encodeURIComponent(userId)),
+      request: (fromId, toId) => post('/api/friends/request', { fromId, toId }),
+      respond: (fromId, toId, action) => post('/api/friends/respond', { fromId, toId, action })
+    },
+
+    messages: {
+      list: (userId, peerId) => get(`/api/messages?userId=${encodeURIComponent(userId)}&peerId=${encodeURIComponent(peerId)}`),
+      send: (fromId, toId, text) => post('/api/messages', { fromId, toId, text }),
+      threads: (userId) => get('/api/threads/' + encodeURIComponent(userId))
+    },
+
+    posts: {
+      list: () => get('/api/posts'),
+      create: (p) => post('/api/posts', p),
+      remove: (id) => del('/api/posts/' + encodeURIComponent(id))
+    },
+
+    events: {
+      list: () => get('/api/events'),
+      get: (id) => get('/api/events/' + encodeURIComponent(id)),
+      create: (ev) => post('/api/events', ev),
+      update: (id, patch) => put('/api/events/' + encodeURIComponent(id), patch),
+      remove: (id) => del('/api/events/' + encodeURIComponent(id))
+    }
+  };
+})();
 </script>
