@@ -1,52 +1,39 @@
 <script>
 /* public/auth.js */
-(function () {
-  const LS = {
-    ACC: 'ct_accounts_v2',
-    SESSION: 'ct_session_v1'
-  };
+window.Auth = (() => {
+  const LSKEY = 'chatternet.me';
 
-  function load(k, f) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch { return f; } }
-  function save(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+  async function ensureAccount() {
+    let me = null;
+    try { me = JSON.parse(localStorage.getItem(LSKEY) || 'null'); } catch {}
+    if (me?.id) return me;
 
-  async function ensureBackendUser() {
-    // Keep a simple local account with an email/password and store the server user
-    let acc = load(LS.ACC, null);
-    if (!acc) {
-      acc = { email: 'me@demo.local', password: 'demo123', name: 'Me', user: null };
-      save(LS.ACC, acc);
-    }
+    // create a throwaway account
+    const id = Math.floor(Math.random() * 1e9).toString(36);
+    const email = `user${id}@demo.local`;
+    const password = 'demo';
+    const name = 'Me';
 
-    // Try login then signup if needed
-    let user = null;
     try {
-      const out = await Api.login(acc.email, acc.password);
-      user = out.user;
+      const r = await Api.users.signup(email, password, name);
+      me = r.user;
     } catch {
-      const out = await Api.signup(acc.email, acc.password, acc.name);
-      user = out.user;
+      const r = await Api.users.login(email, password);
+      me = r.user;
     }
-    acc.user = user; save(LS.ACC, acc);
-    save(LS.SESSION, { userId: user.id, at: Date.now() });
-    return user;
+    localStorage.setItem(LSKEY, JSON.stringify(me));
+    return me;
   }
 
-  async function getEchoBot() {
-    const list = await Api.users.list();
-    return list.find(u => u.email === 'bot@demo.test') || null;
+  function getMeId() {
+    try { const m = JSON.parse(localStorage.getItem(LSKEY) || 'null'); return m?.id || ''; } catch { return ''; }
   }
 
-  window.Auth = {
-    async getUser() {
-      const acc = load(LS.ACC, null);
-      return acc?.user || ensureBackendUser();
-    },
-    async ensureAccount() {
-      return ensureBackendUser();
-    },
-    async getEchoBot() {
-      return getEchoBot();
-    }
-  };
+  async function getMe() {
+    const id = getMeId();
+    return id ? await Api.users.get(id) : await ensureAccount();
+  }
+
+  return { ensureAccount, getMe, getMeId };
 })();
 </script>
