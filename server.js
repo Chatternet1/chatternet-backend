@@ -8,55 +8,38 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// --- middleware
+// ── middleware
 app.use(cors());
 app.use(bodyParser.json({ limit: '6mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '6mb' }));
 
-// --- static site
+// ── static site
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (_req, res) => res.redirect('/index.html'));
 
-// --- DATA FILE ---
+// ── DATA ──────────────────────────────────────────────────────────────────────
 const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
 
 function defaultData() {
-  return {
-    users: [],
-    posts: [],
-    messages: [],
-    polls: [],
-    blogs: [],
-    media: [],
-    groups: [],
-    events: []
-  };
+  return { users: [], posts: [], messages: [], polls: [], blogs: [], media: [], groups: [], events: [] };
 }
-
 function load() {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    }
-  } catch (e) {}
+  try { if (fs.existsSync(DATA_FILE)) return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
+  catch (_) {}
   return defaultData();
 }
 let data = load();
+function save() { try { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); } catch (_) {} }
 
-function save() {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-  } catch (e) {}
-}
 const nowISO = () => new Date().toISOString();
 const byId = (id) => (data.users || []).find(u => String(u.id) === String(id));
 
-// --- HEALTH ---
-app.get('/api/health', (_req, res) =>
-  res.json({ ok: true, time: nowISO(), node: process.version, dataFile: DATA_FILE })
-);
+// ── HEALTH
+app.get('/api/health', (_req, res) => res.json({
+  ok: true, time: nowISO(), node: process.version, dataFile: DATA_FILE
+}));
 
-// --- USERS ---
+// ── USERS
 app.post('/api/signup', (req, res) => {
   const { email, password, name = '' } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email & password required' });
@@ -80,14 +63,12 @@ app.post('/api/signup', (req, res) => {
   (data.users ||= []).push(user); save();
   res.json({ user });
 });
-
 app.post('/api/login', (req, res) => {
   const { email, password } = req.body || {};
   const user = (data.users || []).find(u => u.email === email && u.password === password);
   if (!user) return res.status(400).json({ error: 'Invalid login' });
   res.json({ user });
 });
-
 app.get('/api/users', (_req, res) => res.json(data.users || []));
 app.get('/api/users/:id', (req, res) => {
   const u = byId(req.params.id);
@@ -118,7 +99,7 @@ app.put('/api/users/:id', (req, res) => {
   res.json(data.users[i]);
 });
 
-// --- ECHO BOT (auto-reply) ---
+// ── ECHO BOT (auto-reply)
 function ensureEchoBot() {
   let bot = (data.users || []).find(u => u.email === 'bot@demo.test');
   if (!bot) {
@@ -129,32 +110,66 @@ function ensureEchoBot() {
       name: 'Echo Bot',
       bot: true,
       bio: 'I repeat what you say. Try /time',
-      avatar: '',
-      cover: '',
-      friends: [],
-      friendRequests: [],
+      avatar: '', cover: '',
+      friends: [], friendRequests: [],
       privacy: { visibility: 'public', dm: true, dmAudience: 'everyone' },
       settings: { notifications: {} },
       createdAt: nowISO()
     };
-    (data.users ||= []).push(bot);
-    save();
-  } else if (!bot.bot) {
-    bot.bot = true; save();
-  }
+    (data.users ||= []).push(bot); save();
+  } else if (!bot.bot) { bot.bot = true; save(); }
   return bot;
 }
 ensureEchoBot();
-
-function botReplyText(text) {
+const botReplyText = (text) => {
   const t = String(text || '').trim().toLowerCase();
   if (!t) return "Say something and I'll echo it back.";
   if (/hello|hi|hey/.test(t)) return "Hello! I'm an echo bot. Say anything.";
   if (t.startsWith('/time')) return 'Server time: ' + nowISO();
   return `Echo: ${text}`;
-}
+};
 
-// --- MESSAGES ---
+// ── FRIENDS
+app.get('/api/friends', (req, res) => {
+  const { userId } = req.query || {};
+  const me = byId(userId);
+  if (!me) return res.status(404).json({ error: 'User not found' });
+
+  const all = (data.users || []).filter(u => u.id !== me.id);
+  const requests = (me.friendRequests || [])
+    .map(id => byId(id))
+    .filter(Boolean);
+
+  const friends = (me.friends || [])
+    .map(id => byId(id))
+    .filter(Boolean);
+
+  res.json({ requests, friends, all });
+});
+app.post('/api/friends/request', (req, res) => {
+  const { fromId, toId } = req.body || {};
+  const from = byId(fromId), to = byId(toId);
+  if (!from || !to) return res.status(400).json({ error: 'Invalid users' });
+  if ((to.friendRequests || []).includes(from.id) || (to.friends || []).includes(from.id))
+    return res.json({ ok: true });
+  (to.friendRequests ||= []).push(from.id); save();
+  res.json({ ok: true });
+});
+app.post('/api/friends/respond', (req, res) => {
+  const { fromId, toId, action } = req.body || {};
+  const from = byId(fromId), to = byId(toId); // from requested to
+  if (!from || !to) return res.status(400).json({ error: 'Invalid users' });
+
+  to.friendRequests = (to.friendRequests || []).filter(id => id !== from.id);
+  if (action === 'accept') {
+    if (!(to.friends || []).includes(from.id)) (to.friends ||= []).push(from.id);
+    if (!(from.friends || []).includes(to.id)) (from.friends ||= []).push(to.id);
+  }
+  save();
+  res.json({ ok: true });
+});
+
+// ── MESSAGES
 app.get('/api/messages', (req, res) => {
   const { userId, peerId } = req.query;
   if (!userId || !peerId) return res.status(400).json({ error: 'userId & peerId required' });
@@ -163,29 +178,19 @@ app.get('/api/messages', (req, res) => {
     .sort((a, b) => new Date(a.time) - new Date(b.time));
   res.json(list);
 });
-
 app.post('/api/messages', (req, res) => {
   const { fromId, toId, text } = req.body || {};
   if (!fromId || !toId || !text) return res.status(400).json({ error: 'fromId, toId, text required' });
   const msg = { id: Date.now().toString(), fromId, toId, text, time: nowISO() };
   (data.messages ||= []).push(msg); save();
 
-  // auto-reply if recipient is a bot
   const toUser = byId(toId);
   if (toUser?.bot) {
-    const reply = {
-      id: (Date.now() + 1).toString(),
-      fromId: toUser.id,
-      toId: fromId,
-      text: botReplyText(text),
-      time: nowISO()
-    };
+    const reply = { id: (Date.now() + 1).toString(), fromId: toUser.id, toId: fromId, text: botReplyText(text), time: nowISO() };
     (data.messages ||= []).push(reply); save();
   }
-
   res.json(msg);
 });
-
 app.get('/api/threads/:userId', (req, res) => {
   const userId = req.params.userId; const peers = new Map();
   (data.messages || []).forEach(m => {
@@ -198,94 +203,27 @@ app.get('/api/threads/:userId', (req, res) => {
   const out = Array.from(peers.entries()).map(([peerId, last]) => ({ peerId, last })); res.json(out);
 });
 
-// --- FRIENDS ---
-app.get('/api/friends', (req, res) => {
-  const { userId } = req.query || {};
-  const u = byId(userId);
-  if (!u) return res.status(404).json({ error: 'User not found' });
-  const friends = (u.friends || []).map(id => byId(id)).filter(Boolean);
-  res.json({
-    friends,
-    requests: (u.friendRequests || []).map(id => byId(id)).filter(Boolean)
-  });
-});
-
-// send request (fromId -> toId)
-app.post('/api/friends/request', (req, res) => {
-  const { fromId, toId } = req.body || {};
-  const from = byId(fromId), to = byId(toId);
-  if (!from || !to) return res.status(404).json({ error: 'User not found' });
-
-  // already friends?
-  if ((from.friends || []).includes(to.id)) return res.json({ ok: true, already: true });
-
-  // bots auto-accept
-  if (to.bot) {
-    from.friends ||= []; to.friends ||= [];
-    if (!from.friends.includes(to.id)) from.friends.push(to.id);
-    if (!to.friends.includes(from.id)) to.friends.push(from.id);
-    save(); return res.json({ ok: true, autoAccepted: true });
-  }
-
-  to.friendRequests ||= [];
-  if (!to.friendRequests.includes(from.id)) to.friendRequests.push(from.id);
-  save();
-  res.json({ ok: true });
-});
-
-// accept / decline (toId acts on request from fromId)
-app.post('/api/friends/respond', (req, res) => {
-  const { fromId, toId, action } = req.body || {};
-  const from = byId(fromId), to = byId(toId);
-  if (!from || !to) return res.status(404).json({ error: 'User not found' });
-
-  to.friendRequests = (to.friendRequests || []).filter(id => id !== from.id);
-
-  if (action === 'accept') {
-    from.friends ||= []; to.friends ||= [];
-    if (!from.friends.includes(to.id)) from.friends.push(to.id);
-    if (!to.friends.includes(from.id)) to.friends.push(from.id);
-  }
-  save();
-  res.json({ ok: true });
-});
-
-// --- POSTS (Feed) ---
-function normalizePost(p = {}) {
-  return {
-    id: p.id || Date.now().toString(),
-    title: p.title || '',
-    content: p.content || '',
-    media: p.media || '',
-    authorId: p.authorId || '',
-    authorName: p.authorName || '',
-    createdAt: p.createdAt || nowISO()
-  };
-}
-
+// ── POSTS
 app.get('/api/posts', (_req, res) => {
-  const list = (data.posts || []).slice().sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
-  res.json(list.map(normalizePost));
+  const list = (data.posts || []).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  res.json(list);
 });
-
 app.post('/api/posts', (req, res) => {
-  const { title = '', content = '', media = '', authorId = '', authorName = '' } = req.body || {};
-  if (!content.trim()) return res.status(400).json({ error: 'content required' });
-  const post = normalizePost({ title, content, media, authorId, authorName, id: Date.now().toString(), createdAt: nowISO() });
-  (data.posts ||= []).unshift(post);
-  save();
+  const { title = '', content = '', media = '', authorName = 'Anonymous', authorId = '' } = req.body || {};
+  if (!content.trim() && !media.trim()) return res.status(400).json({ error: 'content or media required' });
+  const post = { id: Date.now().toString(), title, content, media, authorName, authorId, createdAt: nowISO() };
+  (data.posts ||= []).unshift(post); save();
   res.json(post);
 });
-
 app.delete('/api/posts/:id', (req, res) => {
+  const id = String(req.params.id);
   const before = (data.posts || []).length;
-  data.posts = (data.posts || []).filter(p => String(p.id) !== String(req.params.id));
-  if (data.posts.length === before) return res.status(404).json({ error: 'Post not found' });
-  save();
-  res.json({ ok: true });
+  data.posts = (data.posts || []).filter(p => String(p.id) !== id);
+  if ((data.posts || []).length === before) return res.status(404).json({ error: 'Post not found' });
+  save(); res.json({ ok: true });
 });
 
-// --- EVENTS ---
+// ── EVENTS (kept from your version)
 function ensureEvent(ev = {}) {
   return {
     id: ev.id || Date.now().toString(),
@@ -303,32 +241,23 @@ function ensureEvent(ev = {}) {
     discussion: Array.isArray(ev.discussion) ? ev.discussion : []
   };
 }
-
-app.get('/api/events', (_req, res) => {
-  res.json((data.events || []).map(ensureEvent));
-});
-
+app.get('/api/events', (_req, res) => res.json((data.events || []).map(ensureEvent)));
 app.get('/api/events/:id', (req, res) => {
   const ev = (data.events || []).find(e => String(e.id) === String(req.params.id));
   if (!ev) return res.status(404).json({ error: 'Event not found' });
   res.json(ensureEvent(ev));
 });
-
 app.post('/api/events', (req, res) => {
   const { title } = req.body || {};
   if (!title) return res.status(400).json({ error: 'title required' });
   const ev = ensureEvent({ ...req.body, id: Date.now().toString(), createdAt: nowISO() });
-  (data.events ||= []).unshift(ev);
-  save();
-  res.json(ev);
+  (data.events ||= []).unshift(ev); save(); res.json(ev);
 });
-
 app.put('/api/events/:id', (req, res) => {
   const id = String(req.params.id);
   const list = (data.events ||= []);
   const i = list.findIndex(e => String(e.id) === id);
   if (i < 0) return res.status(404).json({ error: 'Event not found' });
-
   const incoming = req.body || {};
   list[i] = ensureEvent({
     ...list[i],
@@ -337,17 +266,14 @@ app.put('/api/events/:id', (req, res) => {
     invites: Array.isArray(incoming.invites) ? incoming.invites : (list[i].invites || []),
     discussion: Array.isArray(incoming.discussion) ? incoming.discussion : (list[i].discussion || [])
   });
-  save();
-  res.json(list[i]);
+  save(); res.json(list[i]);
 });
-
 app.delete('/api/events/:id', (req, res) => {
   const before = (data.events || []).length;
   data.events = (data.events || []).filter(e => String(e.id) !== String(req.params.id));
-  if (data.events.length === before) return res.status(404).json({ error: 'Event not found' });
-  save();
-  res.json({ ok: true });
+  if ((data.events || []).length === before) return res.status(404).json({ error: 'Event not found' });
+  save(); res.json({ ok: true });
 });
 
-// --- start
+// ── start
 app.listen(PORT, () => console.log(`API listening on ${PORT}`));
