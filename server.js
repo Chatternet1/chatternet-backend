@@ -1,10 +1,10 @@
 // server.js (Chatternet backend – CORS + cookie sessions + settings + images)
+// No cookie-parser dependency: we parse cookies manually.
 'use strict';
 
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -28,9 +28,7 @@ function defaultData() {
     media: [],
     groups: [],
     events: [],
-    // sessions: sessionId -> userId
-    sessions: {},
-    // global look/feel settings (used by Settings page)
+    sessions: {}, // sessionId -> { userId, createdAt }
     settingsGlobal: {
       privacy: { visibility: 'private', allowDM: true, dmAudience: 'everyone', emailVisible: false },
       profile: { displayName: '', bio: '', avatarAlt: '', avatarUrl: '', coverUrl: '' },
@@ -48,7 +46,6 @@ let data = load();
 function save() { try { fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2)); } catch (_) {} }
 const byId = (id) => (data.users || []).find(u => String(u.id) === String(id));
 
-// Strip secrets + normalize structure for the frontend
 function sanitizeUser(u) {
   if (!u) return null;
   const profile = u.profile || {
@@ -59,14 +56,9 @@ function sanitizeUser(u) {
     avatarAlt: u.profile?.avatarAlt || ''
   };
   const notifications = u.notifications || (u.settings && u.settings.notifications) || {};
-  const appearance = u.appearance || {
-    darkMode: !!u.settings?.darkMode,
-    highContrast: !!u.settings?.highContrast,
-    theme: u.settings?.theme || 'system'
-  };
+  const appearance = u.appearance || { theme: u.settings?.theme || 'system', bigText: !!u.settings?.compact, highContrast: !!u.settings?.highContrast };
   const privacy = u.privacy || {};
   const security = u.security || {};
-
   return {
     id: u.id,
     email: u.email || '',
@@ -80,20 +72,30 @@ function sanitizeUser(u) {
   };
 }
 
-// ─────────────────────────── CORS & cookies ───────────────────────────
+// ─────────────────────────── CORS & request setup ───────────────────────────
 app.set('trust proxy', 1);
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cookieParser());
 
-// Configure CORS to reflect origin and allow credentials
+// Minimal cookie parser middleware (so we don't need cookie-parser)
+function parseCookies(header = '') {
+  const out = {};
+  String(header).split(';').forEach(p => {
+    const s = p.trim(); if (!s) return;
+    const i = s.indexOf('=');
+    if (i > -1) out[decodeURIComponent(s.slice(0, i))] = decodeURIComponent(s.slice(i + 1));
+  });
+  return out;
+}
+app.use((req, _res, next) => { req.cookies = parseCookies(req.headers.cookie || ''); next(); });
+
+// CORS with credentials for Weebly/custom domains
 const ALLOWED = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
-
 const corsOptions = {
   origin(origin, cb) {
-    if (!origin) return cb(null, true); // same-origin / curl
-    if (ALLOWED.length === 0) return cb(null, true); // allow all if not configured
+    if (!origin) return cb(null, true);
+    if (ALLOWED.length === 0) return cb(null, true);
     try {
       const ok = ALLOWED.includes(origin) ||
                  /\.weebly(site)?\.com$/i.test(new URL(origin).hostname);
@@ -125,22 +127,23 @@ function getUserFromReq(req) {
   if (!link) return null;
   return byId(link.userId) || null;
 }
-function destroySession(req, res) {
-  const sid = req.cookies.ct_session_v2;
-  if (sid && data.sessions[sid]) {
-    delete data.sessions[sid];
-    save();
-  }
-  res.clearCookie('ct_session_v2', { path: '/', sameSite: 'none', secure: true });
+function destroySession(_req, res) {
+  const sid = _req.cookies.ct_session_v2;
+  if (sid && data.sessions[sid]) { delete data.sessions[sid]; save(); }
+  res.clearCookie && res.clearCookie('ct_session_v2', { path: '/', sameSite: 'none', secure: true });
+  // Fallback if res.clearCookie not present (older express): set expired cookie
+  res.setHeader('Set-Cookie', 'ct_session_v2=; Path=/; Max-Age=0; SameSite=None; Secure; HttpOnly');
 }
 function setSessionCookie(res, sessionId) {
-  res.cookie('ct_session_v2', sessionId, {
-    httpOnly: true,
-    secure: true,       // HTTPS only
-    sameSite: 'none',   // allow cross-site (Weebly)
-    path: '/',
-    maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days
-  });
+  // Express has res.cookie; if not, set header manually
+  if (res.cookie) {
+    res.cookie('ct_session_v2', sessionId, {
+      httpOnly: true, secure: true, sameSite: 'none', path: '/', maxAge: 1000*60*60*24*30
+    });
+  } else {
+    res.setHeader('Set-Cookie',
+      `ct_session_v2=${encodeURIComponent(sessionId)}; Path=/; Max-Age=${60*60*24*30}; SameSite=None; Secure; HttpOnly`);
+  }
 }
 
 // ─────────────────────────── health ───────────────────────────
@@ -169,7 +172,6 @@ app.post('/api/signup', (req, res) => {
       fontSize: 'medium', theme: 'system', language: 'en',
       notifications: { event: true, friend: true, post: true, sound: false, volume: 0.5 }
     },
-    // new fields used by Settings UI
     profile: { displayName: name || '', bio: '', avatarUrl: '', coverUrl: '' },
     notifications: { email: false, push: false },
     appearance: { theme: 'system', accent: '#3b82f6', bigText: false, highContrast: false },
@@ -187,24 +189,18 @@ app.post('/api/login', (req, res) => {
   const { email, password } = req.body || {};
   const user = (data.users || []).find(u => u.email === email && u.password === password);
   if (!user) return res.status(400).json({ error: 'Invalid login' });
-
   const sid = newSession(user.id);
   setSessionCookie(res, sid);
   res.json({ user: sanitizeUser(user) });
 });
 
-app.post('/api/logout', (req, res) => {
-  destroySession(req, res);
-  res.json({ ok: true });
-});
+app.post('/api/logout', (req, res) => { destroySession(req, res); res.json({ ok: true }); });
 
 app.get('/api/users/me', (req, res) => {
   const user = getUserFromReq(req);
   if (!user) return res.status(401).json({ error: 'No session' });
   res.json(sanitizeUser(user));
 });
-
-// alias some frontends try
 app.get('/api/session/me', (req, res) => {
   const user = getUserFromReq(req);
   if (!user) return res.status(401).json({ error: 'No session' });
@@ -212,22 +208,17 @@ app.get('/api/session/me', (req, res) => {
 });
 
 app.get('/api/users', (_req, res) => res.json((data.users || []).map(sanitizeUser)));
-
 app.get('/api/users/:id', (req, res) => {
   const u = byId(req.params.id);
   if (!u) return res.status(404).json({ error: 'User not found' });
   res.json(sanitizeUser(u));
 });
-
 app.put('/api/users/:id', (req, res) => {
   const id = String(req.params.id);
   const i = (data.users || []).findIndex(u => String(u.id) === id);
   if (i < 0) return res.status(404).json({ error: 'User not found' });
-
   const incoming = req.body || {};
   const prev = data.users[i];
-
-  // Map new structure (profile/notifications/appearance/security) + legacy settings/fields
   const merged = {
     ...prev,
     email: incoming.email ?? prev.email,
@@ -238,8 +229,6 @@ app.put('/api/users/:id', (req, res) => {
     appearance: { ...(prev.appearance || {}), ...(incoming.appearance || {}) },
     security: { ...(prev.security || {}), ...(incoming.security || {}) }
   };
-
-  // Keep legacy mirrors in sync (non-breaking for older pages)
   merged.avatar = merged.profile.avatarUrl || merged.avatar || '';
   merged.cover  = merged.profile.coverUrl  || merged.cover  || '';
   merged.bio    = merged.profile.bio       || merged.bio    || '';
@@ -250,13 +239,10 @@ app.put('/api/users/:id', (req, res) => {
       notifications: { ...((prev.settings || {}).notifications || {}), ...((incoming.settings || {}).notifications || {}) }
     };
   }
-
-  data.users[i] = merged;
-  save();
-  res.json(sanitizeUser(merged));
+  data.users[i] = merged; save(); res.json(sanitizeUser(merged));
 });
 
-// ─────────────────────────── Echo bot helper ───────────────────────────
+// ─────────────────────────── friends ───────────────────────────
 function ensureEchoBot() {
   let bot = (data.users || []).find(u => u.email === 'bot@demo.test');
   if (!bot) {
@@ -278,7 +264,6 @@ function ensureEchoBot() {
     };
     (data.users ||= []).push(bot); save();
   } else if (!bot.bot) { bot.bot = true; save(); }
-  return bot;
 }
 ensureEchoBot();
 
@@ -290,12 +275,10 @@ const botReplyText = (text) => {
   return `Echo: ${text}`;
 };
 
-// ─────────────────────────── friends ───────────────────────────
 app.get('/api/friends', (req, res) => {
   const { userId } = req.query || {};
   const me = byId(userId);
   if (!me) return res.status(404).json({ error: 'User not found' });
-
   const all = (data.users || []).filter(u => u.id !== me.id).map(sanitizeUser);
   const requests = (me.friendRequests || []).map(id => sanitizeUser(byId(id))).filter(Boolean);
   const friends = (me.friends || []).map(id => sanitizeUser(byId(id))).filter(Boolean);
@@ -305,23 +288,19 @@ app.post('/api/friends/request', (req, res) => {
   const { fromId, toId } = req.body || {};
   const from = byId(fromId), to = byId(toId);
   if (!from || !to) return res.status(400).json({ error: 'Invalid users' });
-  if ((to.friendRequests || []).includes(from.id) || (to.friends || []).includes(from.id))
-    return res.json({ ok: true });
-  (to.friendRequests ||= []).push(from.id); save();
-  res.json({ ok: true });
+  if ((to.friendRequests || []).includes(from.id) || (to.friends || []).includes(from.id)) return res.json({ ok: true });
+  (to.friendRequests ||= []).push(from.id); save(); res.json({ ok: true });
 });
 app.post('/api/friends/respond', (req, res) => {
   const { fromId, toId, action } = req.body || {};
   const from = byId(fromId), to = byId(toId);
   if (!from || !to) return res.status(400).json({ error: 'Invalid users' });
-
   to.friendRequests = (to.friendRequests || []).filter(id => id !== from.id);
   if (action === 'accept') {
     if (!(to.friends || []).includes(from.id)) (to.friends ||= []).push(from.id);
     if (!(from.friends || []).includes(to.id)) (from.friends ||= []).push(to.id);
   }
-  save();
-  res.json({ ok: true });
+  save(); res.json({ ok: true });
 });
 
 // ─────────────────────────── messages ───────────────────────────
@@ -367,8 +346,7 @@ app.post('/api/posts', (req, res) => {
   const { title = '', content = '', media = '', authorName = 'Anonymous', authorId = '' } = req.body || {};
   if (!content.trim() && !media.trim()) return res.status(400).json({ error: 'content or media required' });
   const post = { id: Date.now().toString(), title, content, media, authorName, authorId, createdAt: nowISO() };
-  (data.posts ||= []).unshift(post); save();
-  res.json(post);
+  (data.posts ||= []).unshift(post); save(); res.json(post);
 });
 app.delete('/api/posts/:id', (req, res) => {
   const id = String(req.params.id);
@@ -436,28 +414,19 @@ app.get('/api/settings', (req, res) => {
   if (scope === 'global') return res.json(data.settingsGlobal || defaultData().settingsGlobal);
   res.status(400).json({ error: 'unknown scope' });
 });
-app.get('/api/settings/global', (_req, res) => {
-  res.json(data.settingsGlobal || defaultData().settingsGlobal);
-});
+app.get('/api/settings/global', (_req, res) => res.json(data.settingsGlobal || defaultData().settingsGlobal));
 app.put('/api/settings', (req, res) => {
   const { scope, patch } = req.body || {};
   if (scope !== 'global') return res.status(400).json({ error: 'unknown scope' });
   data.settingsGlobal = { ...(data.settingsGlobal || {}), ...(patch || {}) };
-  save();
-  res.json({ ok: true, settings: data.settingsGlobal });
+  save(); res.json({ ok: true, settings: data.settingsGlobal });
 });
 app.put('/api/settings/global', (req, res) => {
   const { patch } = req.body || {};
   data.settingsGlobal = { ...(data.settingsGlobal || {}), ...(patch || {}) };
-  save();
-  res.json({ ok: true, settings: data.settingsGlobal });
+  save(); res.json({ ok: true, settings: data.settingsGlobal });
 });
-// Some frontends try this:
-app.put('/api/config', (req, res) => {
-  data.settingsGlobal = { ...(data.settingsGlobal || {}), ...(req.body || {}) };
-  save();
-  res.json({ ok: true, settings: data.settingsGlobal });
-});
+app.put('/api/config', (req, res) => { data.settingsGlobal = { ...(data.settingsGlobal || {}), ...(req.body || {}) }; save(); res.json({ ok: true, settings: data.settingsGlobal }); });
 app.get('/api/config', (_req, res) => res.json(data.settingsGlobal || defaultData().settingsGlobal));
 
 // ─────────────────────────── media (data URL saver) ───────────────────────────
@@ -469,10 +438,8 @@ app.post('/api/images', (req, res) => {
   const base64 = dataUrl.split(',')[1];
   const buf = Buffer.from(base64, 'base64');
   const filename = `${Date.now()}-${kind}.${ext}`;
-  const filePath = path.join(UPLOAD_DIR, filename);
-  fs.writeFileSync(filePath, buf);
-  const url = `/uploads/${filename}`;
-  res.json({ url });
+  fs.writeFileSync(path.join(UPLOAD_DIR, filename), buf);
+  res.json({ url: `/uploads/${filename}` });
 });
 
 // ─────────────────────────── start ───────────────────────────
