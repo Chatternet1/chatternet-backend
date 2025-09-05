@@ -1,51 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Chatternet — Messages</title>
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Chatternet – Messages</title>
 <style>
-  body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#f6f7fb;color:#0f172a}
-  .wrap{display:grid;grid-template-columns:280px 1fr;gap:12px;padding:16px}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f6f7fb;margin:0}
+  .wrap{display:grid;grid-template-columns:280px 1fr;gap:18px;margin:24px}
   .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
-  .row{display:flex;align-items:center;gap:8px}
-  .btn{padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer}
+  .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .msg{display:flex;margin:6px 0}
+  .msg.mine{justify-content:flex-end}
+  .bubble{max-width:70%;background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:8px}
+  .btn{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer}
   .btn.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
-  .thread{padding:8px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;margin:6px 0}
-  .thread:hover{background:#f8fafc}
-  .msg{padding:6px 10px;border-radius:10px;margin:6px 0;max-width:70%}
-  .mine{background:#e0f2fe;margin-left:auto}
-  .theirs{background:#f1f5f9}
+  .muted{color:#6b7280}
 </style>
-</head>
-<body>
+</head><body>
 <div class="wrap">
   <div class="card">
-    <div class="row" style="justify-content:space-between">
-      <strong>Threads</strong>
-      <div class="row">
-        <button id="refresh" class="btn">Refresh</button>
-        <button id="chatbot" class="btn">Chat with Echo Bot</button>
-        <a class="btn" href="/index.html">Home</a>
-      </div>
-    </div>
+    <div class="row"><strong>Threads</strong><button id="refresh" class="btn">Refresh</button></div>
+    <div style="margin:8px 0"><button id="chatbot" class="btn primary">Chat with Echo Bot</button> <a class="btn" href="index.html">Home</a></div>
     <div id="threads"></div>
   </div>
 
   <div class="card">
-    <div class="row" style="justify-content:space-between">
-      <strong id="peerName">Select a thread</strong>
-      <div class="row">
-        <input id="text" placeholder="Type a message…" style="width:360px;padding:8px;border:1px solid #cbd5e1;border-radius:8px">
-        <button id="send" class="btn primary">Send</button>
-      </div>
+    <div class="row"><strong id="peerName">Select a thread</strong></div>
+    <div id="msgs" style="min-height:360px;overflow:auto"></div>
+    <div class="row" style="margin-top:8px">
+      <input id="text" placeholder="Type a message…" style="flex:1;padding:8px;border:1px solid #d1d5db;border-radius:8px"/>
+      <button id="send" class="btn primary">Send</button>
     </div>
-    <div id="msgs" style="margin-top:8px;max-height:60vh;overflow:auto"></div>
   </div>
 </div>
 
-<script src="/api.js"></script>
-<script src="/auth.js"></script>
+<script src="api.js"></script>
+<script src="auth.js"></script>
 <script>
 let ME=null, USERS=[], PEER=null;
 
@@ -53,10 +40,10 @@ function drawThreads(list){
   const box=document.getElementById('threads'); box.innerHTML='';
   if(!list.length){ box.innerHTML='<div class="muted">No threads yet.</div>'; return; }
   list.forEach(t=>{
-    const peerId = (t.last.fromId===ME.id) ? t.last.toId : t.last.fromId;
-    const peer = USERS.find(u=>String(u.id)===String(peerId));
-    const el=document.createElement('div'); el.className='thread';
-    el.textContent=(peer?.name||peer?.email||('User '+peerId));
+    const peerId = t.last.fromId===ME.id ? t.last.toId : t.last.fromId;
+    const peer = USERS.find(u=>String(u.id)===String(peerId)) || {name: 'User '+peerId,email:''};
+    const el=document.createElement('div'); el.className='row';
+    el.textContent = peer.name || peer.email || ('User '+peerId);
     el.onclick=()=>openPeer(peer);
     box.appendChild(el);
   });
@@ -65,17 +52,16 @@ function drawThreads(list){
 function drawMsgs(items){
   const box=document.getElementById('msgs'); box.innerHTML='';
   items.forEach(m=>{
-    const wrap=document.createElement('div');
-    wrap.className='msg ' + (String(m.fromId)===String(ME.id)?'mine':'theirs');
-    wrap.textContent=m.text;
-    box.appendChild(wrap);
+    const wrap=document.createElement('div'); wrap.className='msg ' + (String(m.fromId)===String(ME.id)?'mine':'theirs');
+    const b=document.createElement('div'); b.className='bubble'; b.textContent=m.text;
+    wrap.appendChild(b); box.appendChild(wrap);
   });
   box.scrollTop = box.scrollHeight;
 }
 
 async function openPeer(peer){
-  PEER=peer; document.getElementById('peerName').textContent = peer.name||peer.email||('User '+peer.id);
-  const msgs = await Api.messages.list(ME.id, peer.id);
+  PEER=peer; document.getElementById('peerName').textContent = peer.name || peer.email || ('User '+peer.id);
+  const msgs = await Api.messages.list(ME.id, PEER.id);
   drawMsgs(msgs);
 }
 
@@ -86,25 +72,23 @@ async function refreshThreads(){
 }
 
 async function sendMsg(){
-  const input = document.getElementById('text');
-  const txt = input.value.trim(); if(!txt || !PEER) return;
-  await Api.messages.send(ME.id, PEER.id, txt);
-  input.value='';
-  await openPeer(PEER);
-  await refreshThreads();
+  const t = document.getElementById('text').value.trim();
+  if(!t || !PEER) return;
+  await Api.messages.send(ME.id, PEER.id, t);
+  document.getElementById('text').value='';
+  await openPeer(PEER); await refreshThreads();
 }
 
 (async()=>{
   ME = await Auth.ensureAccount();
   document.getElementById('refresh').onclick = refreshThreads;
-  document.getElementById('send').onclick = sendMsg;
+  document.getElementById('send').onclick    = sendMsg;
   document.getElementById('chatbot').onclick = async ()=>{
-    const bot = await Auth.getEchoBot();
+    const bot = (await Api.users.list()).find(u=>u.email==='bot@demo.test');
     if(!bot){ alert('Bot not found'); return; }
-    openPeer(bot);
+    await openPeer(bot);
   };
   await refreshThreads();
 })();
 </script>
-</body>
-</html>
+</body></html>
