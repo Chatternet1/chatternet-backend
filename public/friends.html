@@ -1,94 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Chatternet — Friends</title>
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Chatternet – Friends</title>
 <style>
-  body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#f6f7fb;color:#0f172a}
-  .wrap{max-width:900px;margin:16px auto;padding:0 12px}
-  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-bottom:12px}
-  .row{display:flex;align-items:center;gap:10px}
-  .btn{padding:6px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;cursor:pointer}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f6f7fb;margin:0}
+  .wrap{max-width:980px;margin:24px auto;display:grid;gap:16px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+  .row{display:flex;justify-content:space-between;align-items:center;margin:6px 0}
+  .pill{padding:6px 10px;border-radius:999px;background:#eef2ff;border:1px solid #c7d2fe}
+  .btn{padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer;margin-left:6px}
   .btn.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
-  .pill{display:inline-block;border:1px solid #e5e7eb;border-radius:999px;padding:2px 8px;margin-right:6px}
 </style>
-</head>
-<body>
+</head><body>
 <div class="wrap">
-  <div class="card row" style="justify-content:space-between">
-    <strong>Friends</strong>
-    <a class="btn" href="/index.html">Home</a>
-  </div>
-
-  <div class="card">
-    <h3>Pending requests for you</h3>
-    <div id="requests"></div>
-  </div>
-
-  <div class="card">
-    <h3>Your friends</h3>
-    <div id="friends"></div>
-  </div>
-
-  <div class="card">
-    <h3>All users</h3>
-    <div id="all"></div>
-  </div>
+  <div class="card"><div class="row"><strong>Friends</strong><a class="btn" href="index.html">Home</a></div></div>
+  <div class="card"><h3>Pending requests for you</h3><div id="requests"></div></div>
+  <div class="card"><h3>Your friends</h3><div id="friends"></div></div>
+  <div class="card"><h3>All users</h3><div id="all"></div></div>
 </div>
 
-<script src="/api.js"></script>
-<script src="/auth.js"></script>
+<script src="api.js"></script>
+<script src="auth.js"></script>
 <script>
 let ME=null, ALL=[];
 
 function rowFor(user, actions=[]){
-  const d=document.createElement('div'); d.className='row'; d.style.justifyContent='space-between'; d.style.borderTop='1px dashed #e5e7eb'; d.style.padding='6px 0';
-  d.innerHTML = `<div><span class="pill">${user.name || user.email}</span></div>`;
+  const d=document.createElement('div'); d.className='row';
+  d.innerHTML = `<div class="pill">${user.name || user.email || ('User '+user.id)}</div>`;
   const right=document.createElement('div'); actions.forEach(a=>right.appendChild(a)); d.appendChild(right);
   return d;
 }
 
 async function draw(){
   const lists = await Api.friends.list(ME.id);
-  const friends = lists.friends || [];
-  const reqs = lists.requests || [];
-  const all = ALL.filter(u=>String(u.id)!==String(ME.id));
+  const requests = lists.requests || [];
+  const friends  = lists.friends  || [];
+  ALL = lists.all || [];
 
-  const reqBox=document.getElementById('requests'); reqBox.innerHTML='';
-  if(!reqs.length) reqBox.textContent='No pending requests.';
-  reqs.forEach(u=>{
+  const reqBox = document.getElementById('requests'); reqBox.innerHTML='';
+  if(!requests.length) reqBox.textContent='No pending requests.';
+  requests.forEach(u=>{
     const accept=document.createElement('button'); accept.className='btn primary'; accept.textContent='Accept';
     accept.onclick=async()=>{ await Api.friends.respond(u.id, ME.id, 'accept'); await draw(); };
     const decline=document.createElement('button'); decline.className='btn'; decline.textContent='Decline';
     decline.onclick=async()=>{ await Api.friends.respond(u.id, ME.id, 'decline'); await draw(); };
-    reqBox.appendChild(rowFor(u,[accept,decline]));
+    reqBox.appendChild(rowFor(u, [accept, decline]));
   });
 
-  const fBox=document.getElementById('friends'); fBox.innerHTML='';
-  if(!friends.length) fBox.textContent='You have no friends yet.';
-  friends.forEach(u=>{
-    fBox.appendChild(rowFor(u, []));
-  });
+  const frBox=document.getElementById('friends'); frBox.innerHTML='';
+  if(!friends.length) frBox.textContent='You have no friends yet.';
+  friends.forEach(u=>frBox.appendChild(rowFor(u)));
 
-  const aBox=document.getElementById('all'); aBox.innerHTML='';
-  all.forEach(u=>{
-    const already = friends.find(x=>String(x.id)===String(u.id)) || reqs.find(x=>String(x.id)===String(u.id));
-    if (already) {
-      aBox.appendChild(rowFor(u, [(()=>{const b=document.createElement('span'); b.textContent='(pending/added)'; return b;})()]));
-    } else {
+  const allBox=document.getElementById('all'); allBox.innerHTML='';
+  ALL.forEach(u=>{
+    const already = (friends.find(x=>String(x.id)===String(u.id)) || requests.find(x=>String(x.id)===String(u.id)));
+    if (already) { allBox.appendChild(rowFor(u)); }
+    else {
       const add=document.createElement('button'); add.className='btn'; add.textContent='Add friend';
       add.onclick=async()=>{ await Api.friends.request(ME.id, u.id); await draw(); };
-      aBox.appendChild(rowFor(u,[add]));
+      allBox.appendChild(rowFor(u,[add]));
     }
   });
 }
 
-(async()=>{
-  ME = await Auth.ensureAccount();
-  ALL = await Api.users.list();
-  await draw();
-})();
+(async()=>{ ME = await Auth.ensureAccount(); await draw(); })();
 </script>
-</body>
-</html>
+</body></html>
