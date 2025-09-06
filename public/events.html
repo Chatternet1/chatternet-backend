@@ -1,0 +1,839 @@
+<!DOCTYPE html>  
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Events</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --brand:#3498db; --brand-2:#2980b9;
+    --bg:#f0f2f5; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; --heart:#ff3b5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI',Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  h1,h2,h3{margin:0 0 8px;line-height:1.25}
+  p,.muted,.meta-line,.e-desc{line-height:1.45}
+  a{color:inherit;text-decoration:none}
+  .pill{display:inline-block;padding:4px 8px;border:1px solid #d7d7d7;border-radius:999px;margin-right:8px;background:#f8fafc;font-size:12px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#f6f7fb;border:1px solid #e6e8f2;padding:5px 10px;border-radius:999px;font-size:12px;margin:0 6px 6px 0}
+  .badge{font-size:12px;background:#fff0f5;border:1px solid #ffd3e3;padding:2px 8px;border-radius:999px;color:#b4235b;margin-left:6px}
+
+  /* Base header */
+  .top-bar{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer}
+
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px}
+
+  /* Cards */
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:14px 0}
+  .section-title{font-size:28px;font-weight:800;margin:4px 0 12px}
+  .subhead{display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  input,select,textarea,button{font-family:'Segoe UI',Arial,sans-serif}
+  input,select,textarea{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  textarea{resize:vertical;min-height:80px}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
+  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+  .btn.sm{padding:6px 10px;font-size:12px;border-radius:8px}
+  .muted{color:#6b7280}
+  .empty{color:#6b7280;text-align:center;padding:16px}
+
+  /* Event list item */
+  .e-item{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #ececec;border-radius:14px;background:#fafafa}
+  .e-cover-sm{width:180px;height:112px;border-radius:10px;object-fit:cover;background:#e9eef6;border:1px solid #e5e7eb}
+  .e-info{flex:1;min-width:0}
+  .e-name{font-size:26px;font-weight:800;margin:0 0 6px}
+  .meta-line{color:#475569;margin:0 0 8px}
+  .e-desc{color:#111827}
+
+  /* Event hero (details) */
+  .hero{position:relative;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.12);margin-bottom:12px}
+  .hero-bg{aspect-ratio:16/6;min-height:260px;background:#dfe7f5;background-size:cover;background-position:center}
+  .hero-bar{
+    position:absolute;left:16px;right:16px;bottom:16px;
+    display:flex;gap:16px;align-items:center;padding:12px 14px;
+    background:rgba(255,255,255,.85);backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.8);border-radius:14px;
+  }
+  .hero-title{display:flex;flex-direction:column;gap:6px}
+  .hero-title h2{font-size:34px;font-weight:800;margin:0;line-height:1.15}
+  .hero-right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+  /* Tabs + discussion feed */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+  .tab{padding:8px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#f8fafc;cursor:pointer}
+  .tab.active{background:#e9f2ff;border-color:#cfe1ff}
+
+  .composer{padding:12px;border:1px dashed #d7d7d7;border-radius:12px;background:#fafafa;margin-bottom:10px}
+  .feed-item{padding:12px;margin:10px 0;background:#fafafa;border:1px solid #ececec;border-radius:12px}
+  .f-head{display:flex;gap:10px;align-items:center}
+  .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;cursor:pointer}
+  .author{font-weight:700;cursor:pointer}
+  .meta{color:var(--muted);font-size:12px}
+  .title{font-size:18px;font-weight:700;margin:8px 0 4px}
+  .content{white-space:pre-wrap}
+  .media{border-radius:10px;overflow:hidden;border:1px solid var(--line);margin-top:8px;background:#fff}
+  .media img,.media video,.media iframe{display:block;width:100%}
+  .media iframe,.media video{aspect-ratio:16/9;height:auto;min-height:320px}
+  .util{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .likes-row{display:flex;align-items:center;gap:8px;color:#4b5563}
+  .heart-btn{width:36px;height:36px;border-radius:8px;background:#f6f7fb;border:1px solid #e6e8f2;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+  .heart-btn svg{width:20px;height:20px;fill:none;stroke:#555;stroke-width:2}
+  .heart-btn.active{background:#ffe7ed;border-color:#ffd3de}
+  .heart-btn.active svg{fill:var(--heart);stroke:var(--heart)}
+  .comments{margin-top:10px;border-top:1px solid #e5e5e5;padding-top:10px}
+  .comment{padding:8px;border:1px solid #eee;border-radius:10px;background:#fff;margin:8px 0;display:flex;gap:8px;align-items:flex-start}
+  .comment .c-avatar{width:28px;height:28px;border-radius:50%;flex:0 0 auto;cursor:pointer}
+  .comment .by{font-weight:600;font-size:13px;cursor:pointer}
+</style>
+</head>
+<body>
+
+<!-- ==== BASE HEADER ==== -->
+<script src="auth.js"></script>
+<script>
+  if (!window.Auth) {
+    (function(){
+      const LSx={ACC:'ct_accounts_v2',SESSION:'ct_session_v1'};
+      const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+      function hasAccount(){ return !!Object.keys(load(LSx.ACC,{})).length; }
+      function isLoggedIn(){ const s=load(LSx.SESSION,null),accs=load(LSx.ACC,{}); return !!(s && accs[s.user]); }
+      window.Auth={ require(opts){ const r=(opts&&opts.redirect)||'settings.html?mode=login'; if(isLoggedIn()) return true; if(!hasAccount()){location.href=r;return false;} location.href=r; return false; }, isLoggedIn, hasAccount };
+    })();
+  }
+  if (window.Auth && !Auth.require()) { /* redirected to settings.html?mode=login */ }
+</script>
+
+<div class="top-bar">
+  <h2>Events</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img src="https://i.pravatar.cc/100?u=me" id="myProfile" title="My Profile" />
+  </div>
+</div>
+
+<!-- Notifications Modal -->
+<div class="modal-bg" id="notifBg">
+  <div class="sheet">
+    <h3 style="margin:0 0 10px">Notifications</h3>
+    <div id="notifList"></div>
+    <button id="clearNotif" class="btn primary" style="margin-top:8px;">Clear</button>
+    <button id="closeNotif" class="btn" style="margin-top:8px;">Close</button>
+  </div>
+</div>
+<!-- Inbox Modal -->
+<div class="modal-bg" id="inboxBg">
+  <div class="sheet">
+    <h3 style="margin:0 0 10px">Inbox</h3>
+    <div id="inboxList"></div>
+    <button id="closeInbox" class="btn" style="margin-top:8px;">Close</button>
+  </div>
+</div>
+
+<script>
+  /* Header helpers (shared) */
+  const HLS={USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', VIEW:'ct_profile_view_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'};
+  const H$=s=>document.querySelector(s);
+  const Hload=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+  const Hsave=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const Hesc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+  (function seedUsers(){
+    let users=Hload(HLS.USERS,null);
+    if(!users){ users=[{name:'Me',avatar:'https://i.pravatar.cc/100?u=me'}]; Hsave(HLS.USERS,users); }
+    else if(!users.find(u=>u.name==='Me')){ users.unshift({name:'Me',avatar:'https://i.pravatar.cc/100?u=me'}); Hsave(HLS.USERS,users); }
+  })();
+  function getAvatarFor(name){ const list=Hload(HLS.USERS,[]); const u=list.find(x=>x.name===name); return (u&&u.avatar)||`https://i.pravatar.cc/100?u=${encodeURIComponent(name)}`; }
+  function getMeDisplayName(){ const p=Hload(HLS.PROFILE,{})['Me']; return (p&&p.displayName&&p.displayName.trim())?p.displayName.trim():'Me'; }
+  (function wireHeader(){
+    const img=H$('#myProfile'); if(img){ img.src=getAvatarFor('Me'); img.alt=getMeDisplayName(); img.onclick=()=>{ try{localStorage.setItem(HLS.VIEW,JSON.stringify({name:'Me'}));}catch{} location.href='profile.html'; }; }
+    H$('#btnMsgs')?.addEventListener('click',()=>location.href='messages.html');
+  })();
+  function addNotif(text){ const arr=Hload(HLS.NOTIF,[]); arr.unshift({id:`n_${Date.now()}`,text,time:new Date().toISOString()}); Hsave(HLS.NOTIF,arr); }
+  function addInbox(text){ const arr=Hload(HLS.INBOX,[]); arr.unshift({id:`m_${Date.now()}`,text,time:new Date().toISOString()}); Hsave(HLS.INBOX,arr); }
+
+  const notifBg=H$('#notifBg'), notifList=H$('#notifList');
+  function renderNotif(){ const arr=Hload(HLS.NOTIF,[]); notifList.innerHTML=''; if(!arr.length){notifList.innerHTML='<div class="notif-item">No notifications yet.</div>';return;} arr.forEach(n=>{const d=document.createElement('div');d.className='notif-item';d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${Hesc(n.text)}`;notifList.appendChild(d);}); }
+  H$('#btnNotif')?.addEventListener('click',()=>{ renderNotif(); notifBg.style.display='flex'; });
+  H$('#clearNotif')?.addEventListener('click',()=>{ Hsave(HLS.NOTIF,[]); renderNotif(); });
+  H$('#closeNotif')?.addEventListener('click',()=>{ notifBg.style.display='none'; });
+
+  const inboxBg=H$('#inboxBg'), inboxList=H$('#inboxList');
+  function renderInbox(){ const arr=Hload(HLS.INBOX,[]); inboxList.innerHTML=''; if(!arr.length){inboxList.innerHTML='<div class="notif-item">Inbox is empty.</div>';return;} arr.forEach(n=>{const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${Hesc(n.text)}`; inboxList.appendChild(d);}); }
+  H$('#btnInbox')?.addEventListener('click',()=>{ renderInbox(); inboxBg.style.display='flex'; });
+  H$('#closeInbox')?.addEventListener('click',()=>{ inboxBg.style.display='none'; });
+
+  document.addEventListener('click',e=>{ const t=e.target.closest('[data-profile-name]'); if(t){ try{localStorage.setItem(HLS.VIEW,JSON.stringify({name:t.getAttribute('data-profile-name')}));}catch{} location.href='profile.html'; } });
+</script>
+<!-- ==== /BASE HEADER ==== -->
+
+<div class="page">
+  <!-- Create -->
+  <section class="card">
+    <div class="subhead">
+      <h3 class="section-title">Create an Event</h3>
+    </div>
+    <div class="row">
+      <input id="evTitle" placeholder="Event title">
+      <select id="evPrivacy"><option>Public</option><option>Private</option></select>
+    </div>
+    <div class="row">
+      <input type="date" id="evDate">
+      <input type="time" id="evTime">
+      <input id="evLocation" placeholder="Location">
+    </div>
+    <div class="row">
+      <textarea id="evDesc" placeholder="Description"></textarea>
+    </div>
+    <div class="row">
+      <div>
+        <label class="muted">Event Cover</label>
+        <input type="file" id="evCover" accept="image/*">
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn primary" id="createBtn">Create Event</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Your Events -->
+  <section class="card">
+    <div class="subhead">
+      <h3 class="section-title">Your Events</h3>
+      <div class="row" style="max-width:360px;margin:0">
+        <input id="searchMine" class="search" placeholder="Search your events...">
+      </div>
+    </div>
+    <div id="mineWrap"></div>
+    <div id="mineEmpty" class="empty" style="display:none">You don’t have any events yet.</div>
+  </section>
+
+  <!-- Discover -->
+  <section class="card">
+    <div class="subhead">
+      <h3 class="section-title">Discover</h3>
+      <div class="row" style="max-width:360px;margin:0">
+        <input id="searchAll" class="search" placeholder="Search events to discover...">
+      </div>
+    </div>
+    <div id="allWrap"></div>
+    <div id="allEmpty" class="empty" style="display:none">No events to discover.</div>
+  </section>
+
+  <!-- Invites -->
+  <section class="card">
+    <h3 class="section-title">Invitations (for you)</h3>
+    <div id="inviteWrap"></div>
+    <div id="inviteEmpty" class="empty" style="display:none">No invitations.</div>
+  </section>
+
+  <!-- Detail -->
+  <section class="card" id="detail" style="display:none">
+    <div class="hero">
+      <div class="hero-bg" id="dCover"></div>
+      <div class="hero-bar">
+        <div class="hero-title">
+          <h2 id="dName">Event</h2>
+          <div class="muted" id="dMeta"></div>
+        </div>
+        <div class="hero-right" id="dActions"></div>
+      </div>
+    </div>
+
+    <div class="row" style="gap:14px;align-items:flex-start">
+      <div style="flex:2">
+        <h3 class="section-title">About</h3>
+        <p class="e-desc" id="dDesc" style="margin:6px 0 10px"></p>
+        <div>
+          <span class="pill" id="dPrivacyPill">Public</span>
+          <span class="pill" id="dCreatedBy">Host: —</span>
+        </div>
+        <div style="margin-top:10px" class="muted" id="dCounts"></div>
+
+        <!-- Tabs -->
+        <div class="tabs" id="evTabs" style="margin-top:10px">
+          <div class="tab active" data-tab="all">All</div>
+          <div class="tab" data-tab="photos">Photos</div>
+          <div class="tab" data-tab="videos">Videos</div>
+          <div class="tab" data-tab="attendees">Attendees</div>
+        </div>
+
+        <!-- Discussion Composer (hidden on Attendees tab) -->
+        <div class="composer" id="composer">
+          <div class="row">
+            <input id="epTitle" placeholder="Title (optional)">
+            <select id="epAuthor"></select>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <textarea id="epBody" placeholder="Write something…"></textarea>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <input id="epURL" placeholder="Media URL (image / video / YouTube)">
+            <input type="file" id="epFile" accept="image/*,video/*">
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn primary" id="epPost">Post to Discussion</button>
+          </div>
+        </div>
+
+        <!-- Discussion feed or attendees -->
+        <div id="evFeedList"></div>
+        <div id="evFeedEmpty" class="empty" style="display:none">No discussion yet.</div>
+
+        <div id="attendeeList" style="display:none"></div>
+        <div id="attendeeEmpty" class="empty" style="display:none">No attendees yet.</div>
+      </div>
+
+      <div style="flex:1" id="editPanel" hidden>
+        <h3 class="section-title" style="margin-bottom:6px">Edit Event</h3>
+        <div class="row">
+          <input id="eTitle" placeholder="Event title">
+        </div>
+        <div class="row">
+          <select id="ePrivacy"><option>Public</option><option>Private</option></select>
+        </div>
+        <div class="row">
+          <input type="date" id="eDate">
+          <input type="time" id="eTime">
+        </div>
+        <div class="row">
+          <input id="eLocation" placeholder="Location">
+        </div>
+        <div class="row">
+          <textarea id="eDesc" placeholder="Description"></textarea>
+        </div>
+        <div class="row">
+          <div><label class="muted">Replace Cover</label><input type="file" id="eCover" accept="image/*"></div>
+        </div>
+        <div class="row" style="margin-top:10px;flex-wrap:wrap">
+          <button class="btn primary" id="saveEdit">Save</button>
+          <button class="btn" id="cancelEdit">Cancel</button>
+          <button class="btn sm ghost" id="editAddToFeed">Add to Feed</button>
+          <button class="btn danger" id="deleteEvent">Delete Event</button>
+        </div>
+
+        <hr style="margin:14px 0;border:none;border-top:1px solid #eee">
+        <h3 class="section-title" style="margin-bottom:6px">Invite People</h3>
+        <div id="inviteList" class="muted" style="margin-bottom:8px"></div>
+        <div class="row">
+          <input id="inviteUser" placeholder="Invite by username">
+          <button class="btn ghost" id="sendInvite">Invite</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ===== Keys ===== */
+const LS={
+  USERS:'ct_users_v3',
+  EVENTS:'ct_events_v1',
+  VIEW:'ct_profile_view_v1',
+  NOTIF:'ct_notifications_v1',
+  INBOX:'ct_inbox_v1',
+  FEED:'ct_feed_posts_v7'
+};
+
+/* ===== Helpers ===== */
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}}; 
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,6)}`;
+const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+function rel(iso){const d=(Date.now()-new Date(iso).getTime())/1000;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';}
+function dataURL(file){return new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej('read');r.onload=e=>res(e.target.result);r.readAsDataURL(file);});}
+function goToProfile(name){try{localStorage.setItem(LS.VIEW,JSON.stringify({name}));}catch{}location.href='profile.html';}
+function addNotif(text){const arr=load(LS.NOTIF,[]);arr.unshift({id:uid('n'),text,time:new Date().toISOString()});save(LS.NOTIF,arr);}
+function addInbox(text){const arr=load(LS.INBOX,[]);arr.unshift({id:uid('m'),text,time:new Date().toISOString()});save(LS.INBOX,arr);}
+
+/* Users (Me + fixed AIs) */
+const BOTS=[
+  {name:'Bill Thomas',u:'bill.thomas'},{name:'Kate White',u:'kate.white'},
+  {name:'Michael Reed',u:'michael.reed'},{name:'Olivia Perez',u:'olivia.perez'},
+  {name:'David Carter',u:'david.carter'},{name:'Emily Johnson',u:'emily.johnson'},
+  {name:'Jason Brooks',u:'jason.brooks'},{name:'Sophia Turner',u:'sophia.turner'},
+  {name:'Daniel Foster',u:'daniel.foster'},{name:'Grace Lee',u:'grace.lee'}
+];
+let users=load(LS.USERS,null);
+if(!users){
+  users=[{name:'Me',avatar:'https://i.pravatar.cc/100?u=me'}];
+  BOTS.forEach(b=>users.push({name:b.name,avatar:`https://i.pravatar.cc/100?u=${encodeURIComponent(b.u)}`}));
+  save(LS.USERS,users);
+}else{
+  users=users.filter(u=>!/^User\d+$/i.test(u.name));
+  BOTS.forEach(b=>{ if(!users.find(u=>u.name===b.name)) users.push({name:b.name,avatar:`https://i.pravatar.cc/100?u=${encodeURIComponent(b.u)}`}); });
+  if(!users.find(u=>u.name==='Me')) users.unshift({name:'Me',avatar:'https://i.pravatar.cc/100?u=me'});
+  save(LS.USERS,users);
+}
+const getUser=n=>users.find(u=>u.name===n)||users[0];
+
+/* ===== Backend adapter (Render) with graceful fallback ===== */
+const API='https://chatternet-backend-1.onrender.com/api';
+async function api(path,opts={}) {
+  const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});
+  const t=await r.text();
+  try{const j=t?JSON.parse(t):null; if(!r.ok) throw new Error(j?.error||t||'Request failed'); return j;}
+  catch(e){ if(!r.ok) throw new Error(t||'Request failed'); return null; }
+}
+async function backendAvailable(){
+  try{ await api('/events',{method:'GET'}); return true; }catch{ return false; }
+}
+function ensureEventShape(ev){
+  return {
+    id:ev.id||uid('ev'),
+    title:ev.title||'Event',
+    date:ev.date||'',
+    time:ev.time||'',
+    location:ev.location||'',
+    privacy:ev.privacy||'Public',
+    desc:ev.desc||'',
+    imgSrc:ev.imgSrc||'',
+    creator:ev.creator||'Me',
+    createdAt:ev.createdAt||new Date().toISOString(),
+    invites:Array.isArray(ev.invites)?ev.invites:[],
+    rsvp: ev.rsvp || {Going:[], Maybe:[], NotGoing:[]},
+    discussion:Array.isArray(ev.discussion)?ev.discussion:[]
+  };
+}
+const Store={
+  useBackend:false,
+  async init(){ this.useBackend=await backendAvailable(); if(!this.useBackend){ save(LS.EVENTS, (load(LS.EVENTS,[])||[]).map(ensureEventShape)); }},
+  async list(){ if(this.useBackend){ const arr=await api('/events',{method:'GET'}).catch(()=>[]); return (arr||[]).map(ensureEventShape); } return (load(LS.EVENTS,[])||[]).map(ensureEventShape); },
+  async get(id){ if(this.useBackend){ const ev=await api(`/events/${encodeURIComponent(id)}`,{method:'GET'}).catch(()=>null); return ev?ensureEventShape(ev):null; } return ensureEventShape(load(LS.EVENTS,[]).find(x=>x.id===id)||{}); },
+  async create(ev){ if(this.useBackend){ const out=await api('/events',{method:'POST',body:JSON.stringify(ev)}).catch(()=>null); return out?ensureEventShape(out):null; } const list=load(LS.EVENTS,[]); list.unshift(ev); save(LS.EVENTS,list); return ev; },
+  async update(id,patchOrWhole){ if(this.useBackend){ const out=await api(`/events/${encodeURIComponent(id)}`,{method:'PUT',body:JSON.stringify(patchOrWhole)}).catch(()=>null); return out?ensureEventShape(out):null; } let list=load(LS.EVENTS,[]); const i=list.findIndex(x=>x.id===id); if(i>-1){ list[i]=ensureEventShape({...list[i],...patchOrWhole}); save(LS.EVENTS,list); return list[i]; } return null; },
+  async remove(id){ if(this.useBackend){ await api(`/events/${encodeURIComponent(id)}`,{method:'DELETE'}).catch(()=>{}); } else { save(LS.EVENTS, load(LS.EVENTS,[]).filter(x=>x.id!==id)); } }
+};
+
+/* Add to global Feed */
+function addEventToFeed(ev){
+  const posts=load(LS.FEED,[]);
+  const content = [ev.desc, [ev.date,ev.time].filter(Boolean).join(' '), ev.location].filter(Boolean).join('\n\n');
+  const media = ev.imgSrc ? {type:'image',src:ev.imgSrc} : null;
+  posts.unshift({ id:uid('p'), title:ev.title, content, authorName:'Me', createdAt:new Date().toISOString(), media, comments:[], likes:[] });
+  save(LS.FEED,posts);
+  addNotif(`Added event “${ev.title}” to the Feed.`);
+}
+
+/* ===== UI refs ===== */
+const mineWrap=$('#mineWrap'), mineEmpty=$('#mineEmpty');
+const allWrap=$('#allWrap'), allEmpty=$('#allEmpty');
+const inviteWrap=$('#inviteWrap'), inviteEmpty=$('#inviteEmpty');
+
+/* Helpers for cards */
+function counts(ev){
+  const g=ev.rsvp?.Going?.length||0,m=ev.rsvp?.Maybe?.length||0,n=ev.rsvp?.NotGoing?.length||0;
+  return `Going ${g} • Maybe ${m} • Not ${n}`;
+}
+function meta(ev){
+  const dt=[ev.date,ev.time].filter(Boolean).join(' ');
+  const loc=ev.location?` • ${ev.location}`:'';
+  return `${ev.privacy} • ${dt}${loc}`;
+}
+function isInRSVP(ev,name){
+  return (ev.rsvp?.Going||[]).includes(name) || (ev.rsvp?.Maybe||[]).includes(name) || (ev.rsvp?.NotGoing||[]).includes(name);
+}
+
+/* Build list cards */
+function card(ev,context){
+  const wrap=document.createElement('div'); wrap.className='e-item'; wrap.dataset.eid=ev.id;
+  const cover=document.createElement('img'); cover.className='e-cover-sm'; cover.src=ev.imgSrc||''; cover.alt=ev.title; cover.onerror=()=>{cover.style.display='none';};
+  const info=document.createElement('div'); info.className='e-info';
+  info.innerHTML=`
+    <div class="e-name">${esc(ev.title)}</div>
+    <div class="meta-line">${esc(meta(ev))}</div>
+    <div class="e-desc">${esc(ev.desc||'')}</div>
+    <div class="muted" style="margin-top:6px">${esc(counts(ev))}</div>`;
+  const actions=document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginLeft='auto';
+
+  const open=document.createElement('button'); open.className='btn'; open.textContent='Open'; open.onclick=()=>openDetail(ev.id); actions.appendChild(open);
+
+  if(context==='mine'){
+    const addFeed=document.createElement('button'); addFeed.className='btn sm ghost'; addFeed.textContent='Add to Feed';
+    addFeed.onclick=()=>{ addEventToFeed(ev); alert('Added to Feed!'); };
+    actions.appendChild(addFeed);
+
+    const clear=document.createElement('button'); clear.className='btn'; clear.textContent='Clear RSVP';
+    clear.onclick=async()=>{ ['Going','Maybe','NotGoing'].forEach(k=>{ ev.rsvp[k]=ev.rsvp[k].filter(n=>n!=='Me'); }); await Store.update(ev.id, ev); addNotif('RSVP cleared.'); renderLists(); closeDetailIf(ev.id); };
+    actions.appendChild(clear);
+
+    if(ev.creator==='Me'){
+      const del=document.createElement('button'); del.className='btn sm danger'; del.textContent='Delete';
+      del.onclick=()=>deleteEvent(ev.id);
+      actions.appendChild(del);
+    }
+  }else{
+    const join=document.createElement('button'); join.className='btn primary'; join.textContent='RSVP Going';
+    join.onclick=async()=>{ if(!ev.rsvp.Going.includes('Me')){ ['Going','Maybe','NotGoing'].forEach(k=>ev.rsvp[k]=ev.rsvp[k].filter(n=>n!=='Me')); ev.rsvp.Going.push('Me'); await Store.update(ev.id, ev); addNotif(`You’re going to ${ev.title}.`); renderLists(); } };
+    actions.appendChild(join);
+  }
+
+  wrap.appendChild(cover); wrap.appendChild(info); wrap.appendChild(actions);
+  return wrap;
+}
+
+/* Lists */
+let EVENTS=[];
+async function loadLists(){
+  EVENTS = (await Store.list()).map(ensureEventShape);
+}
+async function renderLists(){
+  await loadLists();
+
+  const qMine=($('#searchMine').value||'').toLowerCase();
+  const mine=EVENTS.filter(ev=>ev.creator==='Me' || isInRSVP(ev,'Me')).filter(ev=>ev.title.toLowerCase().includes(qMine));
+  mineWrap.innerHTML=''; mine.forEach(ev=>mineWrap.appendChild(card(ev,'mine')));
+  mineEmpty.style.display=mine.length?'none':'block';
+
+  const qAll=($('#searchAll').value||'').toLowerCase();
+  const discover=EVENTS.filter(ev=>ev.creator!=='Me' && !isInRSVP(ev,'Me') && ev.title.toLowerCase().includes(qAll));
+  allWrap.innerHTML=''; discover.forEach(ev=>allWrap.appendChild(card(ev,'discover')));
+  allEmpty.style.display=discover.length?'none':'block';
+
+  // invites
+  const myInvs=[];
+  EVENTS.forEach(ev=>{ (ev.invites||[]).forEach(i=>{ if(i.to==='Me' && i.status==='Pending') myInvs.push({ev,inv:i}); }); });
+  inviteWrap.innerHTML='';
+  if(!myInvs.length){ inviteEmpty.style.display='block'; }
+  else{
+    inviteEmpty.style.display='none';
+    myInvs.forEach(({ev,inv})=>{
+      const d=document.createElement('div'); d.className='e-item';
+      d.innerHTML=`<div class="e-info">
+        <div class="e-name" style="font-size:22px;margin:0 0 4px">${esc(ev.title)}</div>
+        <div class="meta-line">Invite from <strong>${esc(inv.from)}</strong> • ${esc(meta(ev))}</div>
+      </div>`;
+      const accept=document.createElement('button'); accept.className='btn primary'; accept.textContent='Accept (Going)';
+      accept.onclick=async()=>{ inv.status='Accepted'; ['Going','Maybe','NotGoing'].forEach(k=>ev.rsvp[k]=ev.rsvp[k].filter(n=>n!=='Me')); ev.rsvp.Going.push('Me'); await Store.update(ev.id, ev); addNotif(`You accepted an invite to ${ev.title}.`); renderLists(); if(currentDetailId===ev.id) openDetail(ev.id); };
+      const decline=document.createElement('button'); decline.className='btn'; decline.textContent='Decline';
+      decline.onclick=async()=>{ inv.status='Declined'; ev.rsvp.NotGoing.push('Me'); await Store.update(ev.id, ev); renderLists(); };
+      d.appendChild(accept); d.appendChild(decline);
+      inviteWrap.appendChild(d);
+    });
+  }
+}
+
+/* Create */
+$('#createBtn').onclick=async()=>{
+  const title=$('#evTitle').value.trim(); if(!title) return alert('Add a title');
+  const privacy=$('#evPrivacy').value;
+  const date=$('#evDate').value, time=$('#evTime').value, location=$('#evLocation').value.trim();
+  const desc=$('#evDesc').value.trim();
+  const f=$('#evCover').files[0];
+  let img=''; if(f) img=await dataURL(f).catch(()=>'');
+
+  const ev=ensureEventShape({title,privacy,date,time,location,desc,imgSrc:img,creator:'Me'});
+  const created=await Store.create(ev);
+  if(!created){ alert('Could not create event.'); return; }
+  addNotif(`Event created: ${title}`);
+
+  // clear
+  ['#evTitle','#evLocation','#evDesc'].forEach(s=>$(s).value='');
+  $('#evDate').value=''; $('#evTime').value=''; $('#evPrivacy').value='Public'; $('#evCover').value='';
+  await renderLists();
+  openDetail(created.id);
+};
+
+/* Detail */
+let currentDetailId=''; let currentTab='all';
+function closeDetailIf(id){ if(currentDetailId===id){ $('#detail').style.display='none'; currentDetailId=''; } }
+
+async function openDetail(id){
+  const ev=(await Store.get(id))||EVENTS.find(x=>x.id===id); if(!ev) return;
+  currentDetailId=id;
+
+  const bg=$('#dCover'); bg.style.backgroundImage=ev.imgSrc?`url('${ev.imgSrc}')`:''; if(!ev.imgSrc){ bg.style.background='#dfe7f5'; }
+  $('#dName').textContent=ev.title;
+  $('#dMeta').textContent=meta(ev);
+  $('#dDesc').textContent=ev.desc||'—';
+  $('#dPrivacyPill').textContent=ev.privacy;
+  $('#dCreatedBy').textContent=`Host: ${ev.creator}`;
+  $('#dCounts').textContent=counts(ev);
+
+  const actions=$('#dActions'); actions.innerHTML='';
+  const canEdit = ev.creator==='Me';
+  if(!canEdit){
+    const go=document.createElement('button'); go.className='btn primary'; go.textContent='Going';
+    const maybe=document.createElement('button'); maybe.className='btn'; maybe.textContent='Maybe';
+    const not=document.createElement('button'); not.className='btn'; not.textContent='Not Going';
+    go.onclick=()=>setRSVP(ev,'Going'); maybe.onclick=()=>setRSVP(ev,'Maybe'); not.onclick=()=>setRSVP(ev,'NotGoing');
+    actions.appendChild(go); actions.appendChild(maybe); actions.appendChild(not);
+  }
+  const addFeed=document.createElement('button'); addFeed.className='btn ghost'; addFeed.textContent='Add to Feed';
+  addFeed.onclick=()=>{ addEventToFeed(ev); alert('Added to Feed!'); };
+  actions.appendChild(addFeed);
+
+  const edit=document.createElement('button'); edit.className='btn ghost'; edit.textContent='Edit Event';
+  edit.style.display = canEdit ? 'inline-flex' : 'none';
+  edit.onclick=()=>toggleEdit(true);
+  actions.appendChild(edit);
+
+  // edit panel
+  $('#eTitle').value=ev.title; $('#ePrivacy').value=ev.privacy; $('#eDate').value=ev.date; $('#eTime').value=ev.time; $('#eLocation').value=ev.location; $('#eDesc').value=ev.desc||'';
+  renderInviteList(ev);
+  $('#editAddToFeed').onclick=()=>{ addEventToFeed(ev); alert('Added to Feed!'); };
+
+  // Composer author list
+  const epAuthor=$('#epAuthor'); epAuthor.innerHTML=''; users.forEach(u=>{ const o=document.createElement('option'); o.value=u.name; o.textContent=u.name; epAuthor.appendChild(o); }); epAuthor.value='Me';
+
+  setActiveTab(currentTab || 'all');
+  renderEventView(ev);
+
+  $('#detail').style.display='block';
+  document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function setRSVP(ev,which){
+  ['Going','Maybe','NotGoing'].forEach(k=>ev.rsvp[k]=ev.rsvp[k].filter(n=>n!=='Me'));
+  ev.rsvp[which].push('Me');
+  await Store.update(ev.id, ev);
+  addNotif(`RSVP updated for ${ev.title}: ${which.replace('NotGoing','Not Going')}`);
+  await renderLists();
+  if(currentDetailId===ev.id) openDetail(ev.id);
+}
+
+function toggleEdit(on){ $('#editPanel').hidden=!on; }
+$('#cancelEdit').onclick=()=>toggleEdit(false);
+$('#saveEdit').onclick=async()=>{
+  const ev=(await Store.get(currentDetailId))||EVENTS.find(x=>x.id===currentDetailId); if(!ev) return;
+  ev.title=$('#eTitle').value.trim()||ev.title;
+  ev.privacy=$('#ePrivacy').value;
+  ev.date=$('#eDate').value; ev.time=$('#eTime').value; ev.location=$('#eLocation').value.trim();
+  ev.desc=$('#eDesc').value.trim();
+  const f=$('#eCover').files[0]; if(f) ev.imgSrc=await dataURL(f).catch(()=>ev.imgSrc);
+  await Store.update(ev.id, ev);
+  addNotif(`Updated event: ${ev.title}`);
+  toggleEdit(false); openDetail(ev.id); renderLists();
+};
+
+/* ➕ Delete Event (creator only) */
+async function deleteEvent(id){
+  const ev=(await Store.get(id))||EVENTS.find(x=>x.id===id); if(!ev) return;
+  if(ev.creator!=='Me'){ alert('Only the host can delete this event.'); return; }
+  if(!confirm(`Delete the event "${ev.title}"? This cannot be undone.`)) return;
+  await Store.remove(id);
+  addNotif(`Deleted event: ${ev.title}`);
+  $('#detail').style.display='none'; currentDetailId='';
+  renderLists();
+}
+$('#deleteEvent').onclick=()=>{ if(currentDetailId) deleteEvent(currentDetailId); };
+
+function renderInviteList(ev){
+  const list=$('#inviteList'); list.innerHTML='';
+  const invs=ev.invites||[];
+  if(!invs.length){ list.textContent='No invites yet.'; return; }
+  invs.forEach(i=>{
+    const s=document.createElement('div');
+    s.innerHTML=`<span class="pill">${esc(i.to)}</span> <span class="muted">${esc(i.status)}</span>`;
+    list.appendChild(s);
+  });
+}
+
+$('#sendInvite').onclick=async()=>{
+  const ev=(await Store.get(currentDetailId))||EVENTS.find(x=>x.id===currentDetailId); if(!ev) return;
+  const to=($('#inviteUser').value||'').trim(); if(!to) return alert('Enter a username');
+  if(!users.find(u=>u.name===to)) return alert('No such user.');
+  ev.invites=ev.invites||[];
+  if(ev.invites.some(i=>i.to===to && i.status==='Pending')) return alert('Invite already pending.');
+  ev.invites.unshift({id:uid('inv'),to,from:'Me',status:'Pending',time:new Date().toISOString()});
+  await Store.update(ev.id, ev);
+  addInbox(`Event invite to ${to} for "${ev.title}".`);
+  $('#inviteUser').value='';
+  renderInviteList(ev);
+  alert('Invite sent!');
+};
+
+/* ===== Discussion (per-event feed) ===== */
+function fileToMedia(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onerror=()=>rej('read_error');
+    r.onload=e=>{
+      const data=e.target.result;
+      if(file.type.startsWith('image/')) return res({kind:'photo',media:{type:'image',src:data}});
+      if(file.type.startsWith('video/')) return res({kind:'video',media:{type:'video',src:data}});
+      res(null);
+    };
+    r.readAsDataURL(file);
+  });
+}
+$('#epPost').addEventListener('click', async ()=>{
+  const ev=(await Store.get(currentDetailId))||EVENTS.find(x=>x.id===currentDetailId); if(!ev) return;
+  const title=$('#epTitle').value.trim();
+  const body=$('#epBody').value.trim();
+  const url=$('#epURL').value.trim();
+  const file=$('#epFile').files[0];
+  const author=$('#epAuthor').value||'Me';
+  if(!title && !body && !url && !file){ alert('Write something or add media.'); return; }
+  let kind='post', media=null;
+  if(file){
+    const fm=await fileToMedia(file).catch(()=>null);
+    if(!fm){ alert('Unsupported file.'); return; }
+    kind=fm.kind; media=fm.media;
+  }else if(url){
+    const low=url.toLowerCase();
+    if(url.includes('youtube.com/watch?v=') || url.includes('youtu.be/')){
+      let embed=url.replace('watch?v=','embed/').replace('youtu.be/','www.youtube.com/embed/'); embed+=(embed.includes('?')?'&':'?')+'rel=0';
+      kind='video'; media={type:'embed',src:embed,allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"};
+    }else if(/\.(png|jpg|jpeg|gif|webp)(\?|$)/.test(low)){ kind='photo'; media={type:'image',src:url}; }
+    else if(/\.(mp4|webm|ogv|mov)(\?|$)/.test(low)){ kind='video'; media={type:'video',src:url}; }
+    else { kind='post'; media={type:'link',src:url}; }
+  }
+  const item={ id:uid('ef'), kind, title, content:body, authorName:author, createdAt:new Date().toISOString(), media, comments:[], likes:[] };
+  ev.discussion.unshift(item);
+  await Store.update(ev.id, ev);
+  addNotif(`${author} posted in ${ev.title}.`);
+  ['#epTitle','#epBody','#epURL'].forEach(s=>$(s).value=''); $('#epFile').value='';
+  renderEventFeed(ev);
+});
+
+function heart(active){const b=document.createElement('button');b.className='heart-btn';if(active)b.classList.add('active');b.innerHTML=`<svg viewBox="0 0 24 24"><path d="M12 21s-6.716-4.27-9.167-7.38C.63 11.154 1.57 7.9 3.985 6.54c1.75-1.01 4.005-.63 5.348.89L12 9.2l2.667-1.77c1.343-1.52 3.598-1.9 5.348-.89 2.414 1.36 3.354 4.614 1.152 7.08C18.716 16.73 12 21 12 21z"/></svg>`;return b;}
+
+function commentEl(item,c){
+  const u=getUser(c.userName);
+  const el=document.createElement('div'); el.className='comment';
+  el.innerHTML=`
+    <img class="c-avatar" src="${esc(u.avatar)}" data-profile-name="${esc(u.name)}" />
+    <div style="flex:1">
+      <div><span class="by" data-profile-name="${esc(u.name)}">${esc(u.name)}</span> <span class="meta">• ${rel(c.createdAt)}</span></div>
+      <div class="ctxt">${esc(c.text)}</div>
+    </div>`;
+  const row=document.createElement('div'); row.className='likes-row';
+  c.likes=c.likes||[];
+  const actor=$('#epAuthor').value||'Me';
+  const btn=heart(c.likes.includes(actor)); const cnt=document.createElement('span'); cnt.textContent=String(c.likes.length);
+  btn.onclick=async()=>{const who=actor; const set=new Set(c.likes); set.has(who)?set.delete(who):set.add(who); c.likes=Array.from(set); await Store.update(currentDetailId, (await Store.get(currentDetailId))||{}); btn.classList.toggle('active',set.has(who)); cnt.textContent=String(set.size);};
+  row.appendChild(btn); row.appendChild(document.createTextNode('Like • ')); row.appendChild(cnt);
+  el.appendChild(row);
+  return el;
+}
+
+function feedItemEl(ev,item){
+  const u=getUser(item.authorName);
+  const wrap=document.createElement('div'); wrap.className='feed-item';
+  let mediaHTML='';
+  if(item.media){
+    if(item.media.type==='image') mediaHTML=`<div class="media"><img src="${esc(item.media.src)}" alt=""></div>`;
+    else if(item.media.type==='video') mediaHTML=`<div class="media"><video controls src="${esc(item.media.src)}"></video></div>`;
+    else if(item.media.type==='embed') mediaHTML=`<div class="media"><iframe src="${esc(item.media.src)}" allow="${item.media.allow||''}" frameborder="0" allowfullscreen></iframe></div>`;
+    else mediaHTML=`<div class="media"><a href="${esc(item.media.src)}" target="_blank" style="display:block;padding:12px">${esc(item.media.src)}</a></div>`;
+  }
+  wrap.innerHTML=`
+    <div class="f-head">
+      <img class="avatar" src="${esc(u.avatar)}" data-profile-name="${esc(u.name)}" />
+      <div>
+        <div class="author" data-profile-name="${esc(u.name)}">${esc(u.name)}</div>
+        <div class="meta">${new Date(item.createdAt).toLocaleString()} • ${rel(item.createdAt)} • <span class="pill">${item.kind[0].toUpperCase()+item.kind.slice(1)}</span></div>
+      </div>
+    </div>
+    ${item.title?`<div class="title">${esc(item.title)}</div>`:''}
+    <div class="content">${esc(item.content||'')}</div>
+    ${mediaHTML}`;
+  const util=document.createElement('div'); util.className='util';
+  item.likes=item.likes||[];
+  const actor=$('#epAuthor').value||'Me';
+  const likeBtn=heart(item.likes.includes(actor)); const cnt=document.createElement('span'); cnt.textContent=String(item.likes.length);
+  likeBtn.onclick=async()=>{const who=actor; const set=new Set(item.likes); set.has(who)?set.delete(who):set.add(who); item.likes=Array.from(set); await Store.update(ev.id, ev); likeBtn.classList.toggle('active',set.has(who)); cnt.textContent=String(set.size);};
+  util.appendChild(likeBtn); util.appendChild(document.createTextNode(' Like • ')); util.appendChild(cnt);
+  wrap.appendChild(util);
+
+  const box=document.createElement('div'); box.className='comments';
+  box.innerHTML=`<div class="row"><input class="c-input" placeholder="Write a comment"><button class="btn primary c-add">Comment</button></div><div class="c-list"></div>`;
+  const list=box.querySelector('.c-list'); (item.comments||[]).forEach(c=>list.appendChild(commentEl(item,c)));
+  box.querySelector('.c-add').onclick=async()=>{
+    const input=box.querySelector('.c-input'); const text=input.value.trim(); if(!text){alert('Add a comment');return;}
+    const c={id:uid('c'),userName:actor,text,createdAt:new Date().toISOString(),likes:[]};
+    item.comments=item.comments||[]; item.comments.push(c); await Store.update(ev.id, ev); list.appendChild(commentEl(item,c)); input.value='';
+  };
+  wrap.appendChild(box);
+
+  return wrap;
+}
+
+function renderEventFeed(ev){
+  const list=$('#evFeedList'), empty=$('#evFeedEmpty');
+  list.innerHTML='';
+  const items=[...ev.discussion].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))
+    .filter(it=>{
+      if(currentTab==='photos') return it.kind==='photo';
+      if(currentTab==='videos') return it.kind==='video';
+      return true; // all
+    });
+  if(!items.length){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  items.forEach(it=>list.appendChild(feedItemEl(ev,it)));
+}
+
+function renderAttendees(ev){
+  const list=$('#attendeeList'); const empty=$('#attendeeEmpty');
+  list.innerHTML='';
+  const names = [...(ev.rsvp.Going||[])];
+  if(!names.length){ empty.style.display='block'; return; }
+  empty.style.display='none';
+  names.forEach(name=>{
+    const u=getUser(name);
+    const row=document.createElement('div'); row.className='e-item';
+    row.innerHTML=`
+      <img class="e-cover-sm" src="${esc(u.avatar)}" alt="${esc(u.name)}" style="width:64px;height:64px;border-radius:12px">
+      <div class="e-info">
+        <div class="e-name" style="font-size:20px" data-profile-name="${esc(u.name)}">${esc(u.name)}</div>
+        <div class="meta-line">Going</div>
+      </div>`;
+    if(ev.creator==='Me' && name!=='Me'){
+      const rm=document.createElement('button'); rm.className='btn sm danger'; rm.textContent='Remove RSVP';
+      rm.onclick=async()=>{ ev.rsvp.Going=ev.rsvp.Going.filter(n=>n!==name); await Store.update(ev.id, ev); addNotif(`Removed ${name} from Going on ${ev.title}.`); renderAttendees(ev); $('#dCounts').textContent=counts(ev); renderLists(); };
+      row.appendChild(rm);
+    }
+    list.appendChild(row);
+  });
+}
+
+function setActiveTab(tab){
+  currentTab=tab;
+  $$('#evTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===tab));
+  const isAtt = tab==='attendees';
+  $('#composer').style.display = isAtt ? 'none':'block';
+  $('#evFeedList').style.display = isAtt ? 'none':'block';
+  $('#evFeedEmpty').style.display = isAtt ? 'none':'block';
+  $('#attendeeList').style.display = isAtt ? 'block':'none';
+  $('#attendeeEmpty').style.display = 'none';
+}
+
+$('#evTabs').addEventListener('click',async e=>{
+  const t=e.target.closest('.tab'); if(!t) return;
+  setActiveTab(t.dataset.tab);
+  const ev=(await Store.get(currentDetailId))||EVENTS.find(x=>x.id===currentDetailId); if(!ev) return;
+  renderEventView(ev);
+});
+
+function renderEventView(ev){
+  if(currentTab==='attendees'){ renderAttendees(ev); return; }
+  renderEventFeed(ev);
+}
+
+/* Search */
+$('#searchMine').addEventListener('input',renderLists);
+$('#searchAll').addEventListener('input',renderLists);
+
+/* Profile routing quick */
+document.addEventListener('click',e=>{ const t=e.target.closest('[data-profile-name]'); if(t){ goToProfile(t.getAttribute('data-profile-name')); } });
+
+/* Init */
+(async function boot(){
+  await Store.init();
+  await renderLists();
+})();
+</script>
+</body>
+</html>
