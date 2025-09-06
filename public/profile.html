@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Profile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Present in your repo; safe if absent -->
+<script src="auth.js"></script>
+<script src="api.js"></script>
+
+<style>
+  :root{
+    --brand:#3498db; --brand-2:#2980b9;
+    --bg:#f0f2f5; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; --heart:#ff3b5c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif}
+
+  /* Header (shared) */
+  .top-bar{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;object-fit:cover}
+
+  /* Modals */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2000}
+  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
+  .notif-item{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+
+  /* Layout */
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px}
+  .stack{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .muted{color:var(--muted)}
+  input,select,textarea,button{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  textarea{resize:vertical;min-height:90px}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
+  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+  .pill{display:inline-block;padding:4px 10px;border:1px solid #dfe3f0;background:#fff;border-radius:999px;font-size:12px;margin-right:6px}
+
+  /* Hero */
+  .hero{position:relative;border-radius:18px;overflow:hidden;background:#dfe7f5;border:1px solid #e6edf8}
+  .cover{aspect-ratio:16/5;min-height:220px;background-size:cover;background-position:center}
+  .pbar{position:absolute;left:14px;right:14px;bottom:14px;display:flex;gap:14px;align-items:center;padding:12px 14px;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.9);border-radius:14px}
+  .ava{width:86px;height:86px;border-radius:50%;border:3px solid #fff;object-fit:cover}
+  .htext h2{margin:0;font-size:30px;font-weight:900}
+  .htext .muted{margin-top:2px}
+  .hbtns{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+  /* Media grid */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}}
+  .m{border:1px solid #ececec;border-radius:12px;overflow:hidden;background:#fafafa}
+  .m img,.m video{display:block;width:100%}
+  .m video{aspect-ratio:16/9}
+
+  /* Posts */
+  .post{padding:12px;border:1px solid #ececec;border-radius:12px;background:#fafafa;margin:10px 0}
+  .post .title{font-weight:800;margin-bottom:6px}
+
+  /* Status */
+  #status{margin-top:6px;font-size:13px}
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="top-bar">
+    <h2>Profile</h2>
+    <div class="top-actions">
+      <button id="btnNotif">Notifications</button>
+      <button id="btnInbox">Inbox</button>
+      <button id="btnMsgs">Messages</button>
+      <img id="myProfile" title="My Profile" src="https://i.pravatar.cc/100?u=me" />
+    </div>
+  </div>
+
+  <!-- Notifications Modal -->
+  <div class="modal-bg" id="notifBg">
+    <div class="sheet">
+      <h3 style="margin:0 0 10px">Notifications</h3>
+      <div id="notifList"></div>
+      <button id="clearNotif" class="btn primary" style="margin-top:8px;">Clear</button>
+      <button id="closeNotif" class="btn" style="margin-top:8px;">Close</button>
+    </div>
+  </div>
+  <!-- Inbox Modal -->
+  <div class="modal-bg" id="inboxBg">
+    <div class="sheet">
+      <h3 style="margin:0 0 10px">Inbox</h3>
+      <div id="inboxList"></div>
+      <button id="closeInbox" class="btn" style="margin-top:8px;">Close</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <section class="card" id="heroCard" style="padding:0">
+      <div class="hero">
+        <div class="cover" id="pCover"></div>
+        <div class="pbar">
+          <img id="pAvatar" class="ava" alt="">
+          <div class="htext">
+            <h2 id="pName">—</h2>
+            <div class="muted" id="pSub">—</div>
+          </div>
+          <div class="hbtns" id="pBtns"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="row" style="align-items:flex-start">
+      <!-- Left: About / Edit -->
+      <section class="card" style="flex:1.2">
+        <h3 style="margin:0 0 10px;font-size:22px;font-weight:900">About</h3>
+        <div id="aboutView">
+          <p id="pBio" style="white-space:pre-wrap;margin:6px 0 10px"></p>
+          <div class="muted">
+            <span class="pill" id="pFriendsCount">Friends — 0</span>
+            <span class="pill" id="pPostsCount">Posts — 0</span>
+            <span class="pill" id="pMediaCount">Media — 0</span>
+          </div>
+        </div>
+
+        <div id="editPanel" hidden>
+          <div class="row"><input id="eDisplayName" placeholder="Display name"></div>
+          <div class="row"><textarea id="eBio" placeholder="Bio (multi-line allowed)"></textarea></div>
+          <div class="row"><input id="eAvatar" placeholder="Avatar URL"><input id="eCover" placeholder="Cover URL (optional)"></div>
+          <div class="row" style="flex-wrap:wrap;margin-top:6px">
+            <button class="btn primary" id="saveEdit">Save</button>
+            <button class="btn" id="cancelEdit">Cancel</button>
+          </div>
+          <div id="status" class="muted"></div>
+        </div>
+      </section>
+
+      <!-- Right: Activity -->
+      <section class="card" style="flex:1.8">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <h3 style="margin:0;font-size:22px;font-weight:900">Activity</h3>
+          <div class="row" style="gap:6px;flex:0 0 auto">
+            <button class="btn pill" id="tabMedia">Media</button>
+            <button class="btn pill" id="tabPosts">Posts</button>
+          </div>
+        </div>
+
+        <!-- Media grid -->
+        <div id="mediaWrap">
+          <div id="mediaGrid" class="grid"></div>
+          <div id="mediaEmpty" class="muted" style="text-align:center;padding:10px;display:none">No media yet.</div>
+        </div>
+
+        <!-- Posts list -->
+        <div id="postsWrap" style="display:none">
+          <div id="postList"></div>
+          <div id="postsEmpty" class="muted" style="text-align:center;padding:10px;display:none">No posts yet.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  /* ===== Safe local storage ===== */
+  let STORAGE_OK = true; const MEM={};
+  const load=(k,f)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{STORAGE_OK=false;return (k in MEM)?MEM[k]:f;} };
+  const save=(k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch{STORAGE_OK=false;MEM[k]=v;} };
+
+  /* ===== Keys & helpers ===== */
+  const API='https://chatternet-backend-1.onrender.com/api';
+  const LS={USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', VIEW:'ct_profile_view_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1', MEDIA:'ct_media_items_v2', FEED:'ct_feed_posts_v7'};
+  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+  const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+  const nowISO=()=>new Date().toISOString();
+  const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+  const rel=iso=>{const d=(Date.now()-new Date(iso).getTime())/1000;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
+  function addNotif(text){const arr=load(LS.NOTIF,[]);arr.unshift({id:uid('n'),text,time:nowISO()});save(LS.NOTIF,arr);}
+  function addInbox(text){const arr=load(LS.INBOX,[]);arr.unshift({id:uid('m'),text,time:nowISO()});save(LS.INBOX,arr);}
+  function goToProfile(name){ try{localStorage.setItem(LS.VIEW,JSON.stringify({name}));}catch{} location.href='profile.html'; }
+  function setStatus(msg,isWarn){ const el=$('#status'); el.textContent=msg||''; el.style.color=isWarn?'#b45309':'#667085'; }
+
+  /* ===== Seed users ===== */
+  const BOTS=[{name:'Bill Thomas',u:'bill.thomas'},{name:'Kate White',u:'kate.white'},{name:'Michael Reed',u:'michael.reed'},{name:'Olivia Perez',u:'olivia.perez'},{name:'David Carter',u:'david.carter'},{name:'Emily Johnson',u:'emily.johnson'},{name:'Jason Brooks',u:'jason.brooks'},{name:'Sophia Turner',u:'sophia.turner'},{name:'Daniel Foster',u:'daniel.foster'},{name:'Grace Lee',u:'grace.lee'}];
+  (function seedUsers(){
+    let users=load(LS.USERS,null);
+    if(!users){
+      users=[{name:'Me',avatar:'https://i.pravatar.cc/100?u=me'}];
+      BOTS.forEach(b=>users.push({name:b.name,avatar:`https://i.pravatar.cc/100?u=${encodeURIComponent(b.u)}`}));
+    }else{
+      users=users.filter(u=>!/^User\d+$/i.test(u.name));
+      if(!users.find(u=>u.name==='Me')) users.unshift({name:'Me',avatar:'https://i.pravatar.cc/100?u=me'});
+      BOTS.forEach(b=>{ if(!users.find(u=>u.name===b.name)) users.push({name:b.name,avatar:`https://i.pravatar.cc/100?u=${encodeURIComponent(b.u)}`}); });
+    }
+    save(LS.USERS,users);
+  })();
+  const USERS=load(LS.USERS,[]);
+  const userByName=n=>USERS.find(u=>u.name===n)||USERS[0]||{name:'Me',avatar:'https://i.pravatar.cc/100?u=me'};
+
+  /* ===== Backend (optional) ===== */
+  async function api(path,opts={}){ const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts}).catch(()=>null); if(!r||!r.ok){ throw new Error('offline'); } return r.json(); }
+  async function getUsers(){ try{return await api('/users');}catch{return [];} }
+  async function putUser(id,body){ try{return await api(`/users/${encodeURIComponent(id)}`,{method:'PUT',body:JSON.stringify(body)});}catch{return null;} }
+  async function listPosts(){ // prefer backend posts; fallback to LS.FEED
+    try{ if(window.Api && Api.posts && Api.posts.list){ return await Api.posts.list(); } }catch{}
+    return load(LS.FEED,[]);
+  }
+
+  /* ===== Header wiring ===== */
+  (function wireHeader(){
+    const img=$('#myProfile'); if(img){ img.src=(userByName('Me').avatar)||'https://i.pravatar.cc/100?u=me'; img.alt='My Profile'; img.onclick=()=>goToProfile('Me'); }
+    $('#btnMsgs')?.addEventListener('click',()=>location.href='messages.html');
+
+    const notifBg=$('#notifBg'), notifList=$('#notifList');
+    function renderNotif(){ const arr=load(LS.NOTIF,[]); notifList.innerHTML=''; if(!arr.length){notifList.innerHTML='<div class="notif-item">No notifications yet.</div>';return;} arr.forEach(n=>{const d=document.createElement('div');d.className='notif-item';d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}`;notifList.appendChild(d);}); }
+    $('#btnNotif')?.addEventListener('click',()=>{ renderNotif(); notifBg.style.display='flex'; });
+    $('#clearNotif')?.addEventListener('click',()=>{ save(LS.NOTIF,[]); renderNotif(); });
+    $('#closeNotif')?.addEventListener('click',()=>{ notifBg.style.display='none'; });
+
+    const inboxBg=$('#inboxBg'), inboxList=$('#inboxList');
+    function renderInbox(){ const arr=load(LS.INBOX,[]); inboxList.innerHTML=''; if(!arr.length){inboxList.innerHTML='<div class="notif-item">Inbox is empty.</div>';return;} arr.forEach(n=>{const d=document.createElement('div');d.className='notif-item';d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}`;inboxList.appendChild(d);}); }
+    $('#btnInbox')?.addEventListener('click',()=>{ renderInbox(); inboxBg.style.display='flex'; });
+    $('#closeInbox')?.addEventListener('click',()=>{ inboxBg.style.display='none'; });
+
+    document.addEventListener('click',e=>{ const t=e.target.closest('[data-profile-name]'); if(t){ goToProfile(t.getAttribute('data-profile-name')); } });
+  })();
+
+  /* ===== Determine viewed profile ===== */
+  const VIEW=load(LS.VIEW,null);
+  const VIEW_NAME = (VIEW && VIEW.name) || 'Me';
+  const ME_NAME = 'Me';
+  const IS_ME = VIEW_NAME==='Me';
+
+  /* ===== Local profile store ===== */
+  const PROFILES = load(LS.PROFILE,{});
+  const CURRENT = PROFILES[VIEW_NAME] || {};
+  const ME_PROFILE = PROFILES[ME_NAME] || {};
+
+  /* ===== Render hero ===== */
+  function renderHero(){
+    const baseUser = userByName(VIEW_NAME);
+    const display = (VIEW_NAME==='Me' && ME_PROFILE.displayName) ? ME_PROFILE.displayName : (CURRENT.displayName || VIEW_NAME);
+    const sub = VIEW_NAME==='Me' ? 'This is you' : 'Member';
+    $('#pName').textContent = display;
+    $('#pSub').textContent = sub;
+    const av = (VIEW_NAME==='Me' ? (ME_PROFILE.avatar || baseUser.avatar) : (CURRENT.avatar || baseUser.avatar) ) || 'https://i.pravatar.cc/100?u=me';
+    $('#pAvatar').src = av; $('#myProfile').src = (userByName('Me').avatar)||'https://i.pravatar.cc/100?u=me';
+    const cover = (VIEW_NAME==='Me' ? ME_PROFILE.cover : CURRENT.cover) || '';
+    $('#pCover').style.backgroundImage = cover ? `url('${cover}')` : '';
+
+    const btns=$('#pBtns'); btns.innerHTML='';
+    if(IS_ME){
+      const edit=document.createElement('button'); edit.className='btn ghost'; edit.textContent='Edit Profile';
+      edit.onclick=()=>toggleEdit(true); btns.appendChild(edit);
+    }else{
+      const msg=document.createElement('button'); msg.className='btn primary'; msg.textContent='Message';
+      msg.onclick=()=>{ location.href=`messages.html?with=${encodeURIComponent(VIEW_NAME)}`; }; btns.appendChild(msg);
+      const backMe=document.createElement('button'); backMe.className='btn'; backMe.textContent='View My Profile';
+      backMe.onclick=()=>goToProfile('Me'); btns.appendChild(backMe);
+    }
+  }
+
+  /* ===== About counts ===== */
+  async function updateCounts(){
+    // friends count from backend if possible
+    let friends = 0;
+    try{
+      const list = await getUsers();
+      const me = list.find(u=>u.name===VIEW_NAME);
+      if(me){ const others = list.filter(u=>u.id!==me.id); friends = others.filter(u => (me.friends||[]).includes(u.id) && (u.friends||[]).includes(me.id)).length; }
+    }catch{}
+    // posts/media counts
+    let posts = 0; let media = 0;
+    try{
+      const all = await listPosts(); posts = (all||[]).filter(p=>(p.authorName||'')===VIEW_NAME).length;
+    }catch{}
+    const mediaItems = load(LS.MEDIA,[]).filter(m => (m.uploaderName||'')===VIEW_NAME);
+    media = mediaItems.length;
+
+    $('#pFriendsCount').textContent = `Friends — ${friends}`;
+    $('#pPostsCount').textContent   = `Posts — ${posts}`;
+    $('#pMediaCount').textContent   = `Media — ${media}`;
+  }
+
+  /* ===== About text ===== */
+  function renderAbout(){
+    const bio = (IS_ME ? ME_PROFILE.bio : CURRENT.bio) || '—';
+    $('#pBio').textContent = bio;
+  }
+
+  /* ===== Activity: Media ===== */
+  function renderMedia(){
+    const grid=$('#mediaGrid'), empty=$('#mediaEmpty'); grid.innerHTML='';
+    const list = (load(LS.MEDIA,[])||[]).filter(m=>(m.uploaderName||'')===VIEW_NAME).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    if(!list.length){ empty.style.display='block'; return; }
+    empty.style.display='none';
+    list.forEach(m=>{
+      const card=document.createElement('div'); card.className='m';
+      if(m.media?.type==='image'){ card.innerHTML=`<img src="${esc(m.media.src)}" alt="">`; }
+      else if(m.media?.type==='video'){ card.innerHTML=`<video controls src="${esc(m.media.src)}"></video>`; }
+      else if(m.media?.type==='embed'){ card.innerHTML=`<div style="position:relative;padding-top:56.25%"><iframe src="${esc(m.media.src)}" allow="${m.media.allow||''}" frameborder="0" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%"></iframe></div>`; }
+      else { card.innerHTML=`<a href="${esc(m.media?.src||'#')}" target="_blank" style="display:block;padding:12px">${esc(m.media?.src||'Link')}</a>`; }
+      grid.appendChild(card);
+    });
+  }
+
+  /* ===== Activity: Posts ===== */
+  async function renderPosts(){
+    const listEl=$('#postList'), empty=$('#postsEmpty'); listEl.innerHTML='';
+    const all = await listPosts().catch(()=>[]);
+    const mine = (all||[]).filter(p=>(p.authorName||'')===VIEW_NAME).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    if(!mine.length){ empty.style.display='block'; return; }
+    empty.style.display='none';
+    mine.forEach(p=>{
+      const d=document.createElement('div'); d.className='post';
+      d.innerHTML = `
+        <div class="title">${esc(p.title||'(no title)')}</div>
+        <div class="muted">${new Date(p.createdAt||Date.now()).toLocaleString()} • ${p.createdAt?esc(rel(p.createdAt)):'now'}</div>
+        <div style="white-space:pre-wrap;margin-top:6px">${esc(p.content||'')}</div>
+        ${p.media ? `<div style="margin-top:8px"><a href="${esc(p.media)}" target="_blank">${esc(p.media)}</a></div>` : ''}
+      `;
+      listEl.appendChild(d);
+    });
+  }
+
+  /* ===== Tabs ===== */
+  function showTab(which){
+    $('#mediaWrap').style.display = (which==='media')?'block':'none';
+    $('#postsWrap').style.display = (which==='posts')?'block':'none';
+  }
+  $('#tabMedia').onclick=()=>showTab('media');
+  $('#tabPosts').onclick=()=>{ showTab('posts'); renderPosts(); };
+  showTab('media');
+
+  /* ===== Edit panel ===== */
+  function toggleEdit(on){
+    $('#editPanel').hidden=!on;
+    if(on){
+      $('#eDisplayName').value = (ME_PROFILE.displayName||'');
+      $('#eBio').value         = (ME_PROFILE.bio||'');
+      $('#eAvatar').value      = (ME_PROFILE.avatar||'');
+      $('#eCover').value       = (ME_PROFILE.cover||'');
+    }else{
+      setStatus('');
+    }
+  }
+  $('#cancelEdit').onclick=()=>toggleEdit(false);
+  $('#saveEdit').onclick=async()=>{
+    const patch={
+      displayName: $('#eDisplayName').value.trim(),
+      bio:         $('#eBio').value.trim(),
+      avatar:      $('#eAvatar').value.trim(),
+      cover:       $('#eCover').value.trim()
+    };
+    const PRO = load(LS.PROFILE,{});
+    PRO['Me'] = {...(PRO['Me']||{}), ...patch};
+    save(LS.PROFILE, PRO);
+    addNotif('Profile saved.');
+    setStatus(STORAGE_OK ? 'Saved.' : 'Saved (temporary here).', !STORAGE_OK);
+
+    // Try sync to backend user record for "Me"
+    try{
+      const server = await getUsers();
+      const me = server.find(u=>u.name==='Me');
+      if(me){ await putUser(me.id, { displayName:patch.displayName, avatar:patch.avatar, bio:patch.bio, cover:patch.cover }); setStatus('Saved + synced.'); }
+    }catch{ /* ignore offline */ }
+
+    renderHero(); renderAbout();
+    toggleEdit(false);
+  };
+
+  /* ===== Boot render ===== */
+  renderHero();
+  renderAbout();
+  updateCounts();
+  renderMedia();
+
+});
+</script>
+</body>
+</html>
