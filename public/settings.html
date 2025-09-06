@@ -242,4 +242,172 @@ let ME=null, avatarUrl='', coverUrl='';
     const status=(m,e)=>{const n=qs('#g-status'); n.textContent=m; n.style.color=e?'#b91c1c':'#6b7280';};
     async function gateCall(endpoint, body){
       const url=apiJoin(API_BASE, endpoint); // ← normalized
-      const r=await fetch(url,{
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(body)});
+      const txt=await r.text().catch(()=> ''); if(!r.ok) throw new Error(txt||'error');
+      try{return JSON.parse(txt);}catch{return{};}
+    }
+    qs('#g-login').onclick = async ()=>{
+      status('Signing in…');
+      const email=qs('#g-email').value.trim(), password=qs('#g-pass').value;
+      try{
+        await gateCall('login',{email,password});
+        if (window.Auth && Auth.ensureAccount) ME=await Auth.ensureAccount();
+        gate.style.display='none'; qs('#settings').style.display='block'; await hydrate();
+      }catch(err){ status('Login failed: '+(err.message||'error'), true); }
+    };
+    qs('#g-signup').onclick = async ()=>{
+      status('Creating account…');
+      const email=qs('#g-email').value.trim(), password=qs('#g-pass').value;
+      try{ await gateCall('signup',{email,password,name:email.split('@')[0]}); status('Account created — you can sign in now.'); }
+      catch(err){ status('Signup failed: '+(err.message||'error'), true); }
+    };
+  }
+})();
+
+/* ===== hydrate ===== */
+async function hydrate(){
+  const u = await Api.users.get(ME.id);
+  // privacy
+  qs('#set-visibility').value = (u.privacy&&u.privacy.visibility)||'private';
+  qs('#set-dm').checked = !!(u.privacy&&u.privacy.dm);
+  qs('#set-dmAudience').value = (u.privacy&&u.privacy.dmAudience)||'everyone';
+  qs('#set-emailVisible').checked = !!(u.privacy&&u.privacy.emailVisible);
+
+  // profile
+  qs('#set-displayName').value = (u.profile&&u.profile.displayName) || u.name || '';
+  qs('#set-bio').value = (u.profile&&u.profile.bio) || u.bio || '';
+  qs('#avatar-alt').value = (u.profile&&u.profile.avatarAlt) || '';
+  avatarUrl = (u.profile&&u.profile.avatarUrl) || u.avatar || '';
+  coverUrl  = (u.profile&&u.profile.coverUrl)  || u.cover  || '';
+  renderImagePreview('avatar', avatarUrl);
+  renderImagePreview('cover',  coverUrl);
+
+  // notifications + appearance
+  const noti=(u.settings&&u.settings.notifications)||{};
+  qs('#set-emailNoti').checked = !!noti.email;
+  qs('#set-pushNoti').checked  = !!noti.push;
+  const st=u.settings||{};
+  qs('#set-theme').value       = st.theme || 'system';
+  qs('#set-accent').value      = st.accent || '#3b82f6';
+  qs('#set-bigText').checked   = !!st.bigText;
+  qs('#set-highContrast').checked = !!st.highContrast;
+  qs('#sec-email').value = u.email || '';
+
+  wireUI(); repaintPreview();
+}
+
+/* ===== UI wiring ===== */
+function wireUI(){
+  qs('#avatar-choose').onclick = ()=> qs('#avatar-file').click();
+  qs('#avatar-file').onchange  = async e => { if (e.target.files[0]) await pick('avatar', e.target.files[0]); };
+  makeDrop(qs('#avatar-drop'),  async f=> await pick('avatar', f));
+  qs('#avatar-remove').onclick  = ()=>{ avatarUrl=''; renderImagePreview('avatar',''); };
+
+  qs('#cover-choose').onclick = ()=> qs('#cover-file').click();
+  qs('#cover-file').onchange  = async e => { if (e.target.files[0]) await pick('cover', e.target.files[0]); };
+  makeDrop(qs('#cover-drop'),  async f=> await pick('cover', f));
+  qs('#cover-remove').onclick = ()=>{ coverUrl=''; renderImagePreview('cover',''); };
+
+  ['set-theme','set-accent'].forEach(id => qs('#'+id).addEventListener('input', repaintPreview));
+  ['set-bigText','set-highContrast'].forEach(id => qs('#'+id).addEventListener('change', repaintPreview));
+
+  qs('#btn-save').onclick = onSave;
+  qs('#btn-export').onclick = exportData;
+  qs('#btn-delete').onclick = wipeLocal;
+}
+
+/* ===== image handling: crop -> data URL ===== */
+async function pick(kind, file){
+  if (!file || !/^image\//.test(file.type)) return;
+  const img = await readImage(file);
+  if (kind==='avatar'){
+    const c = fitCoverCrop(img, 512, 512);
+    avatarUrl = c.toDataURL('image/jpeg', 0.92);
+    renderImagePreview('avatar', avatarUrl);
+  } else {
+    const c = fitCoverCrop(img, 1500, 500);
+    coverUrl = c.toDataURL('image/jpeg', 0.9);
+    renderImagePreview('cover', coverUrl);
+  }
+}
+function renderImagePreview(kind, url){
+  const img = qs('#'+kind+'-preview'), wrap = img && img.parentElement;
+  if (!img) return;
+  if (url){ img.src = url; img.style.display='block'; wrap && wrap.classList.add('has-img'); }
+  else    { img.removeAttribute('src'); img.style.display='none'; wrap && wrap.classList.remove('has-img'); }
+}
+function makeDrop(node, onFile){
+  node.addEventListener('click', ()=> node.parentElement.querySelector('input[type=file]').click());
+  node.addEventListener('dragover', e=>{e.preventDefault(); node.classList.add('drag');});
+  node.addEventListener('dragleave', ()=> node.classList.remove('drag'));
+  node.addEventListener('drop', e=>{
+    e.preventDefault(); node.classList.remove('drag');
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) onFile(f);
+  });
+}
+
+/* ===== preview ===== */
+function repaintPreview(){
+  const bar = qs('#themePrev'); if(!bar) return;
+  bar.style.setProperty('--accent', qs('#set-accent').value);
+  bar.dataset.theme = qs('#set-theme').value;
+}
+
+/* ===== save / export / wipe ===== */
+async function onSave(){
+  const saveBtn=qs('#btn-save'), status=qs('#saveStatus');
+  status.textContent='Saving…'; saveBtn.disabled=true;
+  try{
+    const displayName = qs('#set-displayName').value.trim();
+    const bio         = qs('#set-bio').value.trim();
+
+    // security
+    let security = null;
+    const a1=qs('#sec-answer').value, a2=qs('#sec-answer2').value, qKey=qs('#sec-question').value;
+    const qText=qs('#sec-question').selectedOptions[0]?.textContent||'';
+    if(a1||a2){
+      if(a1!==a2) throw new Error('Security answers do not match.');
+      if(a1.trim().length<3) throw new Error('Security answer is too short.');
+      const salt=(ME?.id||'local')+'::'+(qs('#sec-email').value.trim().toLowerCase());
+      const enc=new TextEncoder(); const buf=await crypto.subtle.digest('SHA-256', enc.encode(a1.trim().toLowerCase()+'::'+salt));
+      const hex=[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+      security={questionKey:qKey,questionText:qText,answerHash:hex,lastSetAt:new Date().toISOString()};
+    }else{
+      security={questionKey:qKey,questionText:qText};
+    }
+
+    const patch={
+      name: displayName || undefined,
+      bio:  bio || undefined,
+      avatar: avatarUrl || undefined,
+      cover:  coverUrl || undefined,
+      profile:{ displayName, bio, avatarAlt:qs('#avatar-alt').value.trim(), avatarUrl, coverUrl },
+      privacy:{ visibility:qs('#set-visibility').value, dm:qs('#set-dm').checked, dmAudience:qs('#set-dmAudience').value, emailVisible:qs('#set-emailVisible').checked },
+      settings:{ theme:qs('#set-theme').value, accent:qs('#set-accent').value, bigText:qs('#set-bigText').checked, highContrast:qs('#set-highContrast').checked, notifications:{ email:qs('#set-emailNoti').checked, push:qs('#set-pushNoti').checked } },
+      security,
+      email: (qs('#sec-email').value.trim() || undefined)
+    };
+
+    await Api.users.put(ME.id, patch);
+    qs('#sec-answer').value=''; qs('#sec-answer2').value='';
+    qs('#sec-state').textContent=(security && security.answerHash)?'Security answer: set (hidden)':'Security answer unchanged.';
+    status.textContent='Saved ✓';
+  }catch(e){
+    status.textContent='Save failed: '+(e.message||'error');
+  }finally{
+    setTimeout(()=>{qs('#saveStatus').textContent='';},3000);
+    qs('#btn-save').disabled=false;
+  }
+}
+
+function exportData(){ alert('Export: add your download logic here if needed.'); }
+function wipeLocal(){
+  localStorage.removeItem('chatternet.settings');
+  localStorage.removeItem('chatternet.settings.global');
+  const prof=JSON.parse(localStorage.getItem('ct_profile_data_v1')||'{}'); if(prof && prof['Me']){ delete prof['Me']; localStorage.setItem('ct_profile_data_v1', JSON.stringify(prof)); }
+  alert('Local data cleared ✓');
+}
+</script>
+</body>
+</html>
