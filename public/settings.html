@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Chatternet – Settings</title>
 <style>
-  /* ==== base look (matches your Messages page) ==== */
+  /* base look (matches your pages) */
   body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f6f7fb;margin:0}
   .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
   .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px}
@@ -15,7 +15,7 @@
   .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
   .muted{color:#6b7280;font-size:12px}
 
-  /* ==== universal spacing fixes (Gate + Settings) ==== */
+  /* spacing fixes everywhere */
   #gate,#settings{letter-spacing:normal;word-spacing:normal}
   #gate *,#settings *{
     letter-spacing:normal!important;word-spacing:normal!important;
@@ -25,7 +25,7 @@
   .label-text{display:block;margin:0 0 6px;font-weight:600;line-height:1.35;letter-spacing:.2px}
   .subhead{margin:0 0 8px;font-weight:600;letter-spacing:.2px}
 
-  /* tabs + layout */
+  /* tabs */
   .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
   .pill{border:1px solid #d1d5db;border-radius:999px;padding:8px 12px;background:#eef2ff;cursor:pointer}
   .pill.active{background:#dbeafe}
@@ -33,7 +33,7 @@
   @media(min-width:860px){.grid-two{grid-template-columns:1fr 1fr}}
 
   label{display:block;margin:10px 0}
-  label.tight{margin:4px 0} /* ← tight spacing for Answer/Confirm */
+  label.tight{margin:4px 0} /* ← tight for Answer/Confirm */
   input[type="text"],input[type="password"],input[type="email"],input[type="color"],textarea,select{
     width:100%;max-width:520px;padding:8px;border:1px solid #d1d5db;border-radius:8px
   }
@@ -61,7 +61,7 @@
 </head>
 <body>
 <div class="wrap">
-  <!-- Fallback Gate (only shows if Auth.ensureAccount fails) -->
+  <!-- Fallback Gate (shows only if Auth.ensureAccount isn’t ready) -->
   <div id="gate" class="gate-bg">
     <div class="gate-sheet">
       <h3 style="margin:0 0 10px">Sign in</h3>
@@ -113,7 +113,7 @@
 
     <div id="tab-security" style="display:none">
       <h3>Security</h3>
-      <p class="muted">Choose a security question and set an answer. Your answer is <strong>hashed in the browser</strong>, never stored in plaintext.</p>
+      <p class="muted">Choose a security question and set an answer. Your answer is <strong>hashed in the browser</strong>.</p>
       <label><span class="label-text">Email (sign-in)</span>
         <input id="sec-email" type="email" placeholder="you@example.com">
       </label>
@@ -244,32 +244,29 @@
 <script src="api.js"></script>
 <script src="auth.js"></script>
 <script>
-/* ===== tiny helpers ===== */
+/* ---- helpers ---- */
 const qs=(s,el=document)=>el.querySelector(s); const qsa=(s,el=document)=>Array.from(el.querySelectorAll(s));
 function readImage(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(file);});}
 function fitCoverCrop(img,W,H){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');const ir=img.width/img.height,cr=W/H;let sx=0,sy=0,sw=img.width,sh=img.height;if(ir>cr){sw=img.height*cr;sx=(img.width-sw)/2;}else{sh=img.width/cr;sy=(img.height-sh)/2;}x.imageSmoothingQuality='high';x.drawImage(img,sx,sy,sw,sh,0,0,W,H);return c;}
 async function sha256Hex(s){ const enc=new TextEncoder(); const buf=await crypto.subtle.digest('SHA-256', enc.encode(s)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
-/* ===== tabs ===== */
+/* tabs */
 qsa('.tabs .pill').forEach(b=>b.onclick=()=>{ qsa('.tabs .pill').forEach(x=>x.classList.toggle('active',x===b)); ['privacy','security','profile','notifications','appearance','data'].forEach(id=> qs('#tab-'+id).style.display = (b.dataset.tab===id?'block':'none')); });
 
-/* ===== state ===== */
-let ME=null, avatarBlob=null, coverBlob=null, avatarUrl='', coverUrl='';
+/* state */
+let ME=null, avatarUrl='', coverUrl='';
 
-/* ===== boot (auth → hydrate) ===== */
+/* boot */
 (async()=>{
   try{
-    if (window.Auth && Auth.ensureAccount) {
-      ME = await Auth.ensureAccount(); // should return user with id/email/name
-    }
-    if (!ME) throw new Error('No session');
+    if (window.Auth && Auth.ensureAccount) { ME = await Auth.ensureAccount(); }
+    if (!ME) throw 0;
     qs('#settings').style.display='block';
     await hydrate();
-  }catch(e){
-    // fallback gate using your server endpoints
+  }catch{
     const gate=qs('#gate'); gate.style.display='grid';
     const API_BASE=(window.Api&&Api.base)||window.API_BASE||'/api';
-    const status=(m,err)=>{const n=qs('#g-status'); n.textContent=m; n.style.color=err?'#b91c1c':'#6b7280';};
+    const status=(m,e)=>{const n=qs('#g-status'); n.textContent=m; n.style.color=e?'#b91c1c':'#6b7280';};
     async function call(path,body){const r=await fetch(API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(body)}); if(!r.ok) throw new Error(await r.text()||'error'); return r.json();}
     qs('#g-login').onclick = go.bind(null,'login'); qs('#g-signup').onclick=go.bind(null,'signup');
     async function go(mode){
@@ -285,56 +282,56 @@ let ME=null, avatarBlob=null, coverBlob=null, avatarUrl='', coverUrl='';
   }
 })();
 
-/* ===== hydrate from Api.users.get ===== */
+/* hydrate from Api.users.get */
 async function hydrate(){
   const u = await Api.users.get(ME.id);
+
   // privacy
   qs('#set-visibility').value = (u.privacy&&u.privacy.visibility)||'private';
   qs('#set-dm').checked = !!(u.privacy&&u.privacy.dm);
   qs('#set-dmAudience').value = (u.privacy&&u.privacy.dmAudience)||'everyone';
   qs('#set-emailVisible').checked = !!(u.privacy&&u.privacy.emailVisible);
 
-  // profile from top-level OR profile object
+  // profile (both top-level + nested)
   qs('#set-displayName').value = (u.profile&&u.profile.displayName) || u.name || '';
   qs('#set-bio').value = (u.profile&&u.profile.bio) || u.bio || '';
   qs('#avatar-alt').value = (u.profile&&u.profile.avatarAlt) || '';
+
   avatarUrl = (u.profile&&u.profile.avatarUrl) || u.avatar || '';
   coverUrl  = (u.profile&&u.profile.coverUrl)  || u.cover  || '';
   renderImagePreview('avatar', avatarUrl);
   renderImagePreview('cover',  coverUrl);
 
-  // notifications under settings.notifications
+  // notifications + appearance (in user.settings)
   const noti=(u.settings&&u.settings.notifications)||{};
   qs('#set-emailNoti').checked = !!noti.email;
   qs('#set-pushNoti').checked  = !!noti.push;
 
-  // appearance maps into settings
   const st=u.settings||{};
   qs('#set-theme').value       = st.theme || 'system';
   qs('#set-accent').value      = st.accent || '#3b82f6';
   qs('#set-bigText').checked   = !!st.bigText;
   qs('#set-highContrast').checked = !!st.highContrast;
 
-  // email for security
   qs('#sec-email').value = u.email || '';
 
-  // wire buttons & inputs
   wireUI();
   repaintPreview();
 }
 
-/* ===== UI wiring ===== */
+/* UI wiring */
 function wireUI(){
-  // avatar/cover
+  // avatar (we store data URL immediately—no extra upload step)
   qs('#avatar-choose').onclick = ()=> qs('#avatar-file').click();
   qs('#avatar-file').onchange  = async e => { if (e.target.files[0]) await pick('avatar', e.target.files[0]); };
   makeDrop(qs('#avatar-drop'),  async f=> await pick('avatar', f));
-  qs('#avatar-remove').onclick  = ()=>{ avatarBlob=null; avatarUrl=''; renderImagePreview('avatar',''); };
+  qs('#avatar-remove').onclick  = ()=>{ avatarUrl=''; renderImagePreview('avatar',''); };
 
+  // cover
   qs('#cover-choose').onclick = ()=> qs('#cover-file').click();
   qs('#cover-file').onchange  = async e => { if (e.target.files[0]) await pick('cover', e.target.files[0]); };
   makeDrop(qs('#cover-drop'),  async f=> await pick('cover', f));
-  qs('#cover-remove').onclick = ()=>{ coverBlob=null; coverUrl=''; renderImagePreview('cover',''); };
+  qs('#cover-remove').onclick = ()=>{ coverUrl=''; renderImagePreview('cover',''); };
 
   ['set-theme','set-accent'].forEach(id => qs('#'+id).addEventListener('input', repaintPreview));
   ['set-bigText','set-highContrast'].forEach(id => qs('#'+id).addEventListener('change', repaintPreview));
@@ -344,20 +341,20 @@ function wireUI(){
   qs('#btn-delete').onclick = wipeLocal;
 }
 
-/* ===== image helpers ===== */
+/* image handling: crop -> data URL (store directly) */
 async function pick(kind, file){
   if (!file || !/^image\//.test(file.type)) return;
   const img = await readImage(file);
   if (kind==='avatar'){
     const c = fitCoverCrop(img, 512, 512);
-    const b = await new Promise(r=> c.toBlob(r,'image/jpeg',0.92));
-    avatarBlob = b;
-    renderImagePreview('avatar', c.toDataURL('image/jpeg',0.9));
+    const dataUrl = c.toDataURL('image/jpeg', 0.92);
+    avatarUrl = dataUrl;                             // ← store for save
+    renderImagePreview('avatar', dataUrl);           // ← instant preview
   } else {
     const c = fitCoverCrop(img, 1500, 500);
-    const b = await new Promise(r=> c.toBlob(r,'image/jpeg',0.9));
-    coverBlob = b;
-    renderImagePreview('cover', c.toDataURL('image/jpeg',0.9));
+    const dataUrl = c.toDataURL('image/jpeg', 0.9);
+    coverUrl = dataUrl;
+    renderImagePreview('cover', dataUrl);
   }
 }
 function renderImagePreview(kind, url){
@@ -377,34 +374,23 @@ function makeDrop(node, onFile){
   });
 }
 
-/* ===== preview ===== */
+/* preview */
 function repaintPreview(){
   const bar = qs('#themePrev'); if(!bar) return;
   bar.style.setProperty('--accent', qs('#set-accent').value);
   bar.dataset.theme = qs('#set-theme').value;
 }
 
-/* ===== save / export / wipe ===== */
+/* save / export / wipe */
 async function onSave(){
   const saveBtn=qs('#btn-save'), status=qs('#saveStatus');
   status.textContent='Saving…'; saveBtn.disabled=true;
 
   try{
-    // if new images selected, persist data URLs into avatarUrl/coverUrl
-    if (avatarBlob){
-      const fr=new FileReader(); const url=await new Promise(r=>{fr.onload=()=>r(fr.result); fr.readAsDataURL(avatarBlob);});
-      avatarUrl = url;
-    }
-    if (coverBlob){
-      const fr=new FileReader(); const url=await new Promise(r=>{fr.onload=()=>r(fr.result); fr.readAsDataURL(coverBlob);});
-      coverUrl = url;
-    }
-
-    // build userPatch in your server's shape
     const displayName = qs('#set-displayName').value.trim();
     const bio         = qs('#set-bio').value.trim();
 
-    // security hashing (optional; stored as user.security)
+    // security hashing
     let security = null;
     const a1 = qs('#sec-answer').value, a2 = qs('#sec-answer2').value, qKey = qs('#sec-question').value;
     const qText = qs('#sec-question').selectedOptions[0]?.textContent || '';
@@ -412,8 +398,9 @@ async function onSave(){
       if (a1 !== a2) throw new Error('Security answers do not match.');
       if (a1.trim().length < 3) throw new Error('Security answer is too short.');
       const salt = (ME?.id || 'local') + '::' + (qs('#sec-email').value.trim().toLowerCase());
-      const answerHash = await sha256Hex((a1.trim().toLowerCase()) + '::' + salt);
-      security = { questionKey: qKey, questionText: qText, answerHash, lastSetAt: new Date().toISOString() };
+      const enc = new TextEncoder(); const buf = await crypto.subtle.digest('SHA-256', enc.encode(a1.trim().toLowerCase()+'::'+salt));
+      const hex = [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+      security = { questionKey: qKey, questionText: qText, answerHash: hex, lastSetAt: new Date().toISOString() };
     } else {
       security = { questionKey: qKey, questionText: qText };
     }
@@ -425,7 +412,12 @@ async function onSave(){
       avatar: avatarUrl || undefined,
       cover:  coverUrl || undefined,
 
-      // canonical objects
+      // structured objects for other pages
+      profile: {
+        displayName, bio,
+        avatarAlt: qs('#avatar-alt').value.trim(),
+        avatarUrl, coverUrl
+      },
       privacy: {
         visibility: qs('#set-visibility').value,
         dm: qs('#set-dm').checked,
@@ -442,34 +434,26 @@ async function onSave(){
           push: qs('#set-pushNoti').checked
         }
       },
-      // optional structured profile too (for other pages that read it)
-      profile: {
-        displayName, bio,
-        avatarAlt: qs('#avatar-alt').value.trim(),
-        avatarUrl, coverUrl
-      },
-      // security (stored for your future checks)
       security,
-      // allow updating sign-in email if changed
       email: (qs('#sec-email').value.trim() || undefined)
     };
 
-    const up = await Api.users.put(ME.id, patch);
+    await Api.users.put(ME.id, patch);
+
+    // clear secrets; status
     qs('#sec-answer').value=''; qs('#sec-answer2').value='';
     qs('#sec-state').textContent = (security && security.answerHash) ? 'Security answer: set (hidden)' : 'Security answer unchanged.';
-    status.textContent = 'Saved ✓';
-    console.log('Updated', up);
+    status.textContent='Saved ✓';
   }catch(e){
     status.textContent='Save failed: '+(e.message||'error');
   }finally{
     setTimeout(()=>{qs('#saveStatus').textContent='';}, 3000);
     qs('#btn-save').disabled=false;
-    avatarBlob=null; coverBlob=null;
   }
 }
 
 function exportData(){
-  alert('Export uses your API/local storage in other pages; add a downloader here if needed.');
+  alert('Export: implement here if you want to download your user + settings JSON.');
 }
 function wipeLocal(){
   localStorage.removeItem('chatternet.settings');
