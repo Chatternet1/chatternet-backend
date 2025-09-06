@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Media</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<!-- Present in your repo (safe if missing) -->
+<script src="auth.js"></script>
+<script src="api.js"></script>
+
+<style>
+  :root{--brand:#3498db;--brand-2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;--heart:#ff3b5c}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif}
+
+  /* Header (matches base stack) */
+  .top-bar{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer}
+
+  /* Layout */
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px}
+  .stack{display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .section-title{font-size:26px;font-weight:800;margin:4px 0 12px}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:10px;align-items:center}
+  .row>*{flex:1}
+  input,select,textarea,button{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  textarea{resize:vertical;min-height:90px}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
+  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+  .empty{color:#6b7280;text-align:center;padding:16px}
+
+  /* Modals */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2000}
+  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
+  .notif-item{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+
+  /* Tabs + filters */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:-14px -14px 10px;padding:10px 14px;border-bottom:1px solid #ececec;background:#fafbff;border-top-left-radius:14px;border-top-right-radius:14px}
+  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:700}
+  .tab.active{background:#e9f2ff;border-color:#cfe1ff}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .f-tab{padding:6px 12px;border-radius:999px;border:1px solid #dfe3f0;background:#fff;cursor:pointer;font-weight:700}
+  .f-tab.active{background:#0ea5e9;color:#fff;border-color:#0ea5e9}
+
+  /* Grid + media card */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:640px){.grid{grid-template-columns:1fr}}
+  .media-card{padding:12px;border:1px solid #ececec;border-radius:12px;background:#fafafa}
+  .m-head{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+  .avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;cursor:pointer}
+  .author{font-weight:700;cursor:pointer}
+  .meta{color:var(--muted);font-size:12px}
+  .media-wrap{border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#fff}
+  .media-wrap img,.media-wrap video,.media-wrap iframe{display:block;width:100%}
+  .media-wrap iframe,.media-wrap video{aspect-ratio:16/9;height:auto;min-height:320px}
+  .caption{white-space:pre-wrap;margin:8px 0 6px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .chip{background:#fff;border:1px solid var(--line);padding:5px 10px;border-radius:999px;font-size:12px;color:#0f172a}
+  .util{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+  .likes-row{display:flex;align-items:center;gap:8px;color:#4b5563}
+  .like-count{font-weight:600;color:#222}
+  .heart-btn{width:36px;height:36px;border-radius:8px;background:#f6f7fb;border:1px solid #e6e8f2;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+  .heart-btn svg{width:20px;height:20px;fill:none;stroke:#555;stroke-width:2}
+  .heart-btn.active{background:#ffe7ed;border-color:#ffd3de}
+  .heart-btn.active svg{fill:var(--heart);stroke:var(--heart)}
+
+  /* Small status line */
+  #status{margin-top:8px;font-size:13px}
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="top-bar">
+    <h2>Media</h2>
+    <div class="top-actions">
+      <button id="btnNotif">Notifications</button>
+      <button id="btnInbox">Inbox</button>
+      <button id="btnMsgs">Messages</button>
+      <img src="https://i.pravatar.cc/100?u=me" id="myProfile" title="My Profile" />
+    </div>
+  </div>
+
+  <!-- Notifications Modal -->
+  <div class="modal-bg" id="notifBg">
+    <div class="sheet">
+      <h3 style="margin:0 0 10px">Notifications</h3>
+      <div id="notifList"></div>
+      <button id="clearNotif" class="btn primary" style="margin-top:8px;">Clear</button>
+      <button id="closeNotif" class="btn" style="margin-top:8px;">Close</button>
+    </div>
+  </div>
+  <!-- Inbox Modal -->
+  <div class="modal-bg" id="inboxBg">
+    <div class="sheet">
+      <h3 style="margin:0 0 10px">Inbox</h3>
+      <div id="inboxList"></div>
+      <button id="closeInbox" class="btn" style="margin-top:8px;">Close</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="stack">
+      <section class="card">
+        <div class="tabs">
+          <div class="tab active" data-tab="library">Library</div>
+          <div class="tab" data-tab="upload">Upload</div>
+        </div>
+
+        <!-- Library -->
+        <div id="panel-library" style="padding-top:10px">
+          <div class="row" style="margin-bottom:8px;">
+            <input id="searchMedia" placeholder="Search caption, tags, or author...">
+            <select id="actorSelect"></select>
+          </div>
+          <div class="filters">
+            <div class="f-tab active" data-filter="all">All</div>
+            <div class="f-tab" data-filter="photos">Photos</div>
+            <div class="f-tab" data-filter="videos">Videos</div>
+          </div>
+          <div id="mediaGrid" class="grid"></div>
+          <div id="mediaEmpty" class="empty" style="display:none;">No media found.</div>
+        </div>
+
+        <!-- Upload -->
+        <div id="panel-upload" style="display:none; padding-top:10px">
+          <div class="row">
+            <input type="file" id="upFile" accept="image/*,video/*">
+            <input id="upUrl" placeholder="Or paste a YouTube / image / video URL">
+          </div>
+          <div class="row"><textarea id="upCaption" placeholder="Write a caption..."></textarea></div>
+          <div class="row">
+            <input id="upTags" placeholder="Tags (comma separated)">
+            <select id="upAuthor"></select>
+          </div>
+          <div class="row" style="flex-wrap:wrap">
+            <button class="btn primary" id="btnPublishLibrary">Publish to Library</button>
+            <button class="btn ghost" id="btnAddAndPost">Add to Library + Post to Feed</button>
+            <button class="btn danger" id="btnClearMedia">Clear Library (local)</button>
+          </div>
+          <div id="status" class="muted"></div>
+          <div class="muted" id="postingAs" style="margin-top:4px"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  /* ===== local storage with fallback ===== */
+  let STORAGE_OK = true;
+  const MEM = {};
+  const load = (k,f)=>{ try{const v=localStorage.getItem(k); return v?JSON.parse(v):f;}catch{STORAGE_OK=false; return (k in MEM)?MEM[k]:f; } };
+  const save = (k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch{STORAGE_OK=false; MEM[k]=v; } };
+
+  /* ===== keys + helpers ===== */
+  const LS={USERS:'ct_users_v3', VIEW:'ct_profile_view_v1', PROFILE:'ct_profile_data_v1', MEDIA:'ct_media_items_v2', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'};
+  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+  const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+  const nowISO=()=>new Date().toISOString();
+  const esc=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+  const rel=iso=>{const d=(Date.now()-new Date(iso).getTime())/1000;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
+  function goToProfile(name){ try{localStorage.setItem(LS.VIEW,JSON.stringify({name}));}catch{} location.href='profile.html'; }
+  function addNotif(text){const arr=load(LS.NOTIF,[]);arr.unshift({id:uid('n'),text,time:nowISO()});save(LS.NOTIF,arr);}
+  function addInbox(text){const arr=load(LS.INBOX,[]);arr.unshift({id:uid('m'),text,time:nowISO()});save(LS.INBOX,arr);}
+  function setStatus(msg,isWarn){ const el=$('#status'); el.textContent=msg||''; el.style.color=isWarn?'#b45309':'#667085'; }
+
+  /* ===== seed users ===== */
+  const BOTS=[{name:'Bill Thomas',u:'bill.thomas'},{name:'Kate White',u:'kate.white'},{name:'Michael Reed',u:'michael.reed'},{name:'Olivia Perez',u:'olivia.perez'},{name:'David Carter',u:'david.carter'},{name:'Emily Johnson',u:'emily.johnson'},{name:'Jason Brooks',u:'jason.brooks'},{name:'Sophia Turner',u:'sophia.turner'},{name:'Daniel Foster',u:'daniel.foster'},{name:'Grace Lee',u:'grace.lee'}];
+  (function seedUsers(){
+    let users=load(LS.USERS,null);
+    if(!users){
+      users=[{name:'Me',avatar:'https://i.pravatar.cc/100?u=me'}];
+      BOTS.forEach(b=>users.push({name:b.name,avatar:`https://i.pravatar.cc/100?u=${encodeURIComponent(b.u)}`}));
+    }else{
+      users=users.filter(u=>!/^User\d+$/i.test(u.name));
+      if(!users.find(u=>u.name==='Me')) users.unshift({name:'Me',avatar:'https://i.pravatar.cc/100?u=me'});
+      BOTS.forEach(b=>{ if(!users.find(u=>u.name===b.name)) users.push({name:b.name,avatar:`https://i.pravatar.cc/100?u=${encodeURIComponent(b.u)}`}); });
+    }
+    save(LS.USERS,users);
+  })();
+  const users=load(LS.USERS,[]);
+  const userByName=n=>users.find(u=>u.name===n)||users[0];
+
+  /* ===== header wiring ===== */
+  (function wireHeader(){
+    const img=$('#myProfile'); if(img){ const me=userByName('Me'); img.src=(me&&me.avatar)||'https://i.pravatar.cc/100?u=me'; img.alt='My Profile'; img.addEventListener('click',()=>goToProfile('Me')); }
+    $('#btnMsgs')?.addEventListener('click',()=>location.href='messages.html');
+
+    const notifBg=$('#notifBg'), notifList=$('#notifList');
+    function renderNotif(){ const arr=load(LS.NOTIF,[]); notifList.innerHTML=''; if(!arr.length){notifList.innerHTML='<div class="notif-item">No notifications yet.</div>';return;} arr.forEach(n=>{const d=document.createElement('div');d.className='notif-item';d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}`;notifList.appendChild(d);}); }
+    $('#btnNotif')?.addEventListener('click',()=>{ renderNotif(); notifBg.style.display='flex'; });
+    $('#clearNotif')?.addEventListener('click',()=>{ save(LS.NOTIF,[]); renderNotif(); });
+    $('#closeNotif')?.addEventListener('click',()=>{ notifBg.style.display='none'; });
+
+    const inboxBg=$('#inboxBg'), inboxList=$('#inboxList');
+    function renderInbox(){ const arr=load(LS.INBOX,[]); inboxList.innerHTML=''; if(!arr.length){inboxList.innerHTML='<div class="notif-item">Inbox is empty.</div>';return;} arr.forEach(n=>{const d=document.createElement('div');d.className='notif-item';d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}`;inboxList.appendChild(d);}); }
+    $('#btnInbox')?.addEventListener('click',()=>{ renderInbox(); inboxBg.style.display='flex'; });
+    $('#closeInbox')?.addEventListener('click',()=>{ inboxBg.style.display='none'; });
+
+    document.addEventListener('click',e=>{ const t=e.target.closest('[data-profile-name]'); if(t){ goToProfile(t.getAttribute('data-profile-name')); } });
+  })();
+
+  /* ===== media helpers ===== */
+  function toYouTubeEmbed(url){
+    try{
+      const u=new URL(url); const host=u.hostname.replace(/^www\./,'').replace(/^m\./,'');
+      let id='';
+      if(host==='youtu.be'){ id=u.pathname.split('/')[1]||''; }
+      else if(host.endsWith('youtube.com')){
+        if(u.pathname==='/watch'){ id=u.searchParams.get('v')||''; }
+        else if(u.pathname.startsWith('/shorts/')){ id=u.pathname.split('/')[2]||''; }
+        else if(u.pathname.startsWith('/live/')){ id=u.pathname.split('/')[2]||''; }
+        else if(u.pathname.startsWith('/embed/')){ id=u.pathname.split('/')[2]||''; }
+      }
+      return id ? `https://www.youtube.com/embed/${encodeURIComponent(id)}?rel=0&modestbranding=1&playsinline=1` : null;
+    }catch{ return null; }
+  }
+  function detectMedia(url){
+    if(!url) return null; try{ new URL(url); }catch{ return null; }
+    const lower=url.toLowerCase();
+    const yt=toYouTubeEmbed(url); if(yt) return {type:'embed',src:yt,allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"};
+    if(/\.(png|jpg|jpeg|gif|webp)(\?|$)/.test(lower)) return {type:'image',src:url};
+    if(/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|$)/.test(lower)) return {type:'video',src:url};
+    return {type:'link',src:url};
+  }
+  function fileToMedia(file){
+    return new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onerror=()=>rej('read_error');
+      r.onload=e=>{
+        const data=e.target.result;
+        if(file.type.startsWith('image/')) return res({type:'image',src:data});
+        if(file.type.startsWith('video/')) return res({type:'video',src=data});
+        res(null);
+      };
+      r.readAsDataURL(file);
+    });
+  }
+
+  /* ===== state ===== */
+  let mediaItems=load(LS.MEDIA,[]); const saveMedia=()=>save(LS.MEDIA,mediaItems);
+
+  /* ===== author/actor selects ===== */
+  const actorSel=$('#actorSelect'), authorSel=$('#upAuthor');
+  users.forEach(u=>{
+    const o1=document.createElement('option'); o1.value=u.name; o1.textContent=u.name; actorSel.appendChild(o1);
+    const o2=document.createElement('option'); o2.value=u.name; o2.textContent=u.name; authorSel.appendChild(o2);
+  });
+  actorSel.value='Me'; authorSel.value='Me';
+  const postingAs=$('#postingAs'); postingAs.textContent='Posting as '+(authorSel.value||'Me');
+  authorSel.addEventListener('change',()=>{ postingAs.textContent='Posting as '+(authorSel.value||'Me'); });
+
+  /* ===== tabs ===== */
+  function switchTab(id){
+    $$('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===id));
+    $('#panel-library').style.display = id==='library' ? 'block' : 'none';
+    $('#panel-upload').style.display  = id==='upload'  ? 'block' : 'none';
+  }
+  $$('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+  switchTab('library');
+
+  /* ===== filter ===== */
+  let currentFilter='all';
+  function setFilter(f){ currentFilter=f; $$('.f-tab').forEach(x=>x.classList.toggle('active',x.dataset.filter===f)); renderLibrary(); }
+  $$('.f-tab').forEach(x=>x.addEventListener('click',()=>setFilter(x.dataset.filter)));
+  setFilter('all');
+
+  /* ===== likes ===== */
+  function heart(active){ const b=document.createElement('button'); b.className='heart-btn'; if(active) b.classList.add('active'); b.innerHTML=`<svg viewBox="0 0 24 24"><path d="M12 21s-6.716-4.27-9.167-7.38C.63 11.154 1.57 7.9 3.985 6.54c1.75-1.01 4.005-.63 5.348.89L12 9.2l2.667-1.77c1.343-1.52 3.598-1.9 5.348-.89 2.414 1.36 3.354 4.614 1.152 7.08C18.716 16.73 12 21 12 21z"/></svg>`; return b; }
+
+  /* ===== post to backend feed (optional) ===== */
+  async function addToBackendFeed(item){
+    if(!window.Api || !Api.posts || !Api.posts.create){ alert('api.js not present or Api.posts missing. Skipping backend post.'); return; }
+    let mediaUrl=''; const src=item.media?.src||'';
+    if(/^data:/i.test(src)){
+      const paste=prompt('Local file detected. Paste a PUBLIC media URL to include (or leave blank for text-only):','');
+      if(paste) mediaUrl=paste;
+    }else{ mediaUrl=src; }
+    const title=(item.caption||'Media').slice(0,100);
+    const content=[item.caption||'', (item.tags?.length?('Tags: #'+item.tags.join(' #')):'')].filter(Boolean).join('\n\n');
+    await Api.posts.create({ title, content, media: mediaUrl||undefined, authorName: item.uploaderName||'Me' });
+    addNotif(`Shared to Feed: ${title}`);
+    alert('Posted to Feed!');
+  }
+
+  /* ===== comments ===== */
+  function commentLikeRow(item, comment){
+    const row=document.createElement('div'); row.className='likes-row';
+    const actor=()=>actorSel.value||'Me';
+    comment.likes=comment.likes||[];
+    const btn=heart(comment.likes.includes(actor()));
+    const cnt=document.createElement('span'); cnt.className='like-count'; cnt.textContent=String(comment.likes.length);
+    btn.addEventListener('click',()=>{ const who=actor(); const set=new Set(comment.likes); set.has(who)?set.delete(who):set.add(who); comment.likes=Array.from(set); saveMedia(); btn.classList.toggle('active',set.has(who)); cnt.textContent=String(set.size); });
+    row.appendChild(btn); row.appendChild(document.createTextNode(' Like • ')); row.appendChild(cnt);
+    return row;
+  }
+  function commentEl(item,c){
+    const u=userByName(c.userName);
+    const el=document.createElement('div'); el.className='comment';
+    el.innerHTML=`<img class="c-avatar" src="${esc(u.avatar)}" alt="${esc(u.name)}" data-profile-name="${esc(u.name)}"><div style="flex:1"><div><span class="by" data-profile-name="${esc(u.name)}">${esc(u.name)}</span> <span class="meta">• ${rel(c.createdAt)}</span></div><div class="ctxt">${esc(c.text)}</div></div>`;
+    el.appendChild(commentLikeRow(item,c));
+    return el;
+  }
+
+  /* ===== card ===== */
+  function itemLikeRow(item){
+    const row=document.createElement('div'); row.className='util';
+    const actor=()=>actorSel.value||'Me';
+    item.likes=item.likes||[];
+    const btn=heart(item.likes.includes(actor()));
+    const cnt=document.createElement('span'); cnt.className='like-count'; cnt.textContent=String(item.likes.length);
+    btn.addEventListener('click',()=>{ const who=actor(); const set=new Set(item.likes); set.has(who)?set.delete(who):set.add(who); item.likes=Array.from(set); saveMedia(); btn.classList.toggle('active',set.has(who)); cnt.textContent=String(set.size); });
+    row.appendChild(btn); row.appendChild(document.createTextNode(' Like • ')); row.appendChild(cnt);
+
+    const addFeed=document.createElement('button'); addFeed.className='btn ghost'; addFeed.textContent='Add to Feed'; addFeed.onclick=()=>addToBackendFeed(item); row.appendChild(addFeed);
+
+    const canDelete=(actorSel.value||'Me')===item.uploaderName;
+    const del=document.createElement('button'); del.className='btn danger'; del.textContent='Delete';
+    del.style.display=canDelete?'inline-flex':'none';
+    del.onclick=()=>{ if(confirm('Delete this media item?')){ mediaItems=mediaItems.filter(x=>x.id!==item.id); saveMedia(); renderLibrary(); setStatus('Deleted.'); } };
+    row.appendChild(del);
+
+    return row;
+  }
+  function itemCard(item){
+    const u=userByName(item.uploaderName||'Me');
+    let mediaHTML='';
+    if(item.media){
+      if(item.media.type==='image') mediaHTML=`<div class="media-wrap"><img src="${esc(item.media.src)}" alt=""></div>`;
+      else if(item.media.type==='video') mediaHTML=`<div class="media-wrap"><video controls src="${esc(item.media.src)}"></video></div>`;
+      else if(item.media.type==='embed') mediaHTML=`<div class="media-wrap"><iframe src="${esc(item.media.src)}" allow="${item.media.allow||''}" frameborder="0" allowfullscreen></iframe></div>`;
+      else mediaHTML=`<div class="media-wrap"><a href="${esc(item.media.src)}" target="_blank" style="display:block;padding:12px">${esc(item.media.src)}</a></div>`;
+    }
+    const wrap=document.createElement('div'); wrap.className='media-card'; wrap.dataset.id=item.id;
+    wrap.innerHTML=`<div class="m-head"><img class="avatar" src="${esc(u.avatar)}" alt="${esc(u.name)}" data-profile-name="${esc(u.name)}"><div><div class="author" data-profile-name="${esc(u.name)}">${esc(u.name)}</div><div class="meta">${new Date(item.createdAt).toLocaleString()} • ${rel(item.createdAt)}</div></div></div>${mediaHTML}<div class="caption">${esc(item.caption||'')}</div><div class="chips">${(item.tags||[]).map(t=>`<span class="chip">#${esc(t)}</span>`).join('')}</div>`;
+    wrap.appendChild(itemLikeRow(item));
+    const comments=document.createElement('div'); comments.className='comments';
+    comments.innerHTML=`<div class="row"><input class="c-input" placeholder="Write a comment"><button class="btn primary c-add">Comment</button></div><div class="c-list"></div>`;
+    const list=comments.querySelector('.c-list'); (item.comments||[]).forEach(c=>list.appendChild(commentEl(item,c)));
+    comments.querySelector('.c-add').onclick=()=>{ const input=comments.querySelector('.c-input'); const text=input.value.trim(); if(!text){alert('Add a comment');return;} const who=actorSel.value||'Me'; const c={id:uid('c'),userName:who,text,createdAt:nowISO(),likes:[]}; item.comments=item.comments||[]; item.comments.push(c); saveMedia(); list.appendChild(commentEl(item,c)); input.value=''; addNotif(`${who} commented on media.`); };
+    wrap.appendChild(comments);
+    return wrap;
+  }
+
+  /* ===== render ===== */
+  const grid=$('#mediaGrid'), emptyEl=$('#mediaEmpty');
+  function renderLibrary(){
+    const q=($('#searchMedia').value||'').toLowerCase();
+    grid.innerHTML='';
+    const list=[...mediaItems].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).filter(it=>{
+      if(currentFilter==='photos' && it.media?.type!=='image') return false;
+      if(currentFilter==='videos' && !(it.media && (it.media.type==='video'||it.media.type==='embed'))) return false;
+      const inCaption=(it.caption||'').toLowerCase().includes(q);
+      const inTags=(it.tags||[]).some(t=>t.toLowerCase().includes(q));
+      const inAuthor=(it.uploaderName||'').toLowerCase().includes(q);
+      return !q || inCaption || inTags || inAuthor;
+    });
+    if(!list.length){ emptyEl.style.display='block'; return; }
+    emptyEl.style.display='none';
+    list.forEach(it=>grid.appendChild(itemCard(it)));
+  }
+
+  /* ===== upload handlers ===== */
+  async function handleUpload(alsoPost){
+    setStatus('');
+    const file=$('#upFile').files[0];
+    const url=$('#upUrl').value.trim();
+    const caption=$('#upCaption').value.trim();
+    const tags=$('#upTags').value.split(',').map(x=>x.trim()).filter(Boolean);
+    const uploader=$('#upAuthor').value||'Me';
+
+    let media=null;
+    if(file) media=await fileToMedia(file).catch(()=>null);
+    else if(url) media=detectMedia(url);
+    if(!media){ alert('Choose a file or paste a valid YouTube/image/video URL.'); return; }
+
+    const item={ id:uid('m'), uploaderName:uploader, caption, tags, createdAt:nowISO(), media, likes:[], comments:[] };
+    mediaItems.push(item); saveMedia();
+
+    // clear inputs
+    $('#upFile').value=''; $('#upUrl').value=''; $('#upCaption').value=''; $('#upTags').value='';
+    addNotif(`${uploader} uploaded new media.`);
+    switchTab('library'); setFilter('all'); renderLibrary();
+
+    setStatus(STORAGE_OK ? 'Saved to Library.' : 'Saved (temporary only — storage blocked here).', !STORAGE_OK);
+    if(alsoPost) await addToBackendFeed(item);
+  }
+
+  $('#btnPublishLibrary').addEventListener('click',()=>handleUpload(false));
+  $('#btnAddAndPost').addEventListener('click',()=>handleUpload(true));
+  $('#btnClearMedia').addEventListener('click',()=>{ if(confirm('Clear ALL media items from library?')){ mediaItems=[]; saveMedia(); renderLibrary(); setStatus('Library cleared.'); } });
+  $('#searchMedia').addEventListener('input',renderLibrary);
+
+  // initial render
+  renderLibrary();
+});
+</script>
+</body>
+</html>
