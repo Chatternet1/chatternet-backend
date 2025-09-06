@@ -1,46 +1,483 @@
-<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Chatternet – Settings</title>
 <style>
+  /* ==== base look (matches your Messages page) ==== */
   body{font-family:system-ui,Segoe UI,Arial,sans-serif;background:#f6f7fb;margin:0}
-  .wrap{max-width:720px;margin:24px auto}
-  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
-  .btn{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#3b82f6;color:#fff;cursor:pointer}
+  .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px}
+  .row{display:flex;gap:8px;align-items:center}
+  .btn{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer}
+  .btn.primary{background:#3b82f6;color:#fff;border-color:#3b82f6}
+  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+  .muted{color:#6b7280;font-size:12px}
+
+  /* ==== universal spacing fixes (Gate + Settings) ==== */
+  #gate,#settings{letter-spacing:normal;word-spacing:normal}
+  #gate *,#settings *{
+    letter-spacing:normal!important;word-spacing:normal!important;
+    word-break:keep-all!important;overflow-wrap:break-word!important;
+    white-space:normal!important;line-height:1.4!important;text-transform:none!important
+  }
+  .label-text{display:block;margin:0 0 6px;font-weight:600;line-height:1.35;letter-spacing:.2px}
+  .subhead{margin:0 0 8px;font-weight:600;letter-spacing:.2px}
+
+  /* tabs + layout */
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+  .pill{border:1px solid #d1d5db;border-radius:999px;padding:8px 12px;background:#eef2ff;cursor:pointer}
+  .pill.active{background:#dbeafe}
+  .grid-two{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:860px){.grid-two{grid-template-columns:1fr 1fr}}
+
+  label{display:block;margin:10px 0}
+  label.tight{margin:4px 0} /* ← tight spacing for Answer/Confirm */
+  input[type="text"],input[type="password"],input[type="email"],input[type="color"],textarea,select{
+    width:100%;max-width:520px;padding:8px;border:1px solid #d1d5db;border-radius:8px
+  }
+
+  /* avatar/cover */
+  .avatar-wrap{position:relative;width:140px;height:140px;border-radius:999px;border:1px dashed #d1d5db;display:grid;place-items:center;overflow:hidden;background:#f8fafc}
+  .avatar-wrap img{width:100%;height:100%;object-fit:cover;display:none}
+  .avatar-wrap.has-img .drop{opacity:0;pointer-events:none}
+  .cover-wrap{position:relative;width:100%;max-width:520px;height:140px;border-radius:12px;border:1px dashed #d1d5db;display:grid;place-items:center;overflow:hidden;background:#f8fafc}
+  .cover-wrap img{width:100%;height:100%;object-fit:cover;display:none}
+  .cover-wrap.has-img .drop{opacity:0;pointer-events:none}
+  .drop{font-size:12px;color:#6b7280;padding:8px 10px;text-align:center;transition:.2s}
+  .drop.drag{background:#eef2ff;border-color:#bfdbfe}
+
+  .preview-bar{margin-top:10px;padding:10px;border:1px dashed #e5e7eb;border-radius:10px}
+  #themePrev{--accent:#3b82f6}
+  #themePrev[data-theme="dark"]{background:#0f172a;color:#e2e8f0}
+  #themePrev[data-theme="light"]{background:#f8fafc;color:#0f172a}
+  #themePrev::after{content:"  •  Primary";margin-left:8px;padding:3px 8px;border-radius:999px;background:var(--accent);color:white}
+
+  /* fallback gate */
+  .gate-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;place-items:center;z-index:9999}
+  .gate-sheet{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;max-width:560px;width:92%}
 </style>
-</head><body>
+</head>
+<body>
 <div class="wrap">
-  <div class="card">
+  <!-- Fallback Gate (only shows if Auth.ensureAccount fails) -->
+  <div id="gate" class="gate-bg">
+    <div class="gate-sheet">
+      <h3 style="margin:0 0 10px">Sign in</h3>
+      <label><span class="label-text">Email</span><input id="g-email" type="email" placeholder="you@example.com"></label>
+      <label><span class="label-text">Password</span><input id="g-pass" type="password" placeholder="••••••••"></label>
+      <div class="row" style="justify-content:space-between;margin-top:8px">
+        <button class="btn" id="g-signup">Create account</button>
+        <button class="btn primary" id="g-login">Sign in</button>
+      </div>
+      <div id="g-status" class="muted" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div id="settings" class="card" style="display:none">
     <p><a href="index.html">← Home</a></p>
-    <h2>Settings</h2>
-    <label>Visibility
-      <select id="vis"><option value="public">Public</option><option value="private">Private</option></select>
-    </label>
-    <br/><label><input type="checkbox" id="dm"> Allow Direct Messages</label>
-    <br/><label>DM Audience
-      <select id="aud"><option value="everyone">everyone</option><option value="friends">friends</option></select>
-    </label>
-    <div style="margin-top:12px"><button id="save" class="btn">Save</button> <span id="status" style="margin-left:8px"></span></div>
+    <h2 style="margin:0 0 10px">Settings</h2>
+
+    <div class="tabs">
+      <button class="pill active" data-tab="privacy">Privacy</button>
+      <button class="pill" data-tab="security">Security</button>
+      <button class="pill" data-tab="profile">Profile</button>
+      <button class="pill" data-tab="notifications">Notifications</button>
+      <button class="pill" data-tab="appearance">Appearance</button>
+      <button class="pill" data-tab="data">Data</button>
+    </div>
+
+    <div id="tab-privacy">
+      <h3>Privacy</h3>
+      <label><span class="label-text">Visibility</span>
+        <select id="set-visibility">
+          <option value="private" selected>private</option>
+          <option value="public">public</option>
+        </select>
+      </label>
+      <label class="row" style="justify-content:flex-start">
+        <input type="checkbox" id="set-dm"> <span style="margin-left:6px">Allow Direct Messages</span>
+      </label>
+      <label><span class="label-text">DM Audience</span>
+        <select id="set-dmAudience">
+          <option value="everyone">everyone</option>
+          <option value="friends">friends</option>
+          <option value="noone">no one</option>
+        </select>
+      </label>
+      <label class="row" style="justify-content:flex-start">
+        <input type="checkbox" id="set-emailVisible"> <span style="margin-left:6px">Show my email on profile (off = private)</span>
+      </label>
+    </div>
+
+    <div id="tab-security" style="display:none">
+      <h3>Security</h3>
+      <p class="muted">Choose a security question and set an answer. Your answer is <strong>hashed in the browser</strong>, never stored in plaintext.</p>
+      <label><span class="label-text">Email (sign-in)</span>
+        <input id="sec-email" type="email" placeholder="you@example.com">
+      </label>
+
+      <label><span class="label-text">Security question</span>
+        <select id="sec-question">
+          <option value="mother_maiden">What is your mother's maiden name?</option>
+          <option value="first_pet">What was the name of your first pet?</option>
+          <option value="first_school">What is the name of your first school?</option>
+          <option value="birth_city">In what city were you born?</option>
+          <option value="fav_teacher_last">What is your favorite teacher’s last name?</option>
+          <option value="child_nickname">What was your childhood nickname?</option>
+          <option value="first_phone_last4">What are the last 4 digits of your first phone number?</option>
+          <option value="child_street">What is the name of the street you grew up on?</option>
+          <option value="child_book">What was your favorite childhood book?</option>
+          <option value="hs_best_friend">What is your high school best friend’s first name?</option>
+          <option value="first_car_model">What was your first car’s model?</option>
+          <option value="first_employer">What was the name of your first employer?</option>
+          <option value="newyear_2000">Where were you on New Year’s 2000?</option>
+          <option value="first_stuffed">What was the name of your first stuffed animal?</option>
+          <option value="bedroom_color">What color was your childhood bedroom?</option>
+        </select>
+      </label>
+
+      <div class="grid-two">
+        <label class="tight"><span class="label-text">Answer</span>
+          <input id="sec-answer" type="password" autocomplete="new-password" placeholder="Type answer">
+        </label>
+        <label class="tight"><span class="label-text">Confirm answer</span>
+          <input id="sec-answer2" type="password" autocomplete="new-password" placeholder="Repeat answer">
+        </label>
+      </div>
+      <div id="sec-state" class="muted" style="margin-top:6px">No security answer set yet.</div>
+    </div>
+
+    <div id="tab-profile" style="display:none">
+      <h3>Profile</h3>
+      <label><span class="label-text">Display name</span>
+        <input id="set-displayName" placeholder="Your name">
+      </label>
+      <label><span class="label-text">Bio</span>
+        <textarea id="set-bio" rows="3" placeholder="A short bio…"></textarea>
+      </label>
+
+      <div class="grid-two" style="margin-top:10px">
+        <div>
+          <h4 class="subhead">Avatar</h4>
+          <div class="avatar-wrap">
+            <img id="avatar-preview" alt="avatar preview">
+            <div class="drop" id="avatar-drop">Drop image or click Upload</div>
+          </div>
+          <div class="row" style="margin:8px 0">
+            <input type="file" id="avatar-file" accept="image/*" hidden>
+            <button class="btn" id="avatar-choose">Upload avatar</button>
+            <button class="btn" id="avatar-remove">Remove</button>
+          </div>
+          <label class="muted"><span class="label-text">Avatar title (alt text)</span>
+            <input id="avatar-alt" placeholder="Describe your avatar">
+          </label>
+        </div>
+
+        <div>
+          <h4 class="subhead">Cover</h4>
+          <div class="cover-wrap">
+            <img id="cover-preview" alt="cover preview">
+            <div class="drop" id="cover-drop">Drop image or click Upload</div>
+          </div>
+          <div class="row" style="margin:8px 0">
+            <input type="file" id="cover-file" accept="image/*" hidden>
+            <button class="btn" id="cover-choose">Upload cover</button>
+            <button class="btn" id="cover-remove">Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-notifications" style="display:none">
+      <h3>Notifications</h3>
+      <label class="row" style="justify-content:flex-start">
+        <input type="checkbox" id="set-emailNoti"> <span style="margin-left:6px">Email notifications</span>
+      </label>
+      <label class="row" style="justify-content:flex-start">
+        <input type="checkbox" id="set-pushNoti"> <span style="margin-left:6px">Push notifications</span>
+      </label>
+    </div>
+
+    <div id="tab-appearance" style="display:none">
+      <h3>Appearance</h3>
+      <label><span class="label-text">Theme</span>
+        <select id="set-theme">
+          <option value="system">system</option>
+          <option value="light">light</option>
+          <option value="dark">dark</option>
+        </select>
+      </label>
+      <label><span class="label-text">Accent color</span>
+        <input id="set-accent" type="color" value="#3b82f6">
+      </label>
+      <label class="row" style="justify-content:flex-start">
+        <input type="checkbox" id="set-bigText"> <span style="margin-left:6px">Larger text</span>
+      </label>
+      <label class="row" style="justify-content:flex-start">
+        <input type="checkbox" id="set-highContrast"> <span style="margin-left:6px">High contrast</span>
+      </label>
+      <div class="preview-bar" id="themePrev">Preview • buttons & chips show theme</div>
+    </div>
+
+    <div id="tab-data" style="display:none">
+      <h3>Data</h3>
+      <button id="btn-export" class="btn">Export my data</button>
+      <button id="btn-delete" class="btn danger">Delete account (local copy)</button>
+      <p class="muted" style="margin-top:8px">Exports are JSON. Delete removes your local copy if the backend isn’t available.</p>
+    </div>
+
+    <div class="row" style="justify-content:space-between;margin-top:12px;border-top:1px dashed #e5e7eb;padding-top:10px">
+      <label class="row muted" style="justify-content:flex-start">
+        <input type="checkbox" id="applyAll" checked> <span style="margin-left:6px">Apply look/feel to all users (saved to your user.settings)</span>
+      </label>
+      <div class="row">
+        <span id="saveStatus" class="muted"></span>
+        <button id="btn-save" class="btn primary">Save</button>
+      </div>
+    </div>
   </div>
 </div>
 
+<!-- your base stack -->
 <script src="api.js"></script>
 <script src="auth.js"></script>
 <script>
-(async()=>{
-  const me = await Auth.ensureAccount();
-  const u = await Api.users.get(me.id);
-  const vis=document.getElementById('vis'), dm=document.getElementById('dm'), aud=document.getElementById('aud');
-  const p = u.privacy || {};
-  vis.value = p.visibility || 'public';
-  dm.checked = !!p.dm;
-  aud.value  = p.dmAudience || 'everyone';
+/* ===== tiny helpers ===== */
+const qs=(s,el=document)=>el.querySelector(s); const qsa=(s,el=document)=>Array.from(el.querySelectorAll(s));
+function readImage(file){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(file);});}
+function fitCoverCrop(img,W,H){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');const ir=img.width/img.height,cr=W/H;let sx=0,sy=0,sw=img.width,sh=img.height;if(ir>cr){sw=img.height*cr;sx=(img.width-sw)/2;}else{sh=img.width/cr;sy=(img.height-sh)/2;}x.imageSmoothingQuality='high';x.drawImage(img,sx,sy,sw,sh,0,0,W,H);return c;}
+async function sha256Hex(s){ const enc=new TextEncoder(); const buf=await crypto.subtle.digest('SHA-256', enc.encode(s)); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
-  document.getElementById('save').onclick = async ()=>{
-    const patch = { privacy:{ visibility: vis.value, dm: dm.checked, dmAudience: aud.value } };
-    const up = await Api.users.put(me.id, patch);
-    document.getElementById('status').textContent = 'Saved at ' + new Date().toLocaleTimeString();
-    console.log('Updated', up);
-  };
+/* ===== tabs ===== */
+qsa('.tabs .pill').forEach(b=>b.onclick=()=>{ qsa('.tabs .pill').forEach(x=>x.classList.toggle('active',x===b)); ['privacy','security','profile','notifications','appearance','data'].forEach(id=> qs('#tab-'+id).style.display = (b.dataset.tab===id?'block':'none')); });
+
+/* ===== state ===== */
+let ME=null, avatarBlob=null, coverBlob=null, avatarUrl='', coverUrl='';
+
+/* ===== boot (auth → hydrate) ===== */
+(async()=>{
+  try{
+    if (window.Auth && Auth.ensureAccount) {
+      ME = await Auth.ensureAccount(); // should return user with id/email/name
+    }
+    if (!ME) throw new Error('No session');
+    qs('#settings').style.display='block';
+    await hydrate();
+  }catch(e){
+    // fallback gate using your server endpoints
+    const gate=qs('#gate'); gate.style.display='grid';
+    const API_BASE=(window.Api&&Api.base)||window.API_BASE||'/api';
+    const status=(m,err)=>{const n=qs('#g-status'); n.textContent=m; n.style.color=err?'#b91c1c':'#6b7280';};
+    async function call(path,body){const r=await fetch(API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(body)}); if(!r.ok) throw new Error(await r.text()||'error'); return r.json();}
+    qs('#g-login').onclick = go.bind(null,'login'); qs('#g-signup').onclick=go.bind(null,'signup');
+    async function go(mode){
+      status(mode==='login'?'Signing in…':'Creating account…');
+      const email=qs('#g-email').value.trim(), password=qs('#g-pass').value;
+      try{
+        if(mode==='signup') await call('/signup',{email,password,name:email.split('@')[0]});
+        await call('/login',{email,password});
+        if (window.Auth && Auth.ensureAccount) ME=await Auth.ensureAccount();
+        gate.style.display='none'; qs('#settings').style.display='block'; await hydrate();
+      }catch(err){ status((mode==='login'?'Sign in':'Signup')+' failed: '+(err.message||'error'), true); }
+    }
+  }
 })();
+
+/* ===== hydrate from Api.users.get ===== */
+async function hydrate(){
+  const u = await Api.users.get(ME.id);
+  // privacy
+  qs('#set-visibility').value = (u.privacy&&u.privacy.visibility)||'private';
+  qs('#set-dm').checked = !!(u.privacy&&u.privacy.dm);
+  qs('#set-dmAudience').value = (u.privacy&&u.privacy.dmAudience)||'everyone';
+  qs('#set-emailVisible').checked = !!(u.privacy&&u.privacy.emailVisible);
+
+  // profile from top-level OR profile object
+  qs('#set-displayName').value = (u.profile&&u.profile.displayName) || u.name || '';
+  qs('#set-bio').value = (u.profile&&u.profile.bio) || u.bio || '';
+  qs('#avatar-alt').value = (u.profile&&u.profile.avatarAlt) || '';
+  avatarUrl = (u.profile&&u.profile.avatarUrl) || u.avatar || '';
+  coverUrl  = (u.profile&&u.profile.coverUrl)  || u.cover  || '';
+  renderImagePreview('avatar', avatarUrl);
+  renderImagePreview('cover',  coverUrl);
+
+  // notifications under settings.notifications
+  const noti=(u.settings&&u.settings.notifications)||{};
+  qs('#set-emailNoti').checked = !!noti.email;
+  qs('#set-pushNoti').checked  = !!noti.push;
+
+  // appearance maps into settings
+  const st=u.settings||{};
+  qs('#set-theme').value       = st.theme || 'system';
+  qs('#set-accent').value      = st.accent || '#3b82f6';
+  qs('#set-bigText').checked   = !!st.bigText;
+  qs('#set-highContrast').checked = !!st.highContrast;
+
+  // email for security
+  qs('#sec-email').value = u.email || '';
+
+  // wire buttons & inputs
+  wireUI();
+  repaintPreview();
+}
+
+/* ===== UI wiring ===== */
+function wireUI(){
+  // avatar/cover
+  qs('#avatar-choose').onclick = ()=> qs('#avatar-file').click();
+  qs('#avatar-file').onchange  = async e => { if (e.target.files[0]) await pick('avatar', e.target.files[0]); };
+  makeDrop(qs('#avatar-drop'),  async f=> await pick('avatar', f));
+  qs('#avatar-remove').onclick  = ()=>{ avatarBlob=null; avatarUrl=''; renderImagePreview('avatar',''); };
+
+  qs('#cover-choose').onclick = ()=> qs('#cover-file').click();
+  qs('#cover-file').onchange  = async e => { if (e.target.files[0]) await pick('cover', e.target.files[0]); };
+  makeDrop(qs('#cover-drop'),  async f=> await pick('cover', f));
+  qs('#cover-remove').onclick = ()=>{ coverBlob=null; coverUrl=''; renderImagePreview('cover',''); };
+
+  ['set-theme','set-accent'].forEach(id => qs('#'+id).addEventListener('input', repaintPreview));
+  ['set-bigText','set-highContrast'].forEach(id => qs('#'+id).addEventListener('change', repaintPreview));
+
+  qs('#btn-save').onclick = onSave;
+  qs('#btn-export').onclick = exportData;
+  qs('#btn-delete').onclick = wipeLocal;
+}
+
+/* ===== image helpers ===== */
+async function pick(kind, file){
+  if (!file || !/^image\//.test(file.type)) return;
+  const img = await readImage(file);
+  if (kind==='avatar'){
+    const c = fitCoverCrop(img, 512, 512);
+    const b = await new Promise(r=> c.toBlob(r,'image/jpeg',0.92));
+    avatarBlob = b;
+    renderImagePreview('avatar', c.toDataURL('image/jpeg',0.9));
+  } else {
+    const c = fitCoverCrop(img, 1500, 500);
+    const b = await new Promise(r=> c.toBlob(r,'image/jpeg',0.9));
+    coverBlob = b;
+    renderImagePreview('cover', c.toDataURL('image/jpeg',0.9));
+  }
+}
+function renderImagePreview(kind, url){
+  const img = qs('#'+kind+'-preview'), wrap = img && img.parentElement;
+  if (!img) return;
+  if (url){ img.src = url; img.style.display='block'; wrap && wrap.classList.add('has-img'); }
+  else    { img.removeAttribute('src'); img.style.display='none'; wrap && wrap.classList.remove('has-img'); }
+}
+function makeDrop(node, onFile){
+  node.addEventListener('click', ()=> node.parentElement.querySelector('input[type=file]').click());
+  node.addEventListener('dragover', e=>{e.preventDefault(); node.classList.add('drag');});
+  node.addEventListener('dragleave', ()=> node.classList.remove('drag'));
+  node.addEventListener('drop', e=>{
+    e.preventDefault(); node.classList.remove('drag');
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) onFile(f);
+  });
+}
+
+/* ===== preview ===== */
+function repaintPreview(){
+  const bar = qs('#themePrev'); if(!bar) return;
+  bar.style.setProperty('--accent', qs('#set-accent').value);
+  bar.dataset.theme = qs('#set-theme').value;
+}
+
+/* ===== save / export / wipe ===== */
+async function onSave(){
+  const saveBtn=qs('#btn-save'), status=qs('#saveStatus');
+  status.textContent='Saving…'; saveBtn.disabled=true;
+
+  try{
+    // if new images selected, persist data URLs into avatarUrl/coverUrl
+    if (avatarBlob){
+      const fr=new FileReader(); const url=await new Promise(r=>{fr.onload=()=>r(fr.result); fr.readAsDataURL(avatarBlob);});
+      avatarUrl = url;
+    }
+    if (coverBlob){
+      const fr=new FileReader(); const url=await new Promise(r=>{fr.onload=()=>r(fr.result); fr.readAsDataURL(coverBlob);});
+      coverUrl = url;
+    }
+
+    // build userPatch in your server's shape
+    const displayName = qs('#set-displayName').value.trim();
+    const bio         = qs('#set-bio').value.trim();
+
+    // security hashing (optional; stored as user.security)
+    let security = null;
+    const a1 = qs('#sec-answer').value, a2 = qs('#sec-answer2').value, qKey = qs('#sec-question').value;
+    const qText = qs('#sec-question').selectedOptions[0]?.textContent || '';
+    if (a1 || a2){
+      if (a1 !== a2) throw new Error('Security answers do not match.');
+      if (a1.trim().length < 3) throw new Error('Security answer is too short.');
+      const salt = (ME?.id || 'local') + '::' + (qs('#sec-email').value.trim().toLowerCase());
+      const answerHash = await sha256Hex((a1.trim().toLowerCase()) + '::' + salt);
+      security = { questionKey: qKey, questionText: qText, answerHash, lastSetAt: new Date().toISOString() };
+    } else {
+      security = { questionKey: qKey, questionText: qText };
+    }
+
+    const patch = {
+      // top-level mirrors (your server uses these)
+      name: displayName || undefined,
+      bio:  bio || undefined,
+      avatar: avatarUrl || undefined,
+      cover:  coverUrl || undefined,
+
+      // canonical objects
+      privacy: {
+        visibility: qs('#set-visibility').value,
+        dm: qs('#set-dm').checked,
+        dmAudience: qs('#set-dmAudience').value,
+        emailVisible: qs('#set-emailVisible').checked
+      },
+      settings: {
+        theme: qs('#set-theme').value,
+        accent: qs('#set-accent').value,
+        bigText: qs('#set-bigText').checked,
+        highContrast: qs('#set-highContrast').checked,
+        notifications: {
+          email: qs('#set-emailNoti').checked,
+          push: qs('#set-pushNoti').checked
+        }
+      },
+      // optional structured profile too (for other pages that read it)
+      profile: {
+        displayName, bio,
+        avatarAlt: qs('#avatar-alt').value.trim(),
+        avatarUrl, coverUrl
+      },
+      // security (stored for your future checks)
+      security,
+      // allow updating sign-in email if changed
+      email: (qs('#sec-email').value.trim() || undefined)
+    };
+
+    const up = await Api.users.put(ME.id, patch);
+    qs('#sec-answer').value=''; qs('#sec-answer2').value='';
+    qs('#sec-state').textContent = (security && security.answerHash) ? 'Security answer: set (hidden)' : 'Security answer unchanged.';
+    status.textContent = 'Saved ✓';
+    console.log('Updated', up);
+  }catch(e){
+    status.textContent='Save failed: '+(e.message||'error');
+  }finally{
+    setTimeout(()=>{qs('#saveStatus').textContent='';}, 3000);
+    qs('#btn-save').disabled=false;
+    avatarBlob=null; coverBlob=null;
+  }
+}
+
+function exportData(){
+  alert('Export uses your API/local storage in other pages; add a downloader here if needed.');
+}
+function wipeLocal(){
+  localStorage.removeItem('chatternet.settings');
+  localStorage.removeItem('chatternet.settings.global');
+  const prof=JSON.parse(localStorage.getItem('ct_profile_data_v1')||'{}');
+  if (prof && prof['Me']) { delete prof['Me']; localStorage.setItem('ct_profile_data_v1', JSON.stringify(prof)); }
+  alert('Local data cleared ✓');
+}
 </script>
-</body></html>
+</body>
+</html>
