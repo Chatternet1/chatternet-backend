@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Chatternet</title>
-<!-- ✅ Force the correct API base (change if you rename your service) -->
+<!-- Set the API base for production; keep if you deploy elsewhere -->
 <script>window.API_BASE = 'https://chatternet-backend-1.onrender.com/api';</script>
 <style>
   :root{--brand:#a86b00;--ink:#0f172a;--muted:#6b7280;--line:#e5e7eb;--card:#fff;--bg:#f6f7fb;--btn:#fff;--blue:#3b82f6}
@@ -14,7 +14,8 @@
   .brand{font-weight:800;letter-spacing:.3px;color:var(--brand)}
   .menu{display:flex;gap:34px;flex-wrap:wrap}
   .menu a{color:#9aa0a6;font-weight:600;letter-spacing:.25px}.menu a.active{color:#111827}
-  .right{display:flex;align-items:center;gap:12px}.ava{width:36px;height:36px;border-radius:999px;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .right{display:flex;align-items:center;gap:12px}
+  .ava{width:36px;height:36px;border-radius:999px;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
   .badge{font-size:12px;color:var(--muted)}
   .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
   .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media (max-width:900px){.cards{grid-template-columns:1fr}}
@@ -97,9 +98,8 @@
 
 <script src="api.js"></script>
 <script src="auth.js"></script>
-
 <script>
-/* ---------- helpers ---------- */
+/* ---------- helpers & API join ---------- */
 const $=(s,el=document)=>el.querySelector(s);
 function getMyAvatar(){
   try{
@@ -109,78 +109,79 @@ function getMyAvatar(){
     const me = users.find(u=>u.name==='Me'); if (me?.avatar) return me.avatar;
   }catch{} return 'https://i.pravatar.cc/100?u=me';
 }
+const API_BASE = (window.Api && (Api.base||Api.BASE)) || window.API_BASE || '/api';
+function apiJoin(base, endpoint){
+  const b=String(base||'').replace(/\/+$/,'');
+  const e=String(endpoint||'').replace(/^\/+/, '');
+  return b + '/' + e;
+}
 
-/* ---------- robust Api.health with timeout & no cookies ---------- */
+/* ---------- health (no cookies + timeout) ---------- */
 async function healthCheck(){
-  const base = (window.Api && (Api.base||Api.BASE)) || window.API_BASE || '/api';
-  const url  = base.replace(/\/$/,'') + '/health';
-  const ctrl = new AbortController();
-  const t = setTimeout(()=>ctrl.abort(), 7000); // 7s timeout
+  const url = apiJoin(API_BASE,'health');
+  const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),7000);
   try{
-    const r = await fetch(url, { signal: ctrl.signal }); // no credentials → fewer CORS issues
+    const r=await fetch(url,{signal:ctrl.signal});
     clearTimeout(t);
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    const j = await r.json().catch(()=>({}));
-    $('#health').textContent = 'UP • ' + new Date(j.time || Date.now()).toLocaleString();
-    $('#health').style.color = '#16a34a';
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j=await r.json().catch(()=>({}));
+    $('#health').textContent='UP • '+new Date(j.time||Date.now()).toLocaleString();
+    $('#health').style.color='#16a34a';
   }catch(e){
     clearTimeout(t);
-    $('#health').textContent = 'DOWN • ' + (e.name==='AbortError'?'timeout':(e.message||'error'));
-    $('#health').style.color = '#b91c1c';
-    console.warn('health error:', e);
+    $('#health').textContent='DOWN • '+(e.name==='AbortError'?'timeout':(e.message||'error'));
+    $('#health').style.color='#b91c1c';
   }
 }
 
-/* ---------- session/gate ---------- */
-const gate = $('#gate');
-function showGate(v){ gate.style.display = v?'grid':'none'; }
-function setWho(text){ $('#who').textContent = text; }
+/* ---------- session & gate ---------- */
+const gate=$('#gate');
+function showGate(v){ gate.style.display=v?'grid':'none'; }
+function setWho(t){ $('#who').textContent=t; }
 function setSignedIn(me){
   const name = me?.name || me?.email || 'User';
-  setWho('Signed in as ' + name);
-  $('#hello').textContent = 'Welcome back, ' + name + '!';
-  $('#meAva').src = getMyAvatar();
-  $('#btnGate').style.display = 'none';
+  setWho('Signed in as '+name);
+  $('#hello').textContent='Welcome back, '+name+'!';
+  $('#meAva').src=getMyAvatar();
+  $('#btnGate').style.display='none';
 }
 async function ensureSession(){
-  if (window.Auth && Auth.ensureAccount) {
-    try{ const me = await Auth.ensureAccount(); setSignedIn(me); return; }catch{}
+  if(window.Auth && Auth.ensureAccount){
+    try{ const me=await Auth.ensureAccount(); setSignedIn(me); return; }catch{}
   }
   setWho('Guest'); $('#hello').textContent='You’re not signed in yet.'; $('#btnGate').style.display='';
 }
-async function gateCall(path, body){
-  const base = (window.Api && (Api.base||Api.BASE)) || window.API_BASE || '/api';
-  const r = await fetch(base.replace(/\/$/,'') + path, {
-    method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body:JSON.stringify(body)
-  });
-  if(!r.ok) throw new Error(await r.text()||'error');
-  return r.json();
+async function gateCall(endpoint, body){
+  const url=apiJoin(API_BASE, endpoint); // <-- no leading slash
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(body)});
+  const txt=await r.text().catch(()=> '');
+  if(!r.ok) throw new Error(txt||('HTTP '+r.status));
+  try{ return JSON.parse(txt); }catch{ return {}; }
 }
-$('#btnGate').onclick = ()=>showGate(true);
-$('#openGate').onclick = ()=>showGate(true);
-$('#g-login').onclick = async()=>{
+$('#btnGate').onclick=()=>showGate(true);
+$('#openGate').onclick=()=>showGate(true);
+$('#g-login').onclick=async()=>{
   const email=$('#g-email').value.trim(), password=$('#g-pass').value;
   $('#g-status').textContent='Signing in…';
   try{
-    await gateCall('/login',{email,password});
-    if (window.Auth && Auth.ensureAccount) { const me=await Auth.ensureAccount(); setSignedIn(me); }
-    else { setSignedIn({email}); }
+    await gateCall('login',{email,password});
+    if(window.Auth&&Auth.ensureAccount){ const me=await Auth.ensureAccount(); setSignedIn(me); } else { setSignedIn({email}); }
     $('#g-status').textContent=''; showGate(false);
   }catch(e){ $('#g-status').textContent='Login failed: '+(e.message||'error'); }
 };
-$('#g-signup').onclick = async()=>{
+$('#g-signup').onclick=async()=>{
   const email=$('#g-email').value.trim(), password=$('#g-pass').value;
   $('#g-status').textContent='Creating account…';
   try{
-    await gateCall('/signup',{email,password,name:email.split('@')[0]});
-    $('#g-status').textContent='Account created — you can sign in now.';
+    await gateCall('signup',{email,password,name:email.split('@')[0]});
+    $('#g-status').textContent='Account created — sign in now.';
   }catch(e){ $('#g-status').textContent='Signup failed: '+(e.message||'error'); }
 };
 
 /* ---------- boot ---------- */
 document.addEventListener('DOMContentLoaded', async ()=>{
-  $('#meAva').src = getMyAvatar();
-  await healthCheck();         // ← no more stuck “Checking…”
+  $('#meAva').src=getMyAvatar();
+  await healthCheck();
   await ensureSession();
 });
 </script>
