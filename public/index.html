@@ -4,52 +4,25 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Chatternet</title>
+<!-- ✅ Force the correct API base (change if you rename your service) -->
+<script>window.API_BASE = 'https://chatternet-backend-1.onrender.com/api';</script>
 <style>
-  :root{
-    --brand:#a86b00;          /* gold-ish for “Chatternet” brand */
-    --ink:#0f172a;
-    --muted:#6b7280;
-    --line:#e5e7eb;
-    --card:#fff;
-    --bg:#f6f7fb;
-    --btn:#fff;
-    --blue:#3b82f6;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-  a{color:#2563eb;text-decoration:none}
-  a:hover{text-decoration:underline}
-
-  /* Top nav */
-  .nav{
-    position:sticky;top:0;z-index:40;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:16px 22px;background:#fff;border-bottom:1px solid var(--line)
-  }
+  :root{--brand:#a86b00;--ink:#0f172a;--muted:#6b7280;--line:#e5e7eb;--card:#fff;--bg:#f6f7fb;--btn:#fff;--blue:#3b82f6}
+  *{box-sizing:border-box} html,body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  a{color:#2563eb;text-decoration:none} a:hover{text-decoration:underline}
+  .nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:#fff;border-bottom:1px solid var(--line)}
   .brand{font-weight:800;letter-spacing:.3px;color:var(--brand)}
   .menu{display:flex;gap:34px;flex-wrap:wrap}
-  .menu a{color:#9aa0a6;font-weight:600;letter-spacing:.25px}
-  .menu a.active{color:#111827;text-decoration:none}
-  .right{display:flex;align-items:center;gap:12px}
-  .ava{width:36px;height:36px;border-radius:999px;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .menu a{color:#9aa0a6;font-weight:600;letter-spacing:.25px}.menu a.active{color:#111827}
+  .right{display:flex;align-items:center;gap:12px}.ava{width:36px;height:36px;border-radius:999px;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.08)}
   .badge{font-size:12px;color:var(--muted)}
-
-  /* Page */
   .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
-  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media (max-width:900px){.cards{grid-template-columns:1fr}}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px} @media (max-width:900px){.cards{grid-template-columns:1fr}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
-
   .btn{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:var(--btn);cursor:pointer}
   .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .muted{color:var(--muted)}
-
-  /* Gate (compact) + spacing fixes */
-  #gate{letter-spacing:normal;word-spacing:normal}
-  #gate *{
-    letter-spacing:normal!important;word-spacing:normal!important;
-    white-space:normal!important;line-height:1.4!important;text-transform:none!important
-  }
+  /* Gate */
+  #gate *{letter-spacing:normal!important;word-spacing:normal!important;white-space:normal!important;line-height:1.4!important}
   .gate-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;place-items:center;z-index:9999}
   .sheet{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;max-width:520px;width:92%}
   .label{display:block;margin:10px 0;font-weight:600}
@@ -84,13 +57,12 @@
 <!-- PAGE -->
 <div class="wrap">
   <div class="cards">
-    <!-- Health card -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <strong>Backend health</strong>
         <span id="health" class="badge">Checking…</span>
       </div>
-      <p class="muted" style="margin-top:6px">This pings <code>/api/health</code> on your Node service.</p>
+      <p class="badge" style="margin-top:6px">This pings <code>/api/health</code> on your Node service.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <a class="btn" href="messages.html">Messages</a>
         <a class="btn" href="settings.html">Settings</a>
@@ -98,10 +70,9 @@
       </div>
     </div>
 
-    <!-- Quick start / Session -->
     <div class="card">
       <strong>Welcome</strong>
-      <p id="hello" class="muted" style="margin-top:6px">You’re not signed in yet.</p>
+      <p id="hello" class="badge" style="margin-top:6px">You’re not signed in yet.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button id="openGate" class="btn primary">Sign in / Create account</button>
         <a class="btn" href="settings.html">Open Settings</a>
@@ -114,49 +85,104 @@
 <div id="gate" class="gate-bg">
   <div class="sheet">
     <h3 style="margin:0 0 10px">Account</h3>
-    <label class="label">Email
-      <input id="g-email" type="email" placeholder="you@example.com"/>
-    </label>
-    <label class="label">Password
-      <input id="g-pass" type="password" placeholder="••••••••"/>
-    </label>
+    <label class="label">Email <input id="g-email" type="email" placeholder="you@example.com"/></label>
+    <label class="label">Password <input id="g-pass" type="password" placeholder="••••••••"/></label>
     <div style="display:flex;justify-content:space-between;gap:8px;margin-top:8px">
       <button id="g-signup" class="btn">Create account</button>
       <button id="g-login"  class="btn primary">Sign in</button>
     </div>
-    <div id="g-status" class="muted" style="margin-top:8px"></div>
+    <div id="g-status" class="badge" style="margin-top:8px"></div>
   </div>
 </div>
 
-<!-- Load your base stack if present -->
 <script src="api.js"></script>
 <script src="auth.js"></script>
 
 <script>
-/* ========= Safe Api shim (prevents “Api is not defined”) ========= */
-(function(){
-  var BASE = (window.Api && (Api.base||Api.BASE)) || window.API_BASE || '/api';
-  if (!window.Api) window.Api = { base: BASE };
-  if (!Api.health) {
-    Api.health = async function(){
-      const r = await fetch(BASE + '/health', { credentials:'include' });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      try { return await r.json(); } catch { return { ok:true }; }
-    };
-  }
-})();
-
-/* ========= Tiny helpers ========= */
-const $ = (s,el=document)=>el.querySelector(s);
+/* ---------- helpers ---------- */
+const $=(s,el=document)=>el.querySelector(s);
 function getMyAvatar(){
   try{
     const prof = JSON.parse(localStorage.getItem('ct_profile_data_v1')||'{}')['Me']||{};
     if (prof.avatarUrl || prof.avatar) return prof.avatarUrl || prof.avatar;
     const users = JSON.parse(localStorage.getItem('ct_users_v3')||'[]');
     const me = users.find(u=>u.name==='Me'); if (me?.avatar) return me.avatar;
-  }catch{}
-  return 'https://i.pravatar.cc/100?u=me';
+  }catch{} return 'https://i.pravatar.cc/100?u=me';
 }
 
-/* ========= Health check ========= */
-async function checkHeal
+/* ---------- robust Api.health with timeout & no cookies ---------- */
+async function healthCheck(){
+  const base = (window.Api && (Api.base||Api.BASE)) || window.API_BASE || '/api';
+  const url  = base.replace(/\/$/,'') + '/health';
+  const ctrl = new AbortController();
+  const t = setTimeout(()=>ctrl.abort(), 7000); // 7s timeout
+  try{
+    const r = await fetch(url, { signal: ctrl.signal }); // no credentials → fewer CORS issues
+    clearTimeout(t);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json().catch(()=>({}));
+    $('#health').textContent = 'UP • ' + new Date(j.time || Date.now()).toLocaleString();
+    $('#health').style.color = '#16a34a';
+  }catch(e){
+    clearTimeout(t);
+    $('#health').textContent = 'DOWN • ' + (e.name==='AbortError'?'timeout':(e.message||'error'));
+    $('#health').style.color = '#b91c1c';
+    console.warn('health error:', e);
+  }
+}
+
+/* ---------- session/gate ---------- */
+const gate = $('#gate');
+function showGate(v){ gate.style.display = v?'grid':'none'; }
+function setWho(text){ $('#who').textContent = text; }
+function setSignedIn(me){
+  const name = me?.name || me?.email || 'User';
+  setWho('Signed in as ' + name);
+  $('#hello').textContent = 'Welcome back, ' + name + '!';
+  $('#meAva').src = getMyAvatar();
+  $('#btnGate').style.display = 'none';
+}
+async function ensureSession(){
+  if (window.Auth && Auth.ensureAccount) {
+    try{ const me = await Auth.ensureAccount(); setSignedIn(me); return; }catch{}
+  }
+  setWho('Guest'); $('#hello').textContent='You’re not signed in yet.'; $('#btnGate').style.display='';
+}
+async function gateCall(path, body){
+  const base = (window.Api && (Api.base||Api.BASE)) || window.API_BASE || '/api';
+  const r = await fetch(base.replace(/\/$/,'') + path, {
+    method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body:JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error(await r.text()||'error');
+  return r.json();
+}
+$('#btnGate').onclick = ()=>showGate(true);
+$('#openGate').onclick = ()=>showGate(true);
+$('#g-login').onclick = async()=>{
+  const email=$('#g-email').value.trim(), password=$('#g-pass').value;
+  $('#g-status').textContent='Signing in…';
+  try{
+    await gateCall('/login',{email,password});
+    if (window.Auth && Auth.ensureAccount) { const me=await Auth.ensureAccount(); setSignedIn(me); }
+    else { setSignedIn({email}); }
+    $('#g-status').textContent=''; showGate(false);
+  }catch(e){ $('#g-status').textContent='Login failed: '+(e.message||'error'); }
+};
+$('#g-signup').onclick = async()=>{
+  const email=$('#g-email').value.trim(), password=$('#g-pass').value;
+  $('#g-status').textContent='Creating account…';
+  try{
+    await gateCall('/signup',{email,password,name:email.split('@')[0]});
+    $('#g-status').textContent='Account created — you can sign in now.';
+  }catch(e){ $('#g-status').textContent='Signup failed: '+(e.message||'error'); }
+};
+
+/* ---------- boot ---------- */
+document.addEventListener('DOMContentLoaded', async ()=>{
+  $('#meAva').src = getMyAvatar();
+  await healthCheck();         // ← no more stuck “Checking…”
+  await ensureSession();
+});
+</script>
+</body>
+</html>
