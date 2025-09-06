@@ -4,8 +4,6 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Chatternet</title>
-<!-- Set the API base for production; keep if you deploy elsewhere -->
-<script>window.API_BASE = 'https://chatternet-backend-1.onrender.com/api';</script>
 <style>
   :root{--brand:#a86b00;--ink:#0f172a;--muted:#6b7280;--line:#e5e7eb;--card:#fff;--bg:#f6f7fb;--btn:#fff;--blue:#3b82f6}
   *{box-sizing:border-box} html,body{margin:0;font-family:system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
@@ -49,7 +47,7 @@
     <a href="settings.html">Settings</a>
   </nav>
   <div class="right">
-    <span id="who" class="badge">Checking session…</span>
+    <span id="who" class="badge">Guest</span>
     <img id="meAva" class="ava" alt="me">
     <button id="btnGate" class="btn">Sign in</button>
   </div>
@@ -96,10 +94,12 @@
   </div>
 </div>
 
+<!-- order: base shim → your libs -->
+<script src="api-base.js"></script>
 <script src="api.js"></script>
 <script src="auth.js"></script>
 <script>
-/* ---------- helpers & API join ---------- */
+/* ---------- helpers ---------- */
 const $=(s,el=document)=>el.querySelector(s);
 function getMyAvatar(){
   try{
@@ -109,16 +109,10 @@ function getMyAvatar(){
     const me = users.find(u=>u.name==='Me'); if (me?.avatar) return me.avatar;
   }catch{} return 'https://i.pravatar.cc/100?u=me';
 }
-const API_BASE = (window.Api && (Api.base||Api.BASE)) || window.API_BASE || '/api';
-function apiJoin(base, endpoint){
-  const b=String(base||'').replace(/\/+$/,'');
-  const e=String(endpoint||'').replace(/^\/+/, '');
-  return b + '/' + e;
-}
 
 /* ---------- health (no cookies + timeout) ---------- */
 async function healthCheck(){
-  const url = apiJoin(API_BASE,'health');
+  const url = apiJoin(window.API_BASE,'health');
   const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),7000);
   try{
     const r=await fetch(url,{signal:ctrl.signal});
@@ -134,46 +128,41 @@ async function healthCheck(){
   }
 }
 
-/* ---------- session & gate ---------- */
-const gate=$('#gate');
-function showGate(v){ gate.style.display=v?'grid':'none'; }
-function setWho(t){ $('#who').textContent=t; }
+/* ---------- session (best-effort) ---------- */
 function setSignedIn(me){
   const name = me?.name || me?.email || 'User';
-  setWho('Signed in as '+name);
+  $('#who').textContent='Signed in as '+name;
   $('#hello').textContent='Welcome back, '+name+'!';
   $('#meAva').src=getMyAvatar();
   $('#btnGate').style.display='none';
 }
 async function ensureSession(){
   if(window.Auth && Auth.ensureAccount){
-    try{ const me=await Auth.ensureAccount(); setSignedIn(me); return; }catch{}
+    try{ const me=await Auth.ensureAccount(); setSignedIn(me); }catch{}
   }
-  setWho('Guest'); $('#hello').textContent='You’re not signed in yet.'; $('#btnGate').style.display='';
 }
-async function gateCall(endpoint, body){
-  const url=apiJoin(API_BASE, endpoint); // <-- no leading slash
-  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(body)});
-  const txt=await r.text().catch(()=> '');
-  if(!r.ok) throw new Error(txt||('HTTP '+r.status));
-  try{ return JSON.parse(txt); }catch{ return {}; }
-}
-$('#btnGate').onclick=()=>showGate(true);
-$('#openGate').onclick=()=>showGate(true);
+
+/* ---------- gate actions using callAPI() ---------- */
+const gate=$('#gate');
+$('#btnGate').onclick=()=>gate.style.display='grid';
+$('#openGate').onclick=()=>gate.style.display='grid';
+
 $('#g-login').onclick=async()=>{
   const email=$('#g-email').value.trim(), password=$('#g-pass').value;
   $('#g-status').textContent='Signing in…';
   try{
-    await gateCall('login',{email,password});
-    if(window.Auth&&Auth.ensureAccount){ const me=await Auth.ensureAccount(); setSignedIn(me); } else { setSignedIn({email}); }
-    $('#g-status').textContent=''; showGate(false);
+    await callAPI('login',{ method:'POST', body:JSON.stringify({email,password}) });
+    if(window.Auth && Auth.ensureAccount){ const me=await Auth.ensureAccount(); setSignedIn(me); }
+    else { setSignedIn({email}); }
+    $('#g-status').textContent=''; gate.style.display='none';
   }catch(e){ $('#g-status').textContent='Login failed: '+(e.message||'error'); }
 };
+
 $('#g-signup').onclick=async()=>{
   const email=$('#g-email').value.trim(), password=$('#g-pass').value;
   $('#g-status').textContent='Creating account…';
   try{
-    await gateCall('signup',{email,password,name:email.split('@')[0]});
+    await callAPI('signup',{ method:'POST', body:JSON.stringify({email,password,name:email.split('@')[0]}) });
     $('#g-status').textContent='Account created — sign in now.';
   }catch(e){ $('#g-status').textContent='Signup failed: '+(e.message||'error'); }
 };
