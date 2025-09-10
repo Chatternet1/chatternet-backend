@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Music</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{ --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; }
+  *{ box-sizing:border-box }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 'Segoe UI',Arial,sans-serif }
+  a{ color:inherit; text-decoration:none }
+
+  /* Header */
+  .top-bar{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--brand); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.2) }
+  .top-bar h2{ margin:0; font-weight:800; letter-spacing:.2px }
+  .top-actions{ display:flex; gap:8px; align-items:center }
+  .top-actions button{ background:#fff; color:#000; border:none; padding:8px 10px; border-radius:10px; cursor:pointer }
+  .top-actions button:hover{ background:#eef4ff }
+  .top-actions img{ width:36px; height:36px; border-radius:50%; border:2px solid rgba(255,255,255,.85); object-fit:cover; cursor:pointer }
+
+  /* Layout */
+  .page{ max-width:1100px; margin:18px auto; padding:0 12px 28px }
+  .grid{ display:grid; grid-template-columns:340px 1fr; gap:14px }
+  @media (max-width:980px){ .grid{ grid-template-columns:1fr } }
+
+  .card{ background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:14px; box-shadow:0 6px 16px rgba(0,0,0,.06); padding:14px }
+  .section-title{ font-size:22px; font-weight:800; margin:0 0 10px }
+  .muted{ color:var(--muted) }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .btn{ padding:10px 14px; border:1px solid #d7d7d7; border-radius:10px; background:#fff; cursor:pointer }
+  .btn.primary{ background:var(--brand); border-color:var(--brand); color:#fff }
+  .btn.primary:hover{ background:var(--brand-2) }
+  input{ width:100%; padding:10px; border:1px solid #d7d7d7; border-radius:10px; font:inherit; background:#fff }
+
+  .list{ display:flex; flex-direction:column; gap:8px; max-height:45vh; overflow:auto }
+  .track{ border:1px solid #eef2f7; border-radius:10px; padding:8px; display:flex; gap:10px; align-items:center }
+  .cover{ width:44px; height:44px; border-radius:8px; object-fit:cover; background:#e5e7eb }
+  .title{ font-weight:800 }
+  .small{ font-size:12px }
+  .right{ margin-left:auto; display:flex; gap:8px }
+
+  /* Player */
+  .player{ display:flex; flex-direction:column; gap:14px }
+  .np{ display:flex; gap:12px; align-items:center }
+  .np img{ width:64px; height:64px; border-radius:10px; object-fit:cover }
+  .bar{ width:100%; height:10px; background:#e5e7eb; border-radius:999px; overflow:hidden; cursor:pointer }
+  .fill{ height:100%; width:0%; background:var(--brand) }
+
+  .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5000 }
+  .toast.show{ opacity:1 }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Music</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" alt="Me" />
+  </div>
+</div>
+
+<div class="page">
+  <div class="grid">
+
+    <!-- Left: playlist + add -->
+    <aside class="card">
+      <h3 class="section-title">Add Track</h3>
+      <input id="tTitle" placeholder="Title">
+      <input id="tArtist" placeholder="Artist">
+      <input id="tUrl" placeholder="Audio URL (mp3/ogg)…">
+      <input id="tCover" placeholder="Cover URL (optional)">
+      <div class="row" style="margin-top:8px">
+        <button class="btn primary" id="addTrack">Add to playlist</button>
+        <button class="btn" id="clearForm">Clear</button>
+      </div>
+
+      <h4 style="margin:14px 0 6px">Playlist</h4>
+      <div id="list" class="list"></div>
+    </aside>
+
+    <!-- Right: player -->
+    <main class="card">
+      <h3 class="section-title">Player</h3>
+      <div class="player">
+        <div class="np">
+          <img id="npCover" src="" alt="">
+          <div style="flex:1">
+            <div class="title" id="npTitle">Nothing playing</div>
+            <div class="muted small" id="npArtist"></div>
+          </div>
+          <div class="row">
+            <button class="btn" id="prev">⏮</button>
+            <button class="btn primary" id="play">▶</button>
+            <button class="btn" id="next">⏭</button>
+          </div>
+        </div>
+        <div class="bar" id="bar"><div class="fill" id="fill"></div></div>
+        <audio id="audio" preload="metadata"></audio>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== tiny utils ===== */
+  const $=(s,el=document)=>el.querySelector(s);
+  const $$=(s,el=document)=>Array.from(el.querySelectorAll(s));
+  const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
+  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const toast=m=>{ const t=$("#toast"); t.textContent=m; t.className="toast show"; setTimeout(()=>t.className="toast",1200) };
+  const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'cover')}`;
+
+  const LS={ PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
+             TRK:'ct_music_tracks_v1', LAST:'ct_music_last_v1' };
+
+  /* ===== shared assets (messenger/header helpers) ===== */
+  (function robustLoad(){
+    const base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+    const tryScripts=(arr)=>{ (function next(i){ if(i>=arr.length) return; const s=document.createElement('script'); s.src=arr[i]; s.async=true; s.onerror=()=>{ s.remove(); next(i+1); }; (document.head||document.documentElement).appendChild(s); })(0); };
+    tryScripts([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js']);
+    tryScripts([base+'/assets/common.js','/assets/common.js','assets/common.js']);
+  })();
+
+  /* ===== header ===== */
+  (function header(){
+    const prof=(load(LS.PROFILE,{})['Me']||{});
+    const img=$("#myProfile"); if(img){ img.src=prof.avatar||prof.avatarUrl||face('Me'); img.alt=prof.displayName||'Me'; img.onclick=()=>location.href='profile.html'; }
+    $("#btnNotif").onclick=()=>{ const arr=load(LS.NOTIF,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'No notifications yet.'); };
+    $("#btnInbox").onclick=()=>{ const arr=load(LS.INBOX,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'Inbox is empty.'); };
+    $("#btnMsgs").onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); };
+  })();
+
+  /* ===== playlist storage ===== */
+  function tracks(){ return load(LS.TRK,[]); }
+  function saveTracks(a){ save(LS.TRK,a); }
+  let index = load(LS.LAST,0) || 0;
+
+  // very small data-URI beep as a guaranteed playable demo
+  const DEMO = {
+    title:'Demo Beep',
+    artist:'Chatternet',
+    url:'data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQAA',
+    cover:'https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=480&auto=format&fit=crop'
+  };
+
+  (function seed(){
+    let T=tracks();
+    if(!T.length){
+      T = [DEMO];
+      saveTracks(T);
+    }
+  })();
+
+  /* ===== render list ===== */
+  function row(t,i){
+    const div=document.createElement('div'); div.className='track';
+    div.innerHTML = `<img class="cover" src="${t.cover||face(t.title)}">
+      <div>
+        <div class="title">${t.title||'Untitled'}</div>
+        <div class="muted small">${t.artist||''}</div>
+      </div>
+      <div class="right">
+        <button class="btn" data-act="play">Play</button>
+        <button class="btn" data-act="del">Delete</button>
+      </div>`;
+    div.onclick=(e)=>{
+      const act=e.target?.dataset?.act; if(!act) return;
+      if(act==='play'){ playAt(i); }
+      if(act==='del'){ let T=tracks(); T.splice(i,1); saveTracks(T); if(index>=T.length) index=T.length-1; renderList(); toast('Removed'); }
+    };
+    return div;
+  }
+
+  function renderList(){
+    const box=$("#list"); box.innerHTML='';
+    const T=tracks();
+    if(!T.length){ box.innerHTML='<div class="muted">No tracks yet. Add one above.</div>'; }
+    T.forEach((t,i)=> box.appendChild(row(t,i)));
+    if(index<0) index=0;
+  }
+
+  /* ===== player ===== */
+  const audio=$("#audio"), fill=$("#fill"), bar=$("#bar");
+  function updateNP(t){
+    $("#npTitle").textContent = t?.title||'Nothing playing';
+    $("#npArtist").textContent = t?.artist||'';
+    $("#npCover").src = t?.cover||face(t?.title||'');
+  }
+  function playAt(i){
+    const T=tracks(); if(!T.length) return;
+    index = (i+T.length)%T.length; save(LS.LAST,index);
+    const t=T[index];
+    updateNP(t);
+    audio.src = t.url;
+    audio.play().catch(()=>{/* ignore */});
+    $("#play").textContent='⏸';
+  }
+  audio.addEventListener('timeupdate',()=>{
+    const p = audio.duration? (audio.currentTime/audio.duration)*100 : 0;
+    fill.style.width = (p||0)+'%';
+  });
+  audio.addEventListener('ended',()=> next());
+  bar.addEventListener('click',(e)=>{
+    const r=bar.getBoundingClientRect();
+    const pct=(e.clientX-r.left)/r.width;
+    audio.currentTime = (audio.duration||0)*pct;
+  });
+  function prev(){ playAt(index-1); }
+  function next(){ playAt(index+1); }
+
+  $("#prev").onclick=prev;
+  $("#next").onclick=next;
+  $("#play").onclick=()=>{
+    if(audio.paused){ audio.play().catch(()=>{}); $("#play").textContent='⏸'; }
+    else{ audio.pause(); $("#play").textContent='▶'; }
+  };
+
+  /* ===== add track form ===== */
+  $("#addTrack").onclick=()=>{
+    const t=($("#tTitle").value||'').trim();
+    const a=($("#tArtist").value||'').trim();
+    const u=($("#tUrl").value||'').trim();
+    const c=($("#tCover").value||'').trim();
+    if(!u){ alert('Please enter an audio URL.'); return; }
+    const T=tracks(); T.push({title:t||'Untitled', artist:a, url:u, cover:c});
+    saveTracks(T); renderList(); toast('Added'); $("#clearForm").click();
+    if(T.length===1) playAt(0);
+  };
+  $("#clearForm").onclick=()=>{ ["tTitle","tArtist","tUrl","tCover"].forEach(id=>$("#"+id).value=''); };
+
+  /* ===== init ===== */
+  renderList();
+  if(tracks().length){ playAt(index||0); }
+})();
+</script>
+</body>
+</html>
