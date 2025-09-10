@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Friends</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
+    --danger:#b91c1c
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
+  a{color:inherit;text-decoration:none}
+
+  /* Header */
+  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;object-fit:cover}
+
+  /* Page */
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:1.3fr .7fr;gap:14px}
+  @media (max-width:920px){ .page{grid-template-columns:1fr} }
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  input,select,button{font:inherit}
+  input,select{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;background:#fff}
+
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer;white-space:nowrap}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
+  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+
+  /* Lists */
+  .item{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid #ececec;background:#fafafa;border-radius:12px;margin:8px 0}
+  .ava{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #fff}
+  .meta{flex:1;min-width:0}
+  .name{font-weight:800}
+  .sub{font-size:12px;color:#6b7280}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* Modals (Notif/Inbox) */
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:3500}
+  .sheet{background:#fff;border-radius:14px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
+  .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+
+  /* Toast */
+  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Friends</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" title="My Profile" />
+  </div>
+</div>
+
+<!-- Notifications / Inbox -->
+<div class="modalbg" id="notifModal">
+  <div class="sheet">
+    <h3 style="margin:0 0 10px;font-weight:800">Notifications</h3>
+    <div id="notifList"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn primary" id="clearNotif">Clear</button>
+      <button class="btn" id="closeNotif">Close</button>
+    </div>
+  </div>
+</div>
+<div class="modalbg" id="inboxModal">
+  <div class="sheet">
+    <h3 style="margin:0 0 10px;font-weight:800">Inbox</h3>
+    <div id="inboxList"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn" id="closeInbox">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <!-- Left column: My Friends -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h3 class="section-title" style="margin:0">My Friends</h3>
+      <span class="muted" id="friendsCount">0</span>
+    </div>
+    <div id="friendsList"></div>
+    <div id="friendsEmpty" class="muted">No friends yet.</div>
+  </section>
+
+  <!-- Right column: Find & Suggestions -->
+  <aside class="card">
+    <h3 class="section-title" style="margin:0 0 10px">Find People</h3>
+    <div class="row" style="margin-bottom:8px">
+      <input id="q" placeholder="Search people by name">
+    </div>
+    <div class="row">
+      <button class="btn" id="btnSearch" style="flex:0 0 auto">Search</button>
+      <button class="btn ghost" id="btnClear" style="flex:0 0 auto">Clear</button>
+    </div>
+    <div id="searchResults" style="margin-top:10px"></div>
+
+    <h3 class="section-title" style="margin:14px 0 10px">Suggestions</h3>
+    <div id="suggestList"></div>
+    <div id="suggestEmpty" class="muted">No suggestions right now.</div>
+  </aside>
+</div>
+
+<div id="toast"></div>
+
+<!-- Keep only your app scripts here; common/messenger load in your universal footer -->
+<script src="auth.js"></script>
+<script src="api.js"></script>
+
+<script>
+/* ===== helpers & keys ===== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const LS = {
+  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', VIEW:'ct_profile_view_v1',
+  FRIENDS:'ct_friend_list_v2', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'
+};
+const face = n => `https://i.pravatar.cc/120?u=${encodeURIComponent(n||'Me')}`;
+function load(k,f){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{return f;} }
+function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+const toast=(m)=>{ const t=$("#toast"); t.textContent=m; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); };
+
+function users(){ return load(LS.USERS,[]); }
+function friends(){ return load(LS.FRIENDS,[]); }
+function setFriends(a){ save(LS.FRIENDS, Array.from(new Set(a))); }
+
+function profileOf(name){ return (load(LS.PROFILE,{}))[name] || {}; }
+function avatarFor(name){ const p=profileOf(name); return p.avatar||p.avatarUrl|| (users().find(u=>u.name===name)?.avatar) || face(name); }
+function goToProfile(name){ try{ localStorage.setItem(LS.VIEW, JSON.stringify({name})); }catch{} location.href='profile.html'; }
+
+/* ===== seed basic people so page never blanks ===== */
+(function seed(){
+  let u = users();
+  if(!Array.isArray(u) || !u.length){
+    u = [{name:'Me', avatar:face('Me')}];
+    const names = ["Grace Lee","Liam Adams","Ava Morgan","Noah Walker","Sophia Turner","Mason Hill","Emma Davis","Ethan Brooks","Olivia Perez","Logan Price","Mia Carter","Lucas Reed","Chloe Evans","Henry Scott","Amelia Ross","Elijah Gray","Isabella Wood","James Hall","Luna Kelly","Benjamin Ward"];
+    names.forEach(n=>u.push({name:n, avatar:face(n)}));
+    save(LS.USERS,u);
+  }else{
+    if(!u.find(x=>x.name==='Me')){ u.unshift({name:'Me', avatar:face('Me')}); save(LS.USERS,u); }
+  }
+})();
+
+/* ===== header avatar & buttons ===== */
+(function wireHeader(){
+  const me = profileOf('Me');
+  const img=$("#myProfile");
+  if(img){
+    img.src = me.avatar || me.avatarUrl || face('Me');
+    img.alt = me.displayName || 'Me';
+    img.onclick = ()=> goToProfile('Me');
+  }
+
+  // Notifs
+  const nModal=$("#notifModal"), nList=$("#notifList");
+  function rNotif(){
+    const arr=load(LS.NOTIF,[]);
+    nList.innerHTML = arr.length
+      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time||Date.now()).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
+      : '<div class="notifitem">No notifications yet.</div>';
+  }
+  $("#btnNotif").addEventListener('click',()=>{ rNotif(); nModal.style.display='flex'; });
+  $("#clearNotif").addEventListener('click',()=>{ save(LS.NOTIF,[]); rNotif(); });
+  $("#closeNotif").addEventListener('click',()=> nModal.style.display='none');
+
+  // Inbox
+  const iModal=$("#inboxModal"), iList=$("#inboxList");
+  function rInbox(){
+    const arr=load(LS.INBOX,[]);
+    iList.innerHTML = arr.length
+      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time||Date.now()).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
+      : '<div class="notifitem">Inbox is empty.</div>';
+  }
+  $("#btnInbox").addEventListener('click',()=>{ rInbox(); iModal.style.display='flex'; });
+  $("#closeInbox").addEventListener('click',()=> iModal.style.display='none');
+
+  // Messages -> overlay if present
+  $("#btnMsgs").addEventListener('click',(e)=>{
+    e.preventDefault(); e.stopPropagation();
+    if (window.ctOpen) return window.ctOpen();
+    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+    location.href='messages.html';
+  });
+})();
+
+/* ===== render friends ===== */
+function renderFriends(){
+  const list = friends();
+  const box = $("#friendsList");
+  $("#friendsCount").textContent = String(list.length)+" total";
+  box.innerHTML = '';
+  $("#friendsEmpty").style.display = list.length ? 'none':'block';
+  list.forEach(name=>{
+    const row = document.createElement('div');
+    row.className='item';
+    row.innerHTML = `
+      <img class="ava" src="${avatarFor(name)}" alt="">
+      <div class="meta">
+        <div class="name">${name}</div>
+        <div class="sub">Friend · ${name=== 'Me' ? 'You' : 'Added'}</div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" data-prof="${name}">Profile</button>
+        <button class="btn primary" data-msg="${name}">Message</button>
+        <button class="btn danger" data-rem="${name}">Remove</button>
+      </div>`;
+    row.querySelector('[data-prof]').onclick=()=> goToProfile(name);
+    row.querySelector('[data-msg]').onclick=()=> {
+      if (window.ctMessage) return window.ctMessage(name);
+      if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+      location.href='messages.html';
+    };
+    row.querySelector('[data-rem]').onclick=()=>{
+      if(!confirm('Remove '+name+'?')) return;
+      setFriends(friends().filter(n=>n!==name));
+      // notif
+      const arr=load(LS.NOTIF,[]); arr.unshift({time:Date.now(), text:`Removed ${name} from friends.`}); save(LS.NOTIF,arr);
+      renderFriends(); renderSuggestions(); toast('Removed');
+    };
+    box.appendChild(row);
+  });
+}
+
+/* ===== suggestions ===== */
+function candidates(){
+  const f = new Set(friends());
+  return users().filter(u=>u.name!=='Me' && !f.has(u.name));
+}
+function renderSuggestions(){
+  const box=$("#suggestList");
+  const empty=$("#suggestEmpty");
+  const list=candidates().slice(0,12);
+  box.innerHTML='';
+  empty.style.display = list.length ? 'none':'block';
+  list.forEach(u=>{
+    const row=document.createElement('div');
+    row.className='item';
+    row.innerHTML=`
+      <img class="ava" src="${u.avatar||avatarFor(u.name)}" alt="">
+      <div class="meta">
+        <div class="name">${u.name}</div>
+        <div class="sub">Suggested</div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" data-add="${u.name}">Add Friend</button>
+        <button class="btn ghost" data-prof="${u.name}">Profile</button>
+        <button class="btn" data-msg="${u.name}">Message</button>
+      </div>`;
+    row.querySelector('[data-add]').onclick=()=>{
+      const arr=friends(); if(!arr.includes(u.name)) arr.unshift(u.name);
+      setFriends(arr);
+      const ns=load(LS.NOTIF,[]); ns.unshift({time:Date.now(), text:`You added ${u.name} as a friend.`}); save(LS.NOTIF,ns);
+      renderFriends(); renderSuggestions(); toast('Friend added');
+    };
+    row.querySelector('[data-prof]').onclick=()=> goToProfile(u.name);
+    row.querySelector('[data-msg]').onclick=()=> {
+      if (window.ctMessage) return window.ctMessage(u.name);
+      if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+      location.href='messages.html';
+    };
+    box.appendChild(row);
+  });
+}
+
+/* ===== search ===== */
+function doSearch(){
+  const term=($("#q").value||'').trim().toLowerCase();
+  const box=$("#searchResults");
+  box.innerHTML='';
+  if(!term){ box.innerHTML='<div class="muted">Type a name to search.</div>'; return; }
+  const list=users().filter(u=>u.name.toLowerCase().includes(term));
+  if(!list.length){ box.innerHTML='<div class="muted">No matches.</div>'; return; }
+  list.forEach(u=>{
+    const isFriend = friends().includes(u.name);
+    const row=document.createElement('div'); row.className='item';
+    row.innerHTML=`
+      <img class="ava" src="${avatarFor(u.name)}" alt="">
+      <div class="meta">
+        <div class="name">${u.name}</div>
+        <div class="sub">${isFriend?'Already your friend':'Not a friend'}</div>
+      </div>
+      <div class="actions">
+        ${ isFriend
+            ? `<button class="btn danger" data-rem="${u.name}">Remove</button>`
+            : `<button class="btn primary" data-add="${u.name}">Add Friend</button>` }
+        <button class="btn ghost" data-prof="${u.name}">Profile</button>
+        <button class="btn" data-msg="${u.name}">Message</button>
+      </div>`;
+    const add=row.querySelector('[data-add]');
+    if(add) add.onclick=()=>{
+      const arr=friends(); if(!arr.includes(u.name)) arr.unshift(u.name); setFriends(arr);
+      const ns=load(LS.NOTIF,[]); ns.unshift({time:Date.now(), text:`You added ${u.name} as a friend.`}); save(LS.NOTIF,ns);
+      renderFriends(); renderSuggestions(); doSearch(); toast('Friend added');
+    };
+    const rem=row.querySelector('[data-rem]');
+    if(rem) rem.onclick=()=>{
+      if(!confirm('Remove '+u.name+'?')) return;
+      setFriends(friends().filter(n=>n!==u.name));
+      const ns=load(LS.NOTIF,[]); ns.unshift({time:Date.now(), text:`Removed ${u.name}.`}); save(LS.NOTIF,ns);
+      renderFriends(); renderSuggestions(); doSearch(); toast('Removed');
+    };
+    row.querySelector('[data-prof]').onclick=()=> goToProfile(u.name);
+    row.querySelector('[data-msg]').onclick=()=> {
+      if (window.ctMessage) return window.ctMessage(u.name);
+      if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+      location.href='messages.html';
+    };
+    box.appendChild(row);
+  });
+}
+$("#btnSearch").addEventListener('click', doSearch);
+$("#btnClear").addEventListener('click', ()=>{ $("#q").value=''; $("#searchResults").innerHTML=''; });
+
+/* ===== initial render + keep fresh ===== */
+renderFriends();
+renderSuggestions();
+window.addEventListener('storage', (e)=>{
+  if ([LS.FRIENDS,LS.USERS,LS.PROFILE].includes(e.key)){ renderFriends(); renderSuggestions(); }
+});
+
+/* If a messages.html link is clicked, open overlay instead when available */
+document.addEventListener('click', (e)=>{
+  const a = e.target.closest && e.target.closest('a[href*="messages.html"]');
+  if(!a) return;
+  if (window.ctOpen || (window.ChatternetMessenger&&window.ChatternetMessenger.open)){
+    e.preventDefault();
+    (window.ctOpen || window.ChatternetMessenger.open)();
+  }
+}, true);
+</script>
+</body>
+</html>
