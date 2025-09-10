@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Dating</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{ --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; --good:#0f766e; --warn:#b45309 }
+  *{ box-sizing:border-box }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 'Segoe UI',Arial,sans-serif }
+  a{ color:inherit; text-decoration:none }
+
+  /* Header */
+  .top-bar{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between;
+            padding:10px 14px; background:var(--brand); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.2) }
+  .top-bar h2{ margin:0; font-weight:800; letter-spacing:.2px }
+  .top-actions{ display:flex; gap:8px; align-items:center }
+  .top-actions button{ background:#fff; color:#000; border:none; padding:8px 10px; border-radius:10px; cursor:pointer }
+  .top-actions button:hover{ background:#eef4ff }
+  .top-actions img{ width:36px; height:36px; border-radius:50%; border:2px solid rgba(255,255,255,.85); object-fit:cover; cursor:pointer }
+
+  /* Layout */
+  .page{ max-width:1100px; margin:18px auto; padding:0 12px 28px }
+  .grid{ display:grid; grid-template-columns:300px 1fr; gap:14px }
+  @media (max-width:940px){ .grid{ grid-template-columns:1fr } }
+
+  .card{ background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:14px; box-shadow:0 6px 16px rgba(0,0,0,.06); padding:14px }
+  .section-title{ font-size:22px; font-weight:800; margin:0 0 10px }
+  .muted{ color:var(--muted) }
+  .pill{ display:inline-block; font-size:12px; padding:4px 8px; border:1px solid #d7d7d7; border-radius:999px; background:#f8fafc; margin:4px 6px 0 0 }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .btn{ padding:10px 14px; border:1px solid #d7d7d7; border-radius:10px; background:#fff; cursor:pointer }
+  .btn.primary{ background:var(--brand); border-color:var(--brand); color:#fff }
+  .btn.primary:hover{ background:var(--brand-2) }
+  .btn.good{ background:#d1fae5; border-color:#a7f3d0; color:#065f46 }
+  .btn.warn{ background:#fff7ed; border-color:#fed7aa; color:#7c2d12 }
+
+  /* Left sidebar */
+  .stat{ font-size:13px; color:#475569; margin-right:8px }
+  .list{ display:flex; flex-direction:column; gap:8px; margin-top:8px; max-height:40vh; overflow:auto }
+  .mini{ display:flex; align-items:center; gap:8px; padding:8px; border:1px solid #eef2f7; border-radius:10px }
+  .ava{ width:36px; height:36px; border-radius:50%; object-fit:cover }
+
+  /* Main deck */
+  .deck{ display:flex; align-items:center; justify-content:center; min-height:68vh; padding:8px }
+  .profile{ width:min(620px,100%); border:1px solid #e8ecf4; border-radius:16px; overflow:hidden; background:#fff; box-shadow:0 10px 20px rgba(0,0,0,.06) }
+  .cover{ width:100%; height:360px; object-fit:cover; background:#e5e7eb }
+  @media (max-width:520px){ .cover{ height:260px } }
+  .pwrap{ padding:12px 14px }
+  .name{ font-size:24px; font-weight:900 }
+  .bio{ color:#475569 }
+  .tags{ margin-top:6px }
+  .actions{ display:flex; gap:10px; flex-wrap:wrap; padding:12px 14px; border-top:1px solid #eef2f7; justify-content:space-between }
+  .r{ display:flex; gap:10px; flex-wrap:wrap }
+
+  /* Modal */
+  .modal{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:3000 }
+  .panel{ background:#fff; border-radius:14px; width:min(520px,92vw); padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.35) }
+  .panel h3{ margin:0 0 8px }
+  .center{ text-align:center }
+  .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5000 }
+  .toast.show{ opacity:1 }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Dating</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" alt="Me" />
+  </div>
+</div>
+
+<div class="page">
+  <div class="grid">
+    <!-- Left: filters + stats -->
+    <aside class="card">
+      <h3 class="section-title">Filters</h3>
+      <div class="row">
+        <label class="stat">Age</label>
+        <input id="minAge" type="number" min="18" max="80" value="18" style="width:88px; padding:8px; border:1px solid #d7d7d7; border-radius:10px">
+        <span class="stat">to</span>
+        <input id="maxAge" type="number" min="18" max="80" value="60" style="width:88px; padding:8px; border:1px solid #d7d7d7; border-radius:10px">
+        <button class="btn" id="apply">Apply</button>
+      </div>
+
+      <div style="margin-top:10px" class="muted small">
+        Tip: tap <span class="pill">Like</span> to save someone. If they like you too, you’ll get a match and can message right away.
+      </div>
+
+      <h4 style="margin:14px 0 6px">Your Likes</h4>
+      <div id="likesList" class="list"></div>
+
+      <h4 style="margin:14px 0 6px">Matches</h4>
+      <div id="matchList" class="list"></div>
+    </aside>
+
+    <!-- Right: deck -->
+    <main class="card">
+      <div class="deck" id="deck"></div>
+    </main>
+  </div>
+</div>
+
+<!-- Match modal -->
+<div id="matchModal" class="modal">
+  <div class="panel center">
+    <h3>🎉 It’s a match!</h3>
+    <div id="matchWho" class="muted" style="margin-bottom:6px"></div>
+    <div class="row" style="justify-content:center">
+      <button id="msgNow" class="btn primary">Message now</button>
+      <button id="keepBrowsing" class="btn">Keep browsing</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== tiny utils ===== */
+  const $=(s,el=document)=>el.querySelector(s);
+  const $$=(s,el=document)=>Array.from(el.querySelectorAll(s));
+  const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
+  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  const face=n=>`https://i.pravatar.cc/300?u=${encodeURIComponent(n||'user')}`;
+  const toast=m=>{ const t=$("#toast"); t.textContent=m; t.className="toast show"; setTimeout(()=>t.className="toast",1200) };
+
+  const LS={
+    USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1',
+    LIKES:'ct_dating_likes_v1', PASS:'ct_dating_pass_v1', MATCHES:'ct_dating_matches_v1',
+    NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'
+  };
+
+  /* ===== robust loader for shared assets (overlay + header helpers) ===== */
+  (function robustLoad(){
+    const base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+    const tryScripts=(arr)=>{ (function next(i){ if(i>=arr.length) return; const s=document.createElement('script'); s.src=arr[i]; s.async=true; s.onerror=()=>{ s.remove(); next(i+1); }; (document.head||document.documentElement).appendChild(s); })(0); };
+    tryScripts([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js']);
+    tryScripts([base+'/assets/common.js','/assets/common.js','assets/common.js']);
+  })();
+
+  /* ===== header wiring ===== */
+  (function header(){
+    const prof=(load(LS.PROFILE,{})['Me']||{});
+    const myA= prof.avatar || prof.avatarUrl || face('Me');
+    const img=$("#myProfile"); if(img){ img.src=myA; img.alt=prof.displayName||'Me'; img.onclick=()=>location.href='profile.html'; }
+    $("#btnNotif").onclick=()=>{ const arr=load(LS.NOTIF,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'No notifications yet.'); };
+    $("#btnInbox").onclick=()=>{ const arr=load(LS.INBOX,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'Inbox is empty.'); };
+    $("#btnMsgs").onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); };
+  })();
+
+  /* ===== seed some demo users if needed ===== */
+  (function seedUsers(){
+    let u = load(LS.USERS, null);
+    const ensure = (arr,name,age,tags=[])=>{
+      if(!arr.find(x=>x.name===name)) arr.push({name,avatar:face(name),age,tags,about:`Hi, I'm ${name}.`});
+    };
+    if(!u || !Array.isArray(u) || u.length<3){
+      u = [{name:'Me', avatar:face('Me')},{name:'Echo Bot', avatar:face('Echo Bot')}];
+      ensure(u,'Grace Lee',28,['hiking','coffee','sci-fi']);
+      ensure(u,'Sam Carter',31,['gaming','music','coding']);
+      ensure(u,'Ava Patel',26,['photography','travel']);
+      ensure(u,'Leo Nguyen',29,['foodie','gym']);
+      ensure(u,'Nora García',33,['books','yoga']);
+      ensure(u,'Ben Okoye',27,['movies','football']);
+      ensure(u,'Mia Rossi',24,['art','dogs']);
+    } else {
+      if(!u.find(x=>x.name==='Me')) u.unshift({name:'Me', avatar:face('Me')});
+      if(!u.find(x=>x.name==='Echo Bot')) u.push({name:'Echo Bot', avatar:face('Echo Bot')});
+    }
+    save(LS.USERS,u);
+  })();
+
+  /* ===== state ===== */
+  let minAge = Number($("#minAge").value)||18;
+  let maxAge = Number($("#maxAge").value)||60;
+  let deck = [];           // candidate names
+  let idx = 0;             // pointer into deck
+  let lastLiked = '';      // for match modal
+
+  function users(){ return load(LS.USERS,[]); }
+  const likes   = ()=>load(LS.LIKES,[]);
+  const passes  = ()=>load(LS.PASS,[]);
+  const matches = ()=>load(LS.MATCHES,[]);
+
+  function saveLikes(a){ save(LS.LIKES,a) }
+  function savePass(a){ save(LS.PASS,a) }
+  function saveMatches(a){ save(LS.MATCHES,a) }
+
+  /* ===== build deck based on filters ===== */
+  function rebuildDeck(){
+    const u=users();
+    const l=likes(); const p=passes();
+    deck = u
+      .filter(x=>x.name!=='Me' && x.name!=='Echo Bot')
+      .filter(x=> (typeof x.age==='number'? x.age>=minAge && x.age<=maxAge : true))
+      .filter(x=> !l.includes(x.name) && !p.includes(x.name))
+      .map(x=>x.name);
+    idx = 0;
+    renderCard();
+    renderSidebars();
+  }
+
+  /* ===== render sidebars ===== */
+  function miniRow(name, actions=true){
+    const u=users().find(z=>z.name===name);
+    const div=document.createElement('div'); div.className='mini';
+    div.innerHTML = `<img class="ava" src="${(u?.avatar)||face(name)}" alt="${esc(name)}"><div><div style="font-weight:700">${esc(name)}</div><div class="muted" style="font-size:12px">${u?.age?u.age+' • ':''}${esc((u?.tags||[]).slice(0,2).join(', '))}</div></div>`;
+    if(actions){
+      const r=document.createElement('div'); r.style.marginLeft='auto'; r.className='row';
+      const b=document.createElement('button'); b.className='btn'; b.textContent='View';
+      b.onclick=()=>{ openOnTop(name); };
+      const m=document.createElement('button'); m.className='btn primary'; m.textContent='Message';
+      m.onclick=()=> goMessage(name);
+      r.appendChild(b); r.appendChild(m); div.appendChild(r);
+    }
+    return div;
+  }
+
+  function renderSidebars(){
+    const likesBox=$("#likesList"); likesBox.innerHTML='';
+    likes().forEach(n=>likesBox.appendChild(miniRow(n,false)));
+
+    const mBox=$("#matchList"); mBox.innerHTML='';
+    matches().forEach(n=>mBox.appendChild(miniRow(n,true)));
+  }
+
+  /* ===== main card ===== */
+  function current(){ const name=deck[idx]; return users().find(x=>x.name===name); }
+
+  function cardHTML(u){
+    const tags=(u.tags||[]).map(t=>`<span class="pill">${esc(t)}</span>`).join(' ');
+    return `
+      <div class="profile">
+        <img class="cover" src="${u.cover||u.avatar||face(u.name)}" alt="${esc(u.name)}">
+        <div class="pwrap">
+          <div class="name">${esc(u.name)}${u.age?`, ${u.age}`:''}</div>
+          <div class="bio">${esc(u.about||'')}</div>
+          <div class="tags">${tags}</div>
+        </div>
+        <div class="actions">
+          <div class="r">
+            <button class="btn warn" id="passBtn">Pass</button>
+            <button class="btn good" id="likeBtn">Like</button>
+            <button class="btn primary" id="superBtn">Super Like</button>
+          </div>
+          <div class="r">
+            <button class="btn" id="prevBtn">Prev</button>
+            <button class="btn" id="nextBtn">Next</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function emptyHTML(){
+    return `<div class="muted" style="text-align:center">No more people in this range. Adjust filters or come back later.</div>`;
+  }
+
+  function renderCard(){
+    const d=$("#deck"); const u=current();
+    if(!u){ d.innerHTML=emptyHTML(); return; }
+    d.innerHTML=cardHTML(u);
+
+    $("#passBtn").onclick = ()=>{ savePass([...new Set([...passes(), u.name])]); idx++; renderCard(); renderSidebars(); };
+    $("#likeBtn").onclick = ()=> like(u.name, false);
+    $("#superBtn").onclick = ()=> like(u.name, true);
+    $("#prevBtn").onclick = ()=>{ idx = Math.max(0, idx-1); renderCard(); };
+    $("#nextBtn").onclick = ()=>{ idx = Math.min(deck.length, idx+1); renderCard(); };
+  }
+
+  /* ===== like/match logic (local demo) ===== */
+  function like(name, superLike){
+    const l=[...likes()];
+    if(!l.includes(name)){ l.push(name); saveLikes(l); }
+    lastLiked = name;
+
+    // Demo matching rule:
+    //  - Super Like => instant match
+    //  - Otherwise: 50% chance OR if user name contains a vowel pattern (just for fun)
+    const gotMatch = superLike || Math.random()<0.5 || /[ae]/i.test(name);
+    if(gotMatch){
+      const m=[...new Set([...matches(), name])]; saveMatches(m);
+      showMatch(name);
+    } else {
+      toast('Saved to Likes');
+    }
+    idx++; renderCard(); renderSidebars();
+  }
+
+  function showMatch(name){
+    $("#matchWho").textContent = `You and ${name} like each other.`;
+    $("#matchModal").style.display='flex';
+    $("#msgNow").onclick = ()=>{ $("#matchModal").style.display='none'; goMessage(name); };
+    $("#keepBrowsing").onclick = ()=>{ $("#matchModal").style.display='none'; };
+  }
+
+  function goMessage(name){
+    if(window.ctMessage) return window.ctMessage(name);
+    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(name);
+    // fallback to full page messages
+    location.href = 'messages.html?msg=' + encodeURIComponent(name);
+  }
+
+  function openOnTop(name){
+    // jump the deck to show this profile
+    const pos = deck.indexOf(name);
+    if(pos>=0){ idx=pos; renderCard(); return; }
+    // if not in deck, temporarily show it
+    const d=$("#deck"); const u=users().find(x=>x.name===name);
+    if(!u){ toast('Profile not found'); return; }
+    d.innerHTML = cardHTML(u);
+    $("#passBtn").onclick = ()=>{ savePass([...new Set([...passes(), u.name])]); rebuildDeck(); };
+    $("#likeBtn").onclick = ()=> like(u.name, false);
+    $("#superBtn").onclick = ()=> like(u.name, true);
+    $("#prevBtn").onclick = ()=> rebuildDeck();
+    $("#nextBtn").onclick = ()=> rebuildDeck();
+  }
+
+  /* ===== filters ===== */
+  $("#apply").onclick = ()=>{
+    const a=Number($("#minAge").value)||18;
+    const b=Number($("#maxAge").value)||60;
+    if(a>b){ alert('Min age must be <= max'); return; }
+    minAge=a; maxAge=b;
+    rebuildDeck();
+  };
+
+  /* ===== live sync for header avatar and user changes ===== */
+  window.addEventListener('storage',ev=>{
+    if(ev.key===LS.PROFILE){
+      const prof=(load(LS.PROFILE,{})['Me']||{});
+      $("#myProfile").src = prof.avatar || prof.avatarUrl || face('Me');
+    }
+  });
+
+  /* ===== init ===== */
+  rebuildDeck();
+})();
+</script>
+</body>
+</html>
