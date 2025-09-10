@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Blogs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
+    --ok:#0f766e;--bad:#b91c1c
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
+  a{color:inherit;text-decoration:none}
+
+  /* Header */
+  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
+
+  /* Layout */
+  .wrap{max-width:1100px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:1fr 1.2fr;gap:14px}
+  @media (max-width:900px){ .wrap{grid-template-columns:1fr} }
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  input,textarea,select,button{font-family:'Segoe UI',Arial,sans-serif}
+  input,textarea,select{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;background:#fff}
+  textarea{min-height:140px;resize:vertical}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .pill{display:inline-block;padding:4px 8px;border:1px solid #d7d7d7;border-radius:999px;background:#f8fafc;font-size:12px;margin-right:6px}
+  .muted{color:var(--muted)}
+
+  /* List */
+  .post{display:flex;gap:12px;border:1px solid #ececec;background:#fafafa;border-radius:12px;padding:12px;margin:10px 0}
+  .ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff;flex:0 0 auto}
+  .title{font-weight:800}
+  .meta{color:#475569;font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Blogs</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" alt="Me" />
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Compose -->
+  <section class="card">
+    <h3 class="section-title">Write a blog post</h3>
+    <div class="row"><input id="pTitle" placeholder="Post title"></div>
+    <div class="row"><textarea id="pBody" placeholder="Write your post…"></textarea></div>
+    <div class="row">
+      <label style="display:flex;align-items:center;gap:8px">Visibility
+        <select id="pVis" style="width:auto">
+          <option value="public">Public</option>
+          <option value="friends">Friends</option>
+          <option value="private">Only me</option>
+        </select>
+      </label>
+      <button class="btn primary" id="pPublish">Publish</button>
+      <span class="pill" id="pStatus">—</span>
+    </div>
+  </section>
+
+  <!-- List -->
+  <section class="card">
+    <h3 class="section-title">Latest posts</h3>
+    <div class="row" style="gap:8px">
+      <input id="q" placeholder="Search title/text/author…">
+      <select id="filter" style="width:auto">
+        <option value="all">All</option>
+        <option value="public">Public</option>
+        <option value="friends">Friends</option>
+        <option value="private">Only me</option>
+      </select>
+      <span class="pill" id="count">0 posts</span>
+    </div>
+    <div id="list"></div>
+  </section>
+
+</div>
+
+<!-- Assets (shared header wiring + messenger overlay) -->
+<script src="/assets/common.js"></script>
+<script src="/assets/messenger.js"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  const LS={ BLOG:'ct_blog_posts_v1', PROFILE:'ct_profile_data_v1', USERS:'ct_users_v3', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1' };
+  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+  const load=(k,f)=>{ try{const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
+  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const face=n=>`https://i.pravatar.cc/100?u=${encodeURIComponent(n||'Me')}`;
+  const nowISO=()=>new Date().toISOString();
+  const uid=p=>(p||'id')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+
+  // header wiring (avatar + buttons)
+  try{ window.CT && CT.wireHeader && CT.wireHeader(); }catch{}
+  try{ window.CT && CT.bindMessageButtons && CT.bindMessageButtons(document); }catch{}
+  // Fallback Messages click (if common.js not loaded)
+  $('#btnMsgs')?.addEventListener('click', (e)=>{ e.preventDefault(); if (window.ctOpen) ctOpen(); else location.href='messages.html'; });
+
+  function me(){ const p=load(LS.PROFILE,{}); return p['Me'] || { displayName:'Me', avatar:face('Me') }; }
+  (function setAvatar(){ const img=$('#myProfile'); if(img){ img.src = me().avatar || face('Me'); img.onclick=()=>location.href='profile.html'; } })();
+
+  function posts(){ return load(LS.BLOG,[]); }
+  function setPosts(p){ save(LS.BLOG,p); }
+
+  function addNotif(t){ const a=load(LS.NOTIF,[]); a.unshift({id:uid('n'), text:t, time:nowISO()}); save(LS.NOTIF,a); }
+  function addInbox(t){ const a=load(LS.INBOX,[]); a.unshift({id:uid('m'), text:t, time:nowISO()}); save(LS.INBOX,a); }
+
+  function publish(){
+    const title=($('#pTitle').value||'').trim();
+    const body =($('#pBody').value||'').trim();
+    const vis  = $('#pVis').value || 'public';
+    if(!title && !body) return alert('Write something first.');
+    const m=me();
+    const p={ id:uid('post'), title, body, vis, authorName:m.displayName||'Me', authorAvatar:m.avatar||face('Me'), createdAt:nowISO(), likes:0, comments:[] };
+    const arr=posts(); arr.unshift(p); setPosts(arr);
+    $('#pTitle').value=''; $('#pBody').value=''; $('#pStatus').textContent='Published';
+    addNotif(`New blog post: ${title||'(no title)'}`);
+    render();
+  }
+  $('#pPublish').addEventListener('click', publish);
+
+  function render(){
+    const q=($('#q').value||'').toLowerCase();
+    const f=$('#filter').value;
+    const arr=posts().filter(p=>{
+      const okVis = (f==='all') || p.vis===f;
+      const okQ   = !q || (String(p.title).toLowerCase().includes(q) || String(p.body).toLowerCase().includes(q) || String(p.authorName).toLowerCase().includes(q));
+      return okVis && okQ;
+    }).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+    $('#count').textContent = `${arr.length} posts`;
+
+    const box=$('#list'); box.innerHTML='';
+    if(!arr.length){ box.innerHTML='<div class="muted">No posts yet.</div>'; return; }
+
+    arr.forEach(p=>{
+      const row=document.createElement('div'); row.className='post';
+      row.innerHTML=`
+        <img class="ava" src="${esc(p.authorAvatar||face(p.authorName))}">
+        <div style="flex:1;min-width:0">
+          <div class="title">${esc(p.title||'(no title)')}</div>
+          <div class="meta">${esc(p.authorName||'Me')} • ${new Date(p.createdAt).toLocaleString()} • <span class="pill">${esc(p.vis)}</span></div>
+          <div style="margin-top:6px;white-space:pre-wrap">${esc(p.body||'')}</div>
+          <div class="row" style="margin-top:8px;gap:6px">
+            <button class="btn" data-like="${p.id}">👍 Like (${p.likes||0})</button>
+            <button class="btn" data-share="${p.id}">Share → Feed</button>
+            <button class="btn" data-del="${p.id}">Delete</button>
+          </div>
+        </div>`;
+      // handlers
+      row.querySelector('[data-like]')?.addEventListener('click',()=>{ const all=posts(); const i=all.findIndex(x=>x.id===p.id); if(i>-1){ all[i].likes=(all[i].likes||0)+1; setPosts(all); render(); }});
+      row.querySelector('[data-del]')?.addEventListener('click',()=>{ if(!confirm('Delete this post?')) return; const all=posts().filter(x=>x.id!==p.id); setPosts(all); render(); });
+      row.querySelector('[data-share]')?.addEventListener('click',()=>{
+        const gKey='ct_global_feed_v1';
+        const g=load(gKey,[]);
+        if(!g.find(x=>x._srcId===p.id)){
+          g.unshift({ id:uid('g'), _srcId:p.id, title:p.title, content:p.body, authorName:p.authorName, createdAt:p.createdAt, media:null });
+          save(gKey,g);
+          addInbox(`Shared to Feed: ${p.title||'(no title)'}`);
+          alert('Shared to Global Feed');
+        }
+      });
+      box.appendChild(row);
+    });
+  }
+  $('#q').addEventListener('input',render);
+  $('#filter').addEventListener('change',render);
+  window.addEventListener('storage',e=>{ if(e.key===LS.BLOG) render(); });
+
+  render();
+})();
+</script>
+</body>
+</html>
