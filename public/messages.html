@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Messages</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{ --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2 }
+  *{ box-sizing:border-box }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 'Segoe UI',Arial,sans-serif }
+  a{ color:inherit; text-decoration:none }
+
+  /* Header */
+  .top-bar{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between;
+            padding:10px 14px; background:var(--brand); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.2) }
+  .top-bar h2{ margin:0; font-weight:800; letter-spacing:.2px }
+  .top-actions{ display:flex; gap:8px; align-items:center }
+  .top-actions button{ background:#fff; color:#000; border:none; padding:8px 10px; border-radius:10px; cursor:pointer }
+  .top-actions button:hover{ background:#eef4ff }
+  .top-actions img{ width:36px; height:36px; border-radius:50%; border:2px solid rgba(255,255,255,.85); object-fit:cover; cursor:pointer }
+
+  /* Layout */
+  .page{ max-width:1100px; margin:18px auto; padding:0 12px 28px; background:transparent; }
+  .sheet{ display:grid; grid-template-columns:320px 1fr; gap:14px }
+  @media (max-width:940px){ .sheet{ grid-template-columns:1fr } }
+
+  .card{ background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:14px; box-shadow:0 6px 16px rgba(0,0,0,.06); padding:0 }
+  .left{ display:flex; flex-direction:column; min-height:70vh }
+  .right{ display:flex; flex-direction:column; min-height:70vh }
+
+  .l-head{ display:flex; align-items:center; gap:8px; padding:12px 12px; border-bottom:1px solid var(--line) }
+  .search{ flex:1; padding:10px; border:1px solid #d8e0f0; border-radius:10px; background:#fff }
+  .add{ padding:8px 10px; border-radius:10px; border:1px solid #d8e0f0; background:#f8fafc; cursor:pointer }
+
+  .list{ overflow:auto; padding:6px 6px 10px }
+  .row{ display:flex; gap:10px; align-items:center; padding:10px; border-radius:10px; cursor:pointer }
+  .row:hover{ background:#f1f5f9 }
+  .row.active{ background:#eaf4ff }
+  .ava{ width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #fff }
+  .meta{ display:flex; flex-direction:column }
+  .name{ font-weight:700 }
+  .sub{ font-size:12px; color:#667085 }
+  .badge{ margin-left:auto; background:#e6f4ff; color:#0b4f81; border:1px solid #cfe1ff; font-size:12px; border-radius:999px; padding:4px 8px }
+
+  .r-head{ display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid var(--line) }
+  .r-name{ font-weight:800 }
+  .r-actions{ display:flex; gap:8px; flex-wrap:wrap }
+
+  .stream{ flex:1; overflow:auto; padding:14px }
+  .bub{ max-width:70%; padding:10px 12px; border-radius:12px; margin:6px 0; line-height:1.45; word-break:break-word; background:#f3f4f6 }
+  .me{ background:#e6f4ff; margin-left:auto }
+  .them{ background:#f3f4f6; margin-right:auto }
+  .when{ font-size:11px; color:#94a3b8; margin-top:2px }
+
+  .composer{ display:flex; gap:8px; padding:12px; border-top:1px solid var(--line) }
+  .composer input{ flex:1; padding:12px; border:1px solid #d8e0f0; border-radius:10px }
+  .btn{ padding:10px 14px; border:1px solid #d7d7d7; border-radius:10px; background:#fff; cursor:pointer }
+  .btn.primary{ background:var(--brand); border-color:var(--brand); color:#fff }
+  .btn.primary:hover{ background:var(--brand-2) }
+
+  .empty{ padding:30px; text-align:center; color:#6b7280 }
+  .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5000 }
+  .toast.show{ opacity:1 }
+
+  /* Simple modal */
+  .modal{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:2000 }
+  .panel{ background:#fff; border-radius:12px; max-width:520px; width:92%; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.3) }
+  .u-item{ display:flex; align-items:center; gap:10px; padding:8px; border-radius:10px; cursor:pointer }
+  .u-item:hover{ background:#f1f5f9 }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Messages</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" alt="Me" />
+  </div>
+</div>
+
+<div class="page">
+  <div class="sheet">
+    <!-- LEFT -->
+    <aside class="card left">
+      <div class="l-head">
+        <input id="q" class="search" placeholder="Search people…">
+        <button id="newChat" class="add">New</button>
+      </div>
+      <div id="list" class="list"></div>
+    </aside>
+
+    <!-- RIGHT -->
+    <section class="card right">
+      <div class="r-head">
+        <div class="r-name" id="rName">Select a conversation</div>
+        <div class="r-actions">
+          <button class="btn" id="openOverlay">Open overlay</button>
+        </div>
+      </div>
+      <div class="stream" id="stream">
+        <div class="empty" id="empty">No conversation selected.</div>
+      </div>
+      <div class="composer">
+        <input id="input" placeholder="Write a message…">
+        <button id="send" class="btn primary">Send</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- New chat modal -->
+<div id="pickModal" class="modal">
+  <div class="panel">
+    <h3 style="margin:0 0 8px">Start a chat</h3>
+    <input id="pickSearch" class="search" placeholder="Search users…" style="width:100%; margin-bottom:8px">
+    <div id="pickList" style="max-height:50vh; overflow:auto"></div>
+    <div style="text-align:right; margin-top:10px"><button class="btn" id="pickClose">Close</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  // ===== mini helpers =====
+  const $=(s,el=document)=>el.querySelector(s);
+  const $$=(s,el=document)=>Array.from(el.querySelectorAll(s));
+  const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
+  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const nowISO=()=>new Date().toISOString();
+  const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'me')}`;
+  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+
+  const LS={
+    USERS:'ct_users_v3',
+    PROFILE:'ct_profile_data_v1',
+    THREADS:'ct_threads_v3',
+    NOTIF:'ct_notifications_v1',
+    INBOX:'ct_inbox_v1',
+    ACTIVE:'ct_msg_active_v1'
+  };
+
+  function toast(m){ const t=$("#toast"); t.textContent=m; t.className="toast show"; setTimeout(()=>t.className="toast",1200); }
+
+  // ===== seed users (Me + Echo Bot) =====
+  (function seed(){
+    let u = load(LS.USERS, null);
+    if(!u || !Array.isArray(u) || u.length<2){
+      u = [{name:'Me', avatar:face('Me')},{name:'Echo Bot', avatar:face('Echo Bot')}];
+    }else{
+      if(!u.find(x=>x.name==='Me')) u.unshift({name:'Me', avatar:face('Me')});
+      if(!u.find(x=>x.name==='Echo Bot')) u.push({name:'Echo Bot', avatar:face('Echo Bot')});
+    }
+    save(LS.USERS, u);
+  })();
+
+  const Users=()=>load(LS.USERS,[]);
+  const MeAvatar=()=> (load(LS.PROFILE,{})['Me']?.avatar) || (load(LS.PROFILE,{})['Me']?.avatarUrl) || face('Me');
+
+  function threads(){ return load(LS.THREADS,[]); }
+  function setThreads(t){ save(LS.THREADS,t); }
+
+  function threadWith(who){
+    let list=threads();
+    let t=list.find(x=>x.with===who);
+    if(!t){ t={ id:'t_'+Date.now(), with:who, msgs:[], unread:0, updatedAt:nowISO() }; list.unshift(t); setThreads(list); }
+    return t;
+  }
+
+  function pushMsg(who, from, text){
+    const list=threads();
+    const t=list.find(x=>x.with===who) || threadWith(who);
+    t.msgs.push({ from, text, time:nowISO() });
+    t.updatedAt=nowISO();
+    if(from!=='Me') t.unread=(t.unread||0)+1;
+    setThreads(list);
+    return t;
+  }
+
+  // Echo bot auto-reply
+  function maybeEcho(who, text){
+    if(who!=='Echo Bot') return;
+    setTimeout(()=>{ pushMsg('Echo Bot','Echo Bot',text); if(active===who) renderRight(); renderLeft(); }, 300);
+  }
+
+  // ===== header wiring =====
+  (function header(){
+    const prof = (load(LS.PROFILE,{})["Me"]||{});
+    const img=$("#myProfile"); if(img){ img.src = MeAvatar(); img.alt=prof.displayName||'Me'; img.onclick=()=>location.href='profile.html'; }
+    $("#btnNotif").onclick=()=>{ const arr=load(LS.NOTIF,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'No notifications yet.'); };
+    $("#btnInbox").onclick=()=>{ const arr=load(LS.INBOX,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'Inbox is empty.'); };
+    $("#btnMsgs").onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); };
+  })();
+
+  // ===== robust loader for assets/messenger =====
+  (function robustLoader(){
+    const base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+    const urls=[ base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
+    (function next(i){
+      if(i>=urls.length) return;
+      const s=document.createElement('script'); s.src=urls[i]; s.async=true;
+      s.onerror=()=>{ s.remove(); next(i+1); };
+      (document.head||document.documentElement).appendChild(s);
+    })(0);
+
+    const commons=[ base+'/assets/common.js','/assets/common.js','assets/common.js' ];
+    (function next2(i){
+      if(i>=commons.length) return;
+      const s=document.createElement('script'); s.src=commons[i]; s.async=true;
+      s.onerror=()=>{ s.remove(); next2(i+1); };
+      (document.head||document.documentElement).appendChild(s);
+    })(0);
+  })();
+
+  // "Open overlay" button
+  $("#openOverlay").onclick=()=>{ if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); toast('Overlay not loaded yet'); };
+
+  // ===== UI render =====
+  let active = load(LS.ACTIVE, '') || '';
+
+  function renderLeft(){
+    const q=($("#q").value||'').trim().toLowerCase();
+    const list = Users().filter(u=>u.name!=='Me')
+      .map(u=>{
+        const t=threads().find(x=>x.with===u.name);
+        return { name:u.name, avatar:u.avatar || face(u.name), t };
+      })
+      .filter(x=>!q || x.name.toLowerCase().includes(q))
+      .sort((a,b)=>{
+        const ta=a.t?.updatedAt || '0', tb=b.t?.updatedAt || '0';
+        return tb.localeCompare(ta);
+      });
+
+    const box=$("#list"); box.innerHTML='';
+    list.forEach(x=>{
+      const row=document.createElement('div'); row.className='row' + (active===x.name?' active':'');
+      row.innerHTML = `
+        <img class="ava" src="${x.avatar}" alt="${esc(x.name)}">
+        <div class="meta">
+          <div class="name">${esc(x.name)}</div>
+          <div class="sub">${ x.t ? esc(x.t.msgs.slice(-1)[0]?.text || 'Viewed') : 'No messages yet' }</div>
+        </div>
+        ${ x.t && x.t.unread ? `<span class="badge">${x.t.unread}</span>` : '' }
+      `;
+      row.addEventListener('click', ()=>{
+        active=x.name; save(LS.ACTIVE, active);
+        const t=threadWith(active); t.unread=0; setThreads(threads());
+        renderLeft(); renderRight();
+      });
+      box.appendChild(row);
+    });
+  }
+
+  function renderRight(){
+    const name = active || '';
+    $("#rName").textContent = name || 'Select a conversation';
+    const s=$("#stream");
+    if(!name){ s.innerHTML='<div class="empty">No conversation selected.</div>'; return; }
+    const t=threadWith(name);
+    t.unread=0; setThreads(threads());
+    s.innerHTML='';
+    t.msgs.forEach(m=>{
+      const d=document.createElement('div');
+      d.className='bub ' + (m.from==='Me'?'me':'them');
+      d.innerHTML = `${esc(m.text||'')}<div class="when">${new Date(m.time).toLocaleString()}</div>`;
+      s.appendChild(d);
+    });
+    s.scrollTop=s.scrollHeight;
+  }
+
+  // send
+  $("#send").onclick=send;
+  $("#input").addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); send(); }});
+  function send(){
+    const text=($("#input").value||'').trim();
+    if(!active) return toast('Pick someone to message.');
+    if(!text) return;
+    pushMsg(active,'Me',text);
+    $("#input").value='';
+    renderRight();
+    renderLeft();
+    maybeEcho(active, text);
+  }
+
+  // search
+  $("#q").addEventListener('input', renderLeft);
+
+  // new chat
+  const pick=$("#pickModal");
+  $("#newChat").onclick=()=>{ fillPicker(); pick.style.display='flex'; $("#pickSearch").value=''; $("#pickSearch").focus(); };
+  $("#pickClose").onclick=()=> pick.style.display='none';
+  $("#pickSearch").addEventListener('input', fillPicker);
+
+  function fillPicker(){
+    const q=($("#pickSearch").value||'').trim().toLowerCase();
+    const box=$("#pickList"); box.innerHTML='';
+    Users().filter(u=>u.name!=='Me').filter(u=>!q||u.name.toLowerCase().includes(q)).forEach(u=>{
+      const row=document.createElement('div'); row.className='u-item';
+      row.innerHTML=`<img class="ava" src="${u.avatar||face(u.name)}"><div class="name">${esc(u.name)}</div>`;
+      row.onclick=()=>{ active=u.name; save(LS.ACTIVE,active); threadWith(active); renderLeft(); renderRight(); pick.style.display='none'; };
+      box.appendChild(row);
+    });
+    if(!box.childElementCount){ box.innerHTML='<div class="sub" style="padding:8px 4px">No matches.</div>'; }
+  }
+
+  // live avatar refresh
+  window.addEventListener('storage',e=>{
+    if(e.key===LS.PROFILE){ const img=$("#myProfile"); if(img) img.src=MeAvatar(); }
+    if(e.key===LS.THREADS) { renderLeft(); if(active) renderRight(); }
+  });
+
+  // initial paint (auto-open via ?msg=Name)
+  try{ const u=new URL(location.href); const who=u.searchParams.get('msg'); if(who){ active=who; save(LS.ACTIVE,who); } }catch{}
+  renderLeft(); renderRight();
+})();
+</script>
+</body>
+</html>
