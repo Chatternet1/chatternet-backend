@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Chatter Market</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{ --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; --accent:#10b981; --warn:#b45309; }
+  *{ box-sizing:border-box }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 'Segoe UI',Arial,sans-serif }
+  a{ color:inherit; text-decoration:none }
+
+  /* Header */
+  .top-bar{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--brand); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.2) }
+  .top-bar h2{ margin:0; font-weight:800; letter-spacing:.2px }
+  .top-actions{ display:flex; gap:8px; align-items:center }
+  .top-actions button{ background:#fff; color:#000; border:none; padding:8px 10px; border-radius:10px; cursor:pointer }
+  .top-actions button:hover{ background:#eef4ff }
+  .top-actions img{ width:36px; height:36px; border-radius:50%; border:2px solid rgba(255,255,255,.85); object-fit:cover; cursor:pointer }
+
+  /* Layout */
+  .page{ max-width:1140px; margin:18px auto; padding:0 12px 28px }
+  .grid{ display:grid; grid-template-columns:320px 1fr; gap:14px }
+  @media (max-width:980px){ .grid{ grid-template-columns:1fr } }
+
+  .card{ background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:14px; box-shadow:0 6px 16px rgba(0,0,0,.06); padding:14px }
+  .section-title{ font-size:22px; font-weight:800; margin:0 0 10px }
+  .muted{ color:var(--muted) }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .btn{ padding:10px 14px; border:1px solid #d7d7d7; border-radius:10px; background:#fff; cursor:pointer }
+  .btn.primary{ background:var(--brand); border-color:var(--brand); color:#fff }
+  .btn.primary:hover{ background:var(--brand-2) }
+  .btn.good{ background:#d1fae5; border-color:#a7f3d0; color:#065f46 }
+  .btn.warn{ background:#fff7ed; border-color:#fed7aa; color:#7c2d12 }
+  input,select,textarea{ width:100%; padding:10px; border:1px solid #d7d7d7; border-radius:10px; font:inherit; background:#fff }
+  textarea{ resize:vertical; min-height:90px }
+
+  /* Listings grid */
+  .tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px }
+  .grid-items{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px }
+  @media (max-width:1000px){ .grid-items{ grid-template-columns:repeat(2,1fr) } }
+  @media (max-width:640px){ .grid-items{ grid-template-columns:1fr } }
+  .item{ border:1px solid #e8ecf4; border-radius:14px; overflow:hidden; background:#fff; display:flex; flex-direction:column }
+  .item img{ width:100%; height:200px; object-fit:cover; background:#e5e7eb }
+  .item-body{ padding:10px 12px; flex:1 }
+  .item h4{ margin:0 0 4px; font-size:18px }
+  .price{ font-weight:900 }
+  .badge{ display:inline-block; font-size:12px; padding:3px 8px; border:1px solid #d7d7d7; border-radius:999px; background:#f8fafc; margin-left:6px }
+  .sold{ background:#fee2e2; border-color:#fecaca; color:#991b1b }
+
+  .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5000 }
+  .toast.show{ opacity:1 }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Chatter Market</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" alt="Me" />
+  </div>
+</div>
+
+<div class="page">
+  <div class="grid">
+
+    <!-- Left: add/edit listing -->
+    <aside class="card">
+      <h3 class="section-title">New Listing</h3>
+      <div class="row">
+        <input id="fTitle" placeholder="Title">
+        <input id="fPrice" type="number" min="0" step="0.01" placeholder="Price">
+      </div>
+      <div class="row">
+        <select id="fCat">
+          <option>Electronics</option><option>Home</option><option>Clothing</option>
+          <option>Tickets</option><option>Services</option><option>Misc</option>
+        </select>
+        <input id="fPhoto" placeholder="Photo URL (https://)">
+      </div>
+      <textarea id="fDesc" placeholder="Describe the item…"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn primary" id="btnPost">Post listing</button>
+        <button class="btn" id="btnClear">Clear</button>
+      </div>
+
+      <h4 style="margin:16px 0 6px">My Listings</h4>
+      <div id="myList"></div>
+    </aside>
+
+    <!-- Right: marketplace -->
+    <main class="card">
+      <div class="tools">
+        <input id="q" placeholder="Search…" style="flex:1">
+        <select id="filterCat">
+          <option value="">All categories</option>
+          <option>Electronics</option><option>Home</option><option>Clothing</option>
+          <option>Tickets</option><option>Services</option><option>Misc</option>
+        </select>
+        <select id="sort">
+          <option value="new">Newest</option>
+          <option value="priceUp">Price ↑</option>
+          <option value="priceDown">Price ↓</option>
+        </select>
+        <button class="btn" id="apply">Apply</button>
+      </div>
+      <div id="items" class="grid-items"></div>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== tiny utils + storage ===== */
+  const $=(s,el=document)=>el.querySelector(s);
+  const $$=(s,el=document)=>Array.from(el.querySelectorAll(s));
+  const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
+  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'user')}`;
+  const toast=m=>{ const t=$("#toast"); t.textContent=m; t.className="toast show"; setTimeout(()=>t.className="toast",1200) };
+  const money=v=>isFinite(v)?'£'+Number(v).toFixed(2):'£0.00';
+
+  const LS={ USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', SETTINGS:'ct_settings_v1',
+             LIST:'ct_market_listings_v1', FAV:'ct_market_faves_v1',
+             NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1' };
+
+  /* ===== load shared assets (overlay + header helpers) ===== */
+  (function robustLoad(){
+    const base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+    const tryScripts=(arr)=>{ (function next(i){ if(i>=arr.length) return; const s=document.createElement('script'); s.src=arr[i]; s.async=true; s.onerror=()=>{ s.remove(); next(i+1); }; (document.head||document.documentElement).appendChild(s); })(0); };
+    tryScripts([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js']);
+    tryScripts([base+'/assets/common.js','/assets/common.js','assets/common.js']);
+  })();
+
+  /* ===== header ===== */
+  (function header(){
+    const prof=(load(LS.PROFILE,{})['Me']||{});
+    const myA= prof.avatar || prof.avatarUrl || face('Me');
+    const img=$("#myProfile"); if(img){ img.src=myA; img.alt=prof.displayName||'Me'; img.onclick=()=>location.href='profile.html'; }
+    $("#btnNotif").onclick=()=>{ const arr=load(LS.NOTIF,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'No notifications yet.'); };
+    $("#btnInbox").onclick=()=>{ const arr=load(LS.INBOX,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'Inbox is empty.'); };
+    $("#btnMsgs").onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); };
+  })();
+
+  /* ===== helpers ===== */
+  const meName = (()=>{ const s=load(LS.SETTINGS,{}); return s?.profile?.actor || 'Me'; })();
+
+  function listings(){ return load(LS.LIST,[]); }
+  function saveListings(a){ save(LS.LIST,a); }
+  function faves(){ return load(LS.FAV,[]); }
+  function saveFaves(a){ save(LS.FAV,a); }
+
+  /* ===== seed a few items if empty ===== */
+  (function seed(){
+    let L=listings();
+    if(L.length) return;
+    const demo = [
+      {t:'iPhone 12 128GB', p:260, c:'Electronics', s:'Grace Lee', photo:'https://images.unsplash.com/photo-1585060544812-6b45742a4a3e?q=80&w=1000&auto=format&fit=crop', d:'Great condition, battery 85%.'},
+      {t:'Gaming Chair', p:90, c:'Home', s:'Sam Carter', photo:'https://images.unsplash.com/photo-1582582429416-2f62e1d2d12a?q=80&w=1000&auto=format&fit=crop', d:'Recliner, black/red.'},
+      {t:'Concert Tickets (2)', p:120, c:'Tickets', s:'Ava Patel', photo:'https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1000&auto=format&fit=crop', d:'This Friday, standing.'},
+      {t:'Denim Jacket', p:25, c:'Clothing', s:'Mia Rossi', photo:'https://images.unsplash.com/photo-1516826957135-700dedea6983?q=80&w=1000&auto=format&fit=crop', d:'Medium size, barely worn.'},
+      {t:'Logo Design (Service)', p:50, c:'Services', s:'Leo Nguyen', photo:'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop', d:'Fast turnaround, 3 concepts.'},
+      {t:'Coffee Maker', p:18, c:'Home', s:'Nora García', photo:'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=1000&auto=format&fit=crop', d:'Works perfectly.'}
+    ];
+    L = demo.map((x,i)=>({ id:'l_'+(Date.now()+i), title:x.t, price:x.p, cat:x.c, photo:x.photo, desc:x.d, seller:x.s, date:Date.now()-i*3600e3, sold:false }));
+    saveListings(L);
+  })();
+
+  /* ===== render ===== */
+  function rowMy(l){
+    const div=document.createElement('div'); div.className='row'; div.style.border='1px solid #eef2f7'; div.style.borderRadius='10px'; div.style.padding='8px';
+    div.innerHTML = `<img src="${l.photo||face(l.title)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover">
+      <div style="flex:1">
+        <div style="font-weight:700">${esc(l.title)}</div>
+        <div class="muted" style="font-size:12px">${esc(l.cat)} • ${money(l.price)}</div>
+      </div>
+      <button class="btn" data-act="edit">Edit</button>
+      <button class="btn warn" data-act="sold">${l.sold?'Mark unsold':'Mark sold'}</button>
+      <button class="btn" data-act="del">Delete</button>`;
+    div.onclick=(e)=>{
+      const act=e.target?.dataset?.act; if(!act) return;
+      if(act==='del'){ if(!confirm('Delete this listing?')) return; let L=listings().filter(x=>x.id!==l.id); saveListings(L); renderAll(); }
+      if(act==='sold'){ let L=listings(); const i=L.findIndex(x=>x.id===l.id); L[i].sold=!L[i].sold; saveListings(L); renderAll(); }
+      if(act==='edit'){ $("#fTitle").value=l.title; $("#fPrice").value=l.price; $("#fCat").value=l.cat; $("#fPhoto").value=l.photo; $("#fDesc").value=l.desc; $("#btnPost").dataset.edit=l.id; window.scrollTo({top:0,behavior:'smooth'}); }
+    };
+    return div;
+  }
+
+  function card(l){
+    const wrap=document.createElement('div'); wrap.className='item';
+    wrap.innerHTML = `
+      <img src="${l.photo||face(l.title)}" alt="${esc(l.title)}">
+      <div class="item-body">
+        <h4>${esc(l.title)} ${l.sold?'<span class="badge sold">SOLD</span>':''}</h4>
+        <div class="muted" style="font-size:12px">${esc(l.cat)} • by ${esc(l.seller)}</div>
+        <div class="price" style="margin:6px 0">${money(l.price)}</div>
+        <div class="muted" style="min-height:40px">${esc(l.desc||'')}</div>
+      </div>
+      <div class="row" style="padding:10px 12px;border-top:1px solid #eef2f7;justify-content:space-between">
+        <div class="row">
+          <button class="btn primary" data-act="msg">Message seller</button>
+          <button class="btn" data-act="fav">☆ Save</button>
+        </div>
+        ${l.seller===meName ? `<button class="btn warn" data-act="tog">${l.sold?'Mark unsold':'Mark sold'}</button>` : ''}
+      </div>`;
+    wrap.onclick=(e)=>{
+      const act=e.target?.dataset?.act; if(!act) return;
+      if(act==='msg'){ goMessage(l.seller); }
+      if(act==='fav'){ const f=[...new Set([...faves(), l.id])]; saveFaves(f); toast('Saved'); }
+      if(act==='tog'){ let L=listings(); const i=L.findIndex(x=>x.id===l.id); L[i].sold=!L[i].sold; saveListings(L); renderAll(); }
+    };
+    return wrap;
+  }
+
+  function renderAll(){
+    const L=listings();
+    // sidebar (mine)
+    $("#myList").innerHTML='';
+    L.filter(x=>x.seller===meName).forEach(x=>$("#myList").appendChild(rowMy(x)));
+
+    // main grid
+    const q=($("#q").value||'').trim().toLowerCase();
+    const cat=$("#filterCat").value||'';
+    const sort=$("#sort").value;
+    let A=L.filter(x=>!x.sold || x.seller===meName);
+    if(q) A=A.filter(x=>[x.title,x.desc,x.cat,x.seller].join(' ').toLowerCase().includes(q));
+    if(cat) A=A.filter(x=>x.cat===cat);
+    if(sort==='priceUp') A=A.sort((a,b)=>a.price-b.price);
+    else if(sort==='priceDown') A=A.sort((a,b)=>b.price-a.price);
+    else A=A.sort((a,b)=>b.date-a.date);
+
+    const box=$("#items"); box.innerHTML='';
+    if(!A.length){ box.innerHTML='<div class="muted">No results.</div>'; return; }
+    A.forEach(x=> box.appendChild(card(x)));
+  }
+
+  /* ===== actions ===== */
+  $("#apply").onclick = renderAll;
+  $("#btnClear").onclick = ()=>{ ["fTitle","fPrice","fPhoto","fDesc"].forEach(id=>$("#"+id).value=''); $("#fCat").selectedIndex=0; delete $("#btnPost").dataset.edit; };
+  $("#btnPost").onclick = ()=>{
+    const title=$("#fTitle").value.trim();
+    const price=parseFloat($("#fPrice").value);
+    const cat=$("#fCat").value; const photo=$("#fPhoto").value.trim(); const desc=$("#fDesc").value.trim();
+    if(!title || !isFinite(price)){ alert("Title and price are required."); return; }
+    let L=listings();
+    const editId=$("#btnPost").dataset.edit;
+    if(editId){
+      const i=L.findIndex(x=>x.id===editId); if(i>=0){ L[i]={...L[i], title, price, cat, photo, desc}; }
+      delete $("#btnPost").dataset.edit;
+    }else{
+      L.unshift({ id:'l_'+Date.now(), title, price, cat, photo, desc, seller:meName, date:Date.now(), sold:false });
+    }
+    saveListings(L); renderAll(); toast('Saved'); $("#btnClear").click();
+  };
+
+  function goMessage(name){
+    if(window.ctMessage) return window.ctMessage(name);
+    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(name);
+    location.href='messages.html?msg='+encodeURIComponent(name);
+  }
+
+  /* ===== init ===== */
+  renderAll();
+})();
+</script>
+</body>
+</html>
