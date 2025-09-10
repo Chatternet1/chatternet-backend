@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Groups</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
+    --danger:#b91c1c
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
+  a{color:inherit;text-decoration:none}
+
+  /* Header */
+  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;object-fit:cover}
+
+  /* Page layout */
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+  @media (max-width:980px){ .page{grid-template-columns:1fr} }
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  input,textarea,select,button{font:inherit}
+  input,textarea,select{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;background:#fff}
+  textarea{resize:vertical;min-height:80px}
+
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer;white-space:nowrap}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
+  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+
+  /* Group list cards */
+  .gitem{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;border:1px solid #ececec;background:#fafafa;border-radius:12px;padding:10px;margin:8px 0}
+  .gcover{width:84px;height:64px;border-radius:10px;object-fit:cover;border:1px solid #e5e7eb;background:#f3f4f6}
+  .gname{font-weight:800}
+  .gsub{font-size:12px;color:#6b7280}
+  .gact{display:flex;gap:8px;flex-wrap:wrap}
+
+  /* Modals (Notif/Inbox/Group) */
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:3500}
+  .sheet{background:#fff;border-radius:14px;max-width:640px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
+  .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+
+  /* Toast */
+  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Groups</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" title="My Profile" />
+  </div>
+</div>
+
+<!-- Notifications / Inbox -->
+<div class="modalbg" id="notifModal">
+  <div class="sheet">
+    <h3 style="margin:0 0 10px;font-weight:800">Notifications</h3>
+    <div id="notifList"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn primary" id="clearNotif">Clear</button>
+      <button class="btn" id="closeNotif">Close</button>
+    </div>
+  </div>
+</div>
+<div class="modalbg" id="inboxModal">
+  <div class="sheet">
+    <h3 style="margin:0 0 10px;font-weight:800">Inbox</h3>
+    <div id="inboxList"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button class="btn" id="closeInbox">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Group details modal -->
+<div class="modalbg" id="groupModal">
+  <div class="sheet" id="groupSheet">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<div class="page">
+  <!-- My Groups -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h3 class="section-title" style="margin:0">My Groups</h3>
+      <span class="muted" id="myCount">0</span>
+    </div>
+    <div id="myGroups"></div>
+    <div id="myEmpty" class="muted">You haven't joined any groups yet.</div>
+  </section>
+
+  <!-- Create / Discover -->
+  <aside class="card">
+    <h3 class="section-title" style="margin:0 0 10px">Create Group</h3>
+    <div class="row">
+      <input id="gName" placeholder="Group name">
+    </div>
+    <div class="row" style="margin-top:6px">
+      <textarea id="gDesc" placeholder="Short description…"></textarea>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <input id="gCover" placeholder="Cover image URL (optional)">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="btnCreate">Create</button>
+      <button class="btn ghost" id="btnClearForm">Clear</button>
+    </div>
+
+    <h3 class="section-title" style="margin:14px 0 10px">Discover</h3>
+    <div class="row" style="margin-bottom:8px">
+      <input id="q" placeholder="Search groups by name">
+      <button class="btn" id="btnSearch" style="flex:0 0 auto">Search</button>
+      <button class="btn ghost" id="btnClearSearch" style="flex:0 0 auto">Clear</button>
+    </div>
+    <div id="discoverList"></div>
+    <div id="discoverEmpty" class="muted">No groups found.</div>
+  </aside>
+</div>
+
+<div id="toast"></div>
+
+<!-- App scripts -->
+<script src="auth.js"></script>
+<script src="api.js"></script>
+
+<script>
+/* ===== helpers & keys ===== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const LS = {
+  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', VIEW:'ct_profile_view_v1',
+  GROUPS:'ct_groups_v2', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'
+};
+function load(k,f){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{return f;} }
+function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+const uid = (p='g') => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+const toast=(m)=>{ const t=$("#toast"); t.textContent=m; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); };
+const face = n => `https://i.pravatar.cc/120?u=${encodeURIComponent(n||'Me')}`;
+const meName = ()=> (load(LS.PROFILE, {})['Me']?.displayName?.trim()) || 'Me';
+function avatarFor(name){ const p=(load(LS.PROFILE,{}))[name]||{}; return p.avatar||p.avatarUrl||face(name); }
+function addNotif(text){ const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text,time:new Date().toISOString()}); save(LS.NOTIF,arr); }
+function addInbox(text){ const arr=load(LS.INBOX,[]); arr.unshift({id:uid('m'),text,time:new Date().toISOString()}); save(LS.INBOX,arr); }
+
+/* ===== seed users + groups so page never blanks ===== */
+(function seedUsers(){
+  let u = load(LS.USERS,null);
+  if(!Array.isArray(u)||!u.length){
+    u=[{name:'Me',avatar:face('Me')},
+       {name:'Grace Lee',avatar:face('Grace Lee')},{name:'Liam Adams',avatar:face('Liam Adams')},
+       {name:'Ava Morgan',avatar:face('Ava Morgan')},{name:'Noah Walker',avatar:face('Noah Walker')}];
+    save(LS.USERS,u);
+  } else if(!u.find(x=>x.name==='Me')){ u.unshift({name:'Me',avatar:face('Me')}); save(LS.USERS,u); }
+})();
+(function seedGroups(){
+  let g=load(LS.GROUPS,null);
+  if(!Array.isArray(g)||!g.length){
+    g=[
+      {id:uid(), name:'Movie Lovers', desc:'Talk films, trailers & reviews.', cover:'https://picsum.photos/seed/movies/600/400', owner:'Grace Lee', members:['Grace Lee','Me']},
+      {id:uid(), name:'Music Vibes', desc:'Share tracks & playlists.', cover:'https://picsum.photos/seed/music/600/400', owner:'Liam Adams', members:['Liam Adams']},
+      {id:uid(), name:'Foodies', desc:'Recipes & restaurants.', cover:'https://picsum.photos/seed/food/600/400', owner:'Ava Morgan', members:['Ava Morgan']}
+    ];
+    save(LS.GROUPS,g);
+  }
+})();
+
+function groups(){ return load(LS.GROUPS,[]); }
+function setGroups(a){ save(LS.GROUPS,a); }
+
+/* ===== header avatar & buttons ===== */
+(function wireHeader(){
+  const img=$("#myProfile");
+  const me = load(LS.PROFILE, {})['Me'] || {};
+  if(img){
+    img.src = me.avatar || me.avatarUrl || face('Me');
+    img.alt = me.displayName || 'Me';
+    img.onclick = ()=>{ try{ localStorage.setItem(LS.VIEW, JSON.stringify({name:'Me'})); }catch{} location.href='profile.html'; };
+  }
+
+  // Notifs / Inbox
+  const nModal=$("#notifModal"), nList=$("#notifList");
+  function rNotif(){
+    const arr=load(LS.NOTIF,[]);
+    nList.innerHTML = arr.length
+      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time||Date.now()).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
+      : '<div class="notifitem">No notifications yet.</div>';
+  }
+  $("#btnNotif").addEventListener('click',()=>{ rNotif(); nModal.style.display='flex'; });
+  $("#clearNotif").addEventListener('click',()=>{ save(LS.NOTIF,[]); rNotif(); });
+  $("#closeNotif").addEventListener('click',()=> nModal.style.display='none');
+
+  const iModal=$("#inboxModal"), iList=$("#inboxList");
+  function rInbox(){
+    const arr=load(LS.INBOX,[]);
+    iList.innerHTML = arr.length
+      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time||Date.now()).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
+      : '<div class="notifitem">Inbox is empty.</div>';
+  }
+  $("#btnInbox").addEventListener('click',()=>{ rInbox(); iModal.style.display='flex'; });
+  $("#closeInbox").addEventListener('click',()=> iModal.style.display='none');
+
+  // Messages -> overlay if present
+  $("#btnMsgs").addEventListener('click',(e)=>{
+    e.preventDefault(); e.stopPropagation();
+    if (window.ctOpen) return window.ctOpen();
+    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+    location.href='messages.html';
+  });
+
+  // Also intercept any <a href="messages.html">
+  document.addEventListener('click', (e)=>{
+    const a = e.target.closest && e.target.closest('a[href*="messages.html"]');
+    if(!a) return;
+    if (window.ctOpen || (window.ChatternetMessenger&&window.ChatternetMessenger.open)){
+      e.preventDefault();
+      (window.ctOpen || window.ChatternetMessenger.open)();
+    }
+  }, true);
+})();
+
+/* ===== render helpers ===== */
+function groupRow(g, mine=false){
+  const wrap=document.createElement('div'); wrap.className='gitem'; wrap.dataset.id=g.id;
+  wrap.innerHTML = `
+    <img class="gcover" src="${g.cover||'https://picsum.photos/seed/'+encodeURIComponent(g.name)+'/600/400'}" alt="">
+    <div>
+      <div class="gname">${g.name}</div>
+      <div class="gsub">${g.members.length} member${g.members.length===1?'':'s'} • Owner: ${g.owner||'—'}</div>
+      <div class="gsub" style="margin-top:4px">${g.desc||''}</div>
+    </div>
+    <div class="gact">
+      <button class="btn ghost" data-open="${g.id}">Open</button>
+      <button class="btn" data-msg="${g.id}">Message</button>
+      ${ mine
+          ? `<button class="btn danger" data-leave="${g.id}">Leave</button>`
+          : `<button class="btn primary" data-join="${g.id}">Join</button>` }
+    </div>`;
+  // actions
+  wrap.querySelector('[data-open]').onclick = ()=> openGroup(g.id);
+  wrap.querySelector('[data-msg]').onclick = ()=>{
+    const target = `#${g.name}`; // use group name as target label
+    if (window.ctMessage) return window.ctMessage(target);
+    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+    location.href='messages.html';
+  };
+  const j = wrap.querySelector('[data-join]');
+  if(j) j.onclick = ()=> joinGroup(g.id);
+  const l = wrap.querySelector('[data-leave]');
+  if(l) l.onclick = ()=> leaveGroup(g.id);
+  return wrap;
+}
+
+function renderMy(){
+  const me = meName();
+  const list = groups().filter(g=> (g.members||[]).includes(me));
+  const box = $("#myGroups"); box.innerHTML='';
+  $("#myEmpty").style.display = list.length ? 'none' : 'block';
+  $("#myCount").textContent = String(list.length)+' total';
+  list.forEach(g=> box.appendChild(groupRow(g, true)));
+}
+function renderDiscover(term=''){
+  const me = meName();
+  let list = groups().filter(g=> !(g.members||[]).includes(me));
+  if(term){ const t=term.toLowerCase(); list=list.filter(g=> g.name.toLowerCase().includes(t)); }
+  const box = $("#discoverList"); box.innerHTML='';
+  $("#discoverEmpty").style.display = list.length ? 'none' : 'block';
+  list.forEach(g=> box.appendChild(groupRow(g, false)));
+}
+
+/* ===== actions ===== */
+function joinGroup(id){
+  const me = meName();
+  const arr = groups();
+  const g = arr.find(x=>x.id===id); if(!g) return;
+  if(!g.members.includes(me)) g.members.unshift(me);
+  setGroups(arr);
+  addNotif(`You joined ${g.name}.`);
+  addInbox(`Welcome to ${g.name}!`);
+  toast('Joined');
+  renderMy(); renderDiscover($("#q").value.trim());
+}
+function leaveGroup(id){
+  const me = meName();
+  const arr = groups();
+  const g = arr.find(x=>x.id===id); if(!g) return;
+  g.members = (g.members||[]).filter(n=>n!==me);
+  setGroups(arr);
+  addNotif(`You left ${g.name}.`);
+  toast('Left group');
+  renderMy(); renderDiscover($("#q").value.trim());
+}
+
+function openGroup(id){
+  const g = groups().find(x=>x.id===id); if(!g) return;
+  const m=$("#groupModal"), s=$("#groupSheet");
+  s.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div style="font-weight:800;font-size:20px">${g.name}</div>
+      <button class="btn" id="gmClose">Close</button>
+    </div>
+    <img src="${g.cover||'https://picsum.photos/seed/'+encodeURIComponent(g.name)+'/900/400'}" style="width:100%;height:auto;border-radius:12px;border:1px solid #e5e7eb;margin:10px 0" alt="">
+    <div class="muted">${g.desc||''}</div>
+    <div style="margin-top:10px;font-weight:700">Members (${g.members.length})</div>
+    <div id="gmMembers" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn primary" id="gmMsg">Message</button>
+      <button class="btn" id="gmVisit">Visit Owner</button>
+      <button class="btn ghost" id="gmShare">Share to Inbox</button>
+    </div>
+  `;
+  const memBox = $("#gmMembers", s);
+  (g.members||[]).forEach(n=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:6px;background:#f6f7fb;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px';
+    d.innerHTML = `<img src="${avatarFor(n)}" style="width:24px;height:24px;border-radius:50%;object-fit:cover"><span>${n}</span>`;
+    memBox.appendChild(d);
+  });
+  $("#gmClose", s).onclick = ()=> m.style.display='none';
+  $("#gmMsg", s).onclick   = ()=>{
+    const target = `#${g.name}`;
+    if (window.ctMessage) return window.ctMessage(target);
+    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+    location.href='messages.html';
+  };
+  $("#gmVisit", s).onclick = ()=>{ try{ localStorage.setItem(LS.VIEW, JSON.stringify({name:g.owner||'Me'})); }catch{} location.href='profile.html'; };
+  $("#gmShare", s).onclick = ()=>{ addInbox(`Check out group: ${g.name}`); toast('Shared'); };
+  m.style.display='flex';
+}
+
+/* ===== create & search ===== */
+$("#btnCreate").addEventListener('click', ()=>{
+  const name = ($("#gName").value||'').trim();
+  const desc = ($("#gDesc").value||'').trim();
+  const cover= ($("#gCover").value||'').trim();
+  if(!name) return alert('Enter a group name');
+  const arr = groups();
+  arr.unshift({id:uid(), name, desc, cover, owner:meName(), members:[meName()]});
+  setGroups(arr);
+  addNotif(`Group “${name}” created.`);
+  toast('Created');
+  ["#gName","#gDesc","#gCover"].forEach(s=> $(s).value='');
+  renderMy(); renderDiscover($("#q").value.trim());
+});
+$("#btnClearForm").addEventListener('click', ()=>["#gName","#gDesc","#gCover"].forEach(s=> $(s).value=''));
+
+$("#btnSearch").addEventListener('click', ()=> renderDiscover($("#q").value.trim()));
+$("#btnClearSearch").addEventListener('click', ()=>{ $("#q").value=''; renderDiscover(''); });
+
+/* ===== initial render + live sync ===== */
+renderMy(); renderDiscover('');
+window.addEventListener('storage', (e)=>{
+  if ([LS.GROUPS,LS.PROFILE].includes(e.key)){ renderMy(); renderDiscover($("#q").value.trim()); }
+});
+</script>
+</body>
+</html>
