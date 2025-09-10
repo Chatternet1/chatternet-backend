@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Polls</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
+    --ok:#0f766e;--bad:#b91c1c
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
+  a{color:inherit;text-decoration:none}
+
+  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
+
+  .wrap{max-width:1100px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:1fr 1.2fr;gap:14px}
+  @media (max-width:900px){ .wrap{grid-template-columns:1fr} }
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  input,button{font-family:'Segoe UI',Arial,sans-serif}
+  input{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;background:#fff}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .pill{display:inline-block;padding:4px 8px;border:1px solid #d7d7d7;border-radius:999px;background:#f8fafc;font-size:12px;margin-right:6px}
+  .muted{color:var(--muted)}
+
+  .poll{border:1px solid #ececec;background:#fafafa;border-radius:12px;padding:12px;margin:10px 0}
+  .title{font-weight:800}
+  .bar{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+  .fill{height:100%}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Polls</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" alt="Me" />
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Create poll -->
+  <section class="card">
+    <h3 class="section-title">Create a poll</h3>
+    <div class="row"><input id="q" placeholder="Ask a question…"></div>
+    <div id="opts"></div>
+    <div class="row">
+      <button class="btn" id="addOpt">Add option</button>
+      <button class="btn primary" id="create">Create poll</button>
+      <span class="pill" id="status">—</span>
+    </div>
+  </section>
+
+  <!-- Polls list -->
+  <section class="card">
+    <h3 class="section-title">Open polls</h3>
+    <div id="list"></div>
+  </section>
+
+</div>
+
+<script src="/assets/common.js"></script>
+<script src="/assets/messenger.js"></script>
+
+<script>
+(function(){
+  "use strict";
+  const LS={ POLLS:'ct_polls_v1', VOTES:'ct_poll_votes_v1', PROFILE:'ct_profile_data_v1' };
+  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+  const load=(k,f)=>{ try{const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
+  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const uid=p=>(p||'id')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+  const face=n=>`https://i.pravatar.cc/100?u=${encodeURIComponent(n||'Me')}`;
+  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+
+  try{ window.CT && CT.wireHeader && CT.wireHeader(); }catch{}
+  try{ window.CT && CT.bindMessageButtons && CT.bindMessageButtons(document); }catch{}
+  $('#btnMsgs')?.addEventListener('click',(e)=>{ e.preventDefault(); if(window.ctOpen) ctOpen(); else location.href='messages.html'; });
+
+  function me(){ const p=load(LS.PROFILE,{}); return p['Me'] || { displayName:'Me', avatar:face('Me') }; }
+  (function setAvatar(){ const img=$('#myProfile'); if(img){ img.src = me().avatar || face('Me'); img.onclick=()=>location.href='profile.html'; } })();
+
+  function polls(){ return load(LS.POLLS,[]); }
+  function setPolls(arr){ save(LS.POLLS,arr); }
+  function votes(){ return load(LS.VOTES,{}); }
+  function setVotes(v){ save(LS.VOTES,v); }
+
+  // Build option inputs
+  const optsBox = document.getElementById('opts');
+  function addOption(val=''){
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML = `<input placeholder="Option" value="${esc(val)}"><button class="btn" data-del>Remove</button>`;
+    row.querySelector('[data-del]').onclick=()=>row.remove();
+    optsBox.appendChild(row);
+  }
+  document.getElementById('addOpt').onclick=()=>addOption();
+  // Start with two
+  addOption(); addOption();
+
+  document.getElementById('create').onclick=()=>{
+    const question = (document.getElementById('q').value||'').trim();
+    const options  = Array.from(optsBox.querySelectorAll('input')).map(i=>i.value.trim()).filter(Boolean);
+    if(!question) return alert('Enter a question');
+    if(options.length<2) return alert('Add at least two options');
+    const m=me();
+    const poll={ id:uid('poll'), q:question, opts:options.map((t,i)=>({i,t,c:0})), createdAt:Date.now(), by:m.displayName||'Me' };
+    const arr=polls(); arr.unshift(poll); setPolls(arr);
+    document.getElementById('q').value=''; optsBox.innerHTML=''; addOption(); addOption();
+    document.getElementById('status').textContent='Created';
+    render();
+  };
+
+  function total(p){ return p.opts.reduce((a,b)=>a+(b.c||0),0); }
+  function myChoice(p){ const v=votes()[p.id]; return (typeof v==='number')? v : null; }
+
+  function render(){
+    const box=document.getElementById('list'); box.innerHTML='';
+    const arr=polls();
+    if(!arr.length){ box.innerHTML='<div class="muted">No polls yet.</div>'; return; }
+
+    arr.forEach(p=>{
+      const mine = myChoice(p);
+      const row=document.createElement('div'); row.className='poll';
+      row.innerHTML = `
+        <div class="title">${esc(p.q)}</div>
+        <div class="muted" style="margin-top:2px">by ${esc(p.by)} • ${new Date(p.createdAt).toLocaleString()}</div>
+        <div style="margin-top:8px" data-opts></div>
+        <div class="muted" style="margin-top:8px">${total(p)} votes</div>
+        <div class="row" style="margin-top:8px;gap:6px">
+          <button class="btn" data-reset ${mine===null?'disabled':''}>Clear my vote</button>
+          <button class="btn" data-del>Delete</button>
+        </div>
+      `;
+
+      const optsArea = row.querySelector('[data-opts]');
+      const sum = Math.max(1, total(p));
+      p.opts.forEach(o=>{
+        const percent = Math.round((o.c||0)*100/sum);
+        const line=document.createElement('div');
+        line.style.margin='6px 0';
+        line.innerHTML = `
+          <div class="row" style="justify-content:space-between">
+            <div>${esc(o.t)}</div>
+            <div class="muted">${o.c||0} • ${percent}%</div>
+          </div>
+          <div class="bar"><div class="fill" style="width:${percent}%; background:${mine===o.i?'#34d399':'#93c5fd'}"></div></div>
+          <div class="row" style="margin-top:6px"><button class="btn" data-vote="${o.i}" ${mine!==null?'disabled':''}>Vote</button></div>
+        `;
+        optsArea.appendChild(line);
+      });
+
+      // handlers
+      optsArea.querySelectorAll('[data-vote]').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          const choice = Number(btn.getAttribute('data-vote'));
+          const all=polls(); const idx=all.findIndex(x=>x.id===p.id); if(idx<0) return;
+          all[idx].opts.find(x=>x.i===choice).c++;
+          setPolls(all);
+          const v=votes(); v[p.id]=choice; setVotes(v);
+          render();
+        });
+      });
+
+      row.querySelector('[data-reset]').addEventListener('click',()=>{
+        const v=votes(); const ch=v[p.id]; if(typeof ch!=='number') return;
+        const all=polls(); const idx=all.findIndex(x=>x.id===p.id); if(idx<0) return;
+        const opt=all[idx].opts.find(x=>x.i===ch); if(opt && opt.c>0) opt.c--;
+        delete v[p.id]; setVotes(v); setPolls(all); render();
+      });
+
+      row.querySelector('[data-del]').addEventListener('click',()=>{
+        if(!confirm('Delete this poll?')) return;
+        setPolls(polls().filter(x=>x.id!==p.id));
+        const v=votes(); delete v[p.id]; setVotes(v);
+        render();
+      });
+
+      box.appendChild(row);
+    });
+  }
+
+  window.addEventListener('storage',e=>{ if([LS.POLLS,LS.VOTES,LS.PROFILE].includes(e.key)) render(); });
+  render();
+})();
+</script>
+</body>
+</html>
