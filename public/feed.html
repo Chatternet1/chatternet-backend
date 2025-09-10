@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Feed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
+    --like:#ef4444;--ok:#0f766e
+  }
+  *{box-sizing:border-box}
+  body,html{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
+  a{color:inherit;text-decoration:none}
+
+  /* Header */
+  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;object-fit:cover}
+
+  /* Page layout */
+  .page{max-width:900px;margin:18px auto;padding:0 12px 28px}
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:14px 0}
+  .section-title{font-size:20px;font-weight:800;margin:0 0 10px}
+  .muted{color:var(--muted)}
+  input,textarea,button,select{font-family:'Segoe UI',Arial,sans-serif}
+  .row{display:flex;gap:10px;align-items:center}
+
+  /* Composer */
+  #composer{display:flex;gap:10px}
+  #mePic{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #fff}
+  #postText{flex:1;padding:10px;border:1px solid #d7d7d7;border-radius:10px;min-height:60px}
+  .c-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .pill{padding:6px 10px;border:1px solid #d7d7d7;border-radius:999px;background:#fff}
+
+  /* Post */
+  .post{display:flex;gap:12px;padding:12px;border:1px solid #ececec;background:#fafafa;border-radius:12px;margin:12px 0}
+  .ava{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #fff}
+  .p-head{display:flex;justify-content:space-between;align-items:center}
+  .p-name{font-weight:800}
+  .p-time{font-size:12px;color:#6b7280}
+  .p-body{margin:6px 0 0;white-space:pre-wrap;word-break:break-word}
+  .p-img{margin-top:8px;max-width:100%;border-radius:12px;border:1px solid #e5e7eb}
+  .p-actions{display:flex;gap:10px;margin-top:8px}
+  .link{cursor:pointer;color:#2563eb}
+  .danger{color:#b91c1c;cursor:pointer}
+
+  /* Modals */
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:3500}
+  .sheet{background:#fff;border-radius:14px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
+  .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+
+  /* Toast */
+  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Feed</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" title="My Profile" />
+  </div>
+</div>
+
+<!-- Notifications / Inbox Modals -->
+<div class="modalbg" id="notifModal">
+  <div class="sheet">
+    <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
+    <div id="notifList"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="clearNotif" class="btn primary">Clear</button>
+      <button id="closeNotif" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modalbg" id="inboxModal">
+  <div class="sheet">
+    <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
+    <div id="inboxList"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="closeInbox" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <!-- Composer -->
+  <section class="card">
+    <h3 class="section-title">Create post</h3>
+    <div id="composer">
+      <img id="mePic" alt="Me" />
+      <div style="flex:1">
+        <textarea id="postText" placeholder="What's happening?"></textarea>
+        <div class="c-actions">
+          <label class="pill" style="cursor:pointer">
+            <input id="imgFile" type="file" accept="image/*" style="display:none">
+            Add image
+          </label>
+          <select id="vis" class="pill">
+            <option value="public">Public</option>
+            <option value="friends">Friends</option>
+            <option value="private">Only me</option>
+          </select>
+          <button class="btn primary" id="btnPost">Post</button>
+        </div>
+        <img id="imgPreview" class="p-img" style="display:none" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Feed -->
+  <section class="card">
+    <h3 class="section-title">Latest</h3>
+    <div id="feedList"></div>
+  </section>
+</div>
+
+<div id="toast"></div>
+
+<!-- Keep only your app scripts here; common.js & messenger.js load in your universal footer -->
+<script src="auth.js"></script>
+<script src="api.js"></script>
+
+<script>
+/* ===== tiny helpers ===== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const LS = {
+  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', SETTINGS:'ct_settings_v1',
+  POSTS:'ct_feed_posts_v7', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'
+};
+const face = n => `https://i.pravatar.cc/120?u=${encodeURIComponent(n||'me')}`;
+const toast = (m)=>{ const t=$("#toast"); t.textContent=m; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); };
+function load(k,f){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{return f;} }
+function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+/* ===== seed minimum data ===== */
+(function seed(){
+  let u = load(LS.USERS, null);
+  if (!u || !Array.isArray(u) || !u.length){
+    u = [{name:'Me', avatar:face('Me')}, {name:'Grace Lee', avatar:face('Grace')}];
+    save(LS.USERS, u);
+  } else if (!u.find(x=>x.name==='Me')) { u.unshift({name:'Me', avatar:face('Me')}); save(LS.USERS, u); }
+  if (!Array.isArray(load(LS.POSTS,null))) save(LS.POSTS, []);
+})();
+
+/* ===== header wiring (avatar + buttons) ===== */
+(function wireHeader(){
+  const prof = (load(LS.PROFILE, {})['Me']||{});
+  const img  = $("#myProfile");
+  if (img){
+    img.src = (prof.avatar || prof.avatarUrl || face('Me'));
+    img.alt = (prof.displayName || 'Me');
+    img.onclick = ()=>location.href='profile.html';
+  }
+  // Notifications modal
+  const nModal=$("#notifModal"), nList=$("#notifList");
+  function rNotif(){
+    const arr=load(LS.NOTIF,[]);
+    nList.innerHTML = arr.length
+      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
+      : '<div class="notifitem">No notifications yet.</div>';
+  }
+  $("#btnNotif").addEventListener('click',()=>{ rNotif(); nModal.style.display='flex'; });
+  $("#clearNotif").addEventListener('click',()=>{ save(LS.NOTIF,[]); rNotif(); });
+  $("#closeNotif").addEventListener('click',()=> nModal.style.display='none');
+
+  // Inbox modal
+  const iModal=$("#inboxModal"), iList=$("#inboxList");
+  function rInbox(){
+    const arr=load(LS.INBOX,[]);
+    iList.innerHTML = arr.length
+      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
+      : '<div class="notifitem">Inbox is empty.</div>';
+  }
+  $("#btnInbox").addEventListener('click',()=>{ rInbox(); iModal.style.display='flex'; });
+  $("#closeInbox").addEventListener('click',()=> iModal.style.display='none');
+
+  // Messages -> overlay if available
+  $("#btnMsgs").addEventListener('click',(e)=>{
+    e.preventDefault(); e.stopPropagation();
+    if (window.ctOpen) return window.ctOpen();
+    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+    location.href='messages.html';
+  });
+})();
+
+/* ===== composer ===== */
+(function compose(){
+  const prof = (load(LS.PROFILE,{})['Me']||{});
+  $("#mePic").src = (prof.avatar || prof.avatarUrl || face('Me'));
+
+  let imgData = '';
+  $("#imgFile").addEventListener('change', (e)=>{
+    const f=e.target.files && e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload = ev => {
+      imgData = ev.target.result || '';
+      const prev = $("#imgPreview");
+      if (imgData){ prev.src = imgData; prev.style.display='block'; }
+    };
+    r.readAsDataURL(f);
+  });
+
+  $("#btnPost").addEventListener('click', ()=>{
+    const text = ($("#postText").value||'').trim();
+    const vis  = $("#vis").value||'public';
+    if (!text && !imgData) { toast('Type something or add an image'); return; }
+    const s = load(LS.SETTINGS, {profile:{actor:'Me'}});
+    const actor = (s.profile && s.profile.actor) || 'Me';
+    const posts = load(LS.POSTS, []);
+    const post = {
+      id: 'p_'+Date.now(),
+      by: actor,
+      avatar: (prof.avatar || prof.avatarUrl || face(actor)),
+      time: new Date().toISOString(),
+      text, img: imgData||'', vis, likes:0, comments:[]
+    };
+    posts.unshift(post);
+    save(LS.POSTS, posts);
+    // in-app notification (demo)
+    const ns = load(LS.NOTIF,[]);
+    ns.unshift({time:Date.now(), text:'Your post was published to the feed.'});
+    save(LS.NOTIF, ns);
+
+    $("#postText").value=''; imgData=''; $("#imgPreview").style.display='none';
+    renderFeed();
+    toast('Posted');
+  });
+})();
+
+/* ===== feed render ===== */
+function timeAgo(ts){
+  try{
+    const t = new Date(ts).getTime();
+    const d = Math.max(1, Math.floor((Date.now()-t)/1000));
+    if (d<60) return d+'s';
+    if (d<3600) return Math.floor(d/60)+'m';
+    if (d<86400) return Math.floor(d/3600)+'h';
+    return Math.floor(d/86400)+'d';
+  }catch{return '';}
+}
+
+function renderFeed(){
+  const meName = ((load(LS.SETTINGS,{profile:{actor:'Me'}})).profile||{}).actor || 'Me';
+  const posts = (load(LS.POSTS,[])).slice(); // copy
+  const box = $("#feedList");
+  if (!posts.length){ box.innerHTML = '<div class="muted">No posts yet. Create one above!</div>'; return; }
+  box.innerHTML = '';
+  posts.forEach(p=>{
+    const row = document.createElement('div');
+    row.className = 'post';
+    row.innerHTML = `
+      <img class="ava" src="${p.avatar||face(p.by)}" alt="">
+      <div style="flex:1">
+        <div class="p-head">
+          <div>
+            <div class="p-name">${p.by}</div>
+            <div class="p-time">${timeAgo(p.time)} · ${p.vis||'public'}</div>
+          </div>
+          <div class="p-actions">
+            <span class="link" data-act="like">Like (${p.likes||0})</span>
+            ${ p.by===meName ? `<span class="link" data-act="edit">Edit</span>
+            <span class="danger" data-act="del">Delete</span>` : '' }
+          </div>
+        </div>
+        <div class="p-body">${(p.text||'').replaceAll('&','&amp;').replaceAll('<','&lt;')}</div>
+        ${ p.img ? `<img class="p-img" src="${p.img}" alt="">` : '' }
+      </div>
+    `;
+    // actions
+    row.querySelectorAll('[data-act]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const act = btn.getAttribute('data-act');
+        const all = load(LS.POSTS,[]);
+        const idx = all.findIndex(x=>x.id===p.id);
+        if (idx<0) return;
+        if (act==='like'){ all[idx].likes = (all[idx].likes||0)+1; save(LS.POSTS,all); renderFeed(); }
+        if (act==='del'){
+          if (!confirm('Delete this post?')) return;
+          all.splice(idx,1); save(LS.POSTS,all); renderFeed();
+        }
+        if (act==='edit'){
+          const txt = prompt('Edit your post text:', all[idx].text||'');
+          if (txt==null) return;
+          all[idx].text = txt;
+          all[idx].time = new Date().toISOString(); // bump
+          save(LS.POSTS,all); renderFeed();
+        }
+      });
+    });
+    $("#feedList").appendChild(row);
+  });
+}
+
+/* initial render + keep avatar reactive */
+renderFeed();
+window.addEventListener('storage', (e)=>{
+  if (e.key===LS.POSTS) renderFeed();
+});
+
+/* Small safety net: if someone clicks a messages.html link, open overlay */
+document.addEventListener('click', (e)=>{
+  const a = e.target.closest && e.target.closest('a[href*="messages.html"]');
+  if(!a) return;
+  if (window.ctOpen || (window.ChatternetMessenger&&window.ChatternetMessenger.open)){
+    e.preventDefault();
+    (window.ctOpen || window.ChatternetMessenger.open)();
+  }
+}, true);
+</script>
+</body>
+</html>
