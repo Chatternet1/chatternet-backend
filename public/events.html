@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Events</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{ --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; --ok:#10b981; --warn:#b45309; }
+  *{ box-sizing:border-box }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 'Segoe UI',Arial,sans-serif }
+  a{ color:inherit; text-decoration:none }
+
+  /* Header */
+  .top-bar{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--brand); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.2) }
+  .top-bar h2{ margin:0; font-weight:800; letter-spacing:.2px }
+  .top-actions{ display:flex; gap:8px; align-items:center }
+  .top-actions button{ background:#fff; color:#000; border:none; padding:8px 10px; border-radius:10px; cursor:pointer }
+  .top-actions button:hover{ background:#eef4ff }
+  .top-actions img{ width:36px; height:36px; border-radius:50%; border:2px solid rgba(255,255,255,.85); object-fit:cover; cursor:pointer }
+
+  /* Layout */
+  .page{ max-width:1140px; margin:18px auto; padding:0 12px 28px }
+  .grid{ display:grid; grid-template-columns:340px 1fr; gap:14px }
+  @media (max-width:980px){ .grid{ grid-template-columns:1fr } }
+
+  .card{ background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:14px; box-shadow:0 6px 16px rgba(0,0,0,.06); padding:14px }
+  .section-title{ font-size:22px; font-weight:800; margin:0 0 10px }
+  .muted{ color:var(--muted) }
+  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .btn{ padding:10px 14px; border:1px solid #d7d7d7; border-radius:10px; background:#fff; cursor:pointer }
+  .btn.primary{ background:var(--brand); border-color:var(--brand); color:#fff }
+  .btn.primary:hover{ background:var(--brand-2) }
+  .btn.good{ background:#d1fae5; border-color:#a7f3d0; color:#065f46 }
+  .btn.warn{ background:#fff7ed; border-color:#fed7aa; color:#7c2d12 }
+  input,select,textarea{ width:100%; padding:10px; border:1px solid #d7d7d7; border-radius:10px; font:inherit; background:#fff }
+  textarea{ resize:vertical; min-height:90px }
+
+  /* Event cards */
+  .tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px }
+  .grid-items{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px }
+  @media (max-width:820px){ .grid-items{ grid-template-columns:1fr } }
+  .ev{ border:1px solid #e8ecf4; border-radius:14px; overflow:hidden; background:#fff; display:flex; flex-direction:column }
+  .ev img{ width:100%; height:200px; object-fit:cover; background:#e5e7eb }
+  .ev-body{ padding:10px 12px; flex:1 }
+  .ev h4{ margin:0 0 4px; font-size:18px }
+  .badge{ display:inline-block; font-size:12px; padding:3px 8px; border:1px solid #d7d7d7; border-radius:999px; background:#f8fafc; margin-left:6px }
+  .pill{ display:inline-block; padding:4px 8px; border:1px solid #d7d7d7; border-radius:999px; background:#f8fafc; font-size:12px; margin-right:6px }
+  .small{ font-size:12px }
+
+  /* toast */
+  .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5000 }
+  .toast.show{ opacity:1 }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Events</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" alt="Me" />
+  </div>
+</div>
+
+<div class="page">
+  <div class="grid">
+
+    <!-- Create/Edit -->
+    <aside class="card">
+      <h3 class="section-title">Create Event</h3>
+      <input id="eTitle" placeholder="Event title">
+      <div class="row">
+        <input id="eWhen" type="datetime-local">
+        <input id="eEnd" type="datetime-local" placeholder="End (optional)">
+      </div>
+      <input id="eWhere" placeholder="Location (or link)">
+      <div class="row">
+        <select id="eVis">
+          <option value="public">Public</option>
+          <option value="friends">Friends</option>
+          <option value="private">Only me</option>
+        </select>
+        <input id="eBanner" placeholder="Banner image URL (optional)">
+      </div>
+      <textarea id="eDesc" placeholder="Describe the event…"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="btn primary" id="saveEvent">Save event</button>
+        <button class="btn" id="clearEvent">Clear</button>
+      </div>
+
+      <h4 style="margin:16px 0 6px">My Events</h4>
+      <div id="myEvents"></div>
+    </aside>
+
+    <!-- List -->
+    <main class="card">
+      <div class="tools">
+        <input id="q" placeholder="Search…" style="flex:1">
+        <select id="fVis">
+          <option value="">All</option>
+          <option value="public">Public</option>
+          <option value="friends">Friends</option>
+          <option value="private">Only me</option>
+        </select>
+        <select id="sort">
+          <option value="soon">Soonest</option>
+          <option value="new">Newest created</option>
+        </select>
+        <button class="btn" id="apply">Apply</button>
+      </div>
+      <div id="list" class="grid-items"></div>
+    </main>
+
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== tiny utils ===== */
+  const $=(s,el=document)=>el.querySelector(s);
+  const $$=(s,el=document)=>Array.from(el.querySelectorAll(s));
+  const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
+  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+  const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'cover')}`;
+  const toast=m=>{ const t=$("#toast"); t.textContent=m; t.className="toast show"; setTimeout(()=>t.className="toast",1200) };
+
+  const LS={ PROFILE:'ct_profile_data_v1', SETTINGS:'ct_settings_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
+             EVENTS:'ct_events_v1', RSVP:'ct_rsvp_v1' };
+
+  const me = (()=>{ const s=load(LS.SETTINGS,{}); return s?.profile?.actor || 'Me'; })();
+
+  /* ===== robust load shared scripts (messenger + header helpers) ===== */
+  (function robustLoad(){
+    const base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+    const tryScripts=(arr)=>{ (function next(i){ if(i>=arr.length) return; const s=document.createElement('script'); s.src=arr[i]; s.async=true; s.onerror=()=>{ s.remove(); next(i+1); }; (document.head||document.documentElement).appendChild(s); })(0); };
+    tryScripts([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js']);
+    tryScripts([base+'/assets/common.js','/assets/common.js','assets/common.js']);
+  })();
+
+  /* ===== header wiring ===== */
+  (function header(){
+    const prof=(load(LS.PROFILE,{})['Me']||{});
+    const img=$("#myProfile"); if(img){ img.src=prof.avatar||prof.avatarUrl||face('Me'); img.alt=prof.displayName||'Me'; img.onclick=()=>location.href='profile.html'; }
+    $("#btnNotif").onclick=()=>{ const arr=load(LS.NOTIF,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'No notifications yet.'); };
+    $("#btnInbox").onclick=()=>{ const arr=load(LS.INBOX,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'Inbox is empty.'); };
+    $("#btnMsgs").onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); };
+  })();
+
+  /* ===== data ===== */
+  function events(){ return load(LS.EVENTS,[]); }
+  function saveEvents(a){ save(LS.EVENTS,a); }
+  function rsvps(){ return load(LS.RSVP,{}); }     // {eventId: 'going'|'interested'|'no'}
+  function saveRsvps(o){ save(LS.RSVP,o); }
+
+  /* seed a demo event if empty */
+  (function seed(){
+    let E=events(); if(E.length) return;
+    const now=Date.now()+3*24*3600e3;
+    E=[{
+      id:'e_'+Date.now(),
+      title:'Chatternet Launch Party',
+      start: new Date(now).toISOString(),
+      end: new Date(now+2*3600e3).toISOString(),
+      where:'Online — Stream link in description',
+      banner:'https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200&auto=format&fit=crop',
+      desc:'Celebrate our launch with live music and giveaways!',
+      vis:'public',
+      host:'Grace Lee',
+      created: Date.now()
+    }];
+    saveEvents(E);
+  })();
+
+  /* ===== render ===== */
+  function myRow(ev){
+    const div=document.createElement('div'); div.className='row'; div.style.border='1px solid #eef2f7'; div.style.borderRadius='10px'; div.style.padding='8px';
+    const when=new Date(ev.start).toLocaleString();
+    div.innerHTML = `<img src="${ev.banner||face(ev.title)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover">
+      <div style="flex:1">
+        <div style="font-weight:800">${esc(ev.title)}</div>
+        <div class="muted small">${when} • ${esc(ev.where||'')}</div>
+      </div>
+      <button class="btn" data-act="edit">Edit</button>
+      <button class="btn warn" data-act="del">Delete</button>`;
+    div.onclick=(e)=>{
+      const a=e.target?.dataset?.act; if(!a) return;
+      if(a==='del'){ if(!confirm('Delete this event?')) return; let E=events().filter(x=>x.id!==ev.id); saveEvents(E); renderAll(); }
+      if(a==='edit'){ $("#eTitle").value=ev.title; $("#eWhen").value=ev.start.slice(0,16); $("#eEnd").value=ev.end?ev.end.slice(0,16):''; $("#eWhere").value=ev.where||''; $("#eVis").value=ev.vis||'public'; $("#eBanner").value=ev.banner||''; $("#eDesc").value=ev.desc||''; $("#saveEvent").dataset.edit=ev.id; window.scrollTo({top:0,behavior:'smooth'}); }
+    };
+    return div;
+  }
+
+  function ics(ev){
+    const pad=n=>String(n).padStart(2,'0');
+    const fmt = (d)=>{ const t=new Date(d); const y=t.getUTCFullYear(); const m=pad(t.getUTCMonth()+1); const da=pad(t.getUTCDate()); const h=pad(t.getUTCHours()); const mi=pad(t.getUTCMinutes()); const s=pad(t.getUTCSeconds()); return `${y}${m}${da}T${h}${mi}${s}Z`; };
+    const body = [
+      'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chatternet//EN','BEGIN:VEVENT',
+      `UID:${ev.id}@chatternet`,
+      `DTSTAMP:${fmt(new Date())}`,
+      `DTSTART:${fmt(ev.start)}`,
+      ev.end?`DTEND:${fmt(ev.end)}`:null,
+      `SUMMARY:${ev.title}`,
+      `DESCRIPTION:${(ev.desc||'').replace(/\n/g,'\\n')}`,
+      `LOCATION:${ev.where||''}`,
+      'END:VEVENT','END:VCALENDAR'
+    ].filter(Boolean).join('\r\n');
+    const url='data:text/calendar;charset=utf-8,'+encodeURIComponent(body);
+    const a=document.createElement('a'); a.href=url; a.download=`${ev.title||'event'}.ics`; a.click();
+  }
+
+  function card(ev){
+    const wrap=document.createElement('div'); wrap.className='ev';
+    const when=new Date(ev.start).toLocaleString();
+    const len= ev.end ? ' • ends '+new Date(ev.end).toLocaleTimeString() : '';
+    wrap.innerHTML = `
+      <img src="${ev.banner||face(ev.title)}" alt="${esc(ev.title)}">
+      <div class="ev-body">
+        <h4>${esc(ev.title)} <span class="badge">${esc(ev.vis)}</span></h4>
+        <div class="muted small">${when}${len}</div>
+        <div class="muted small" style="margin:4px 0">at ${esc(ev.where||'TBA')} • host ${esc(ev.host||'Unknown')}</div>
+        <div class="muted" style="min-height:40px">${esc(ev.desc||'')}</div>
+      </div>
+      <div class="row" style="padding:10px 12px;border-top:1px solid #eef2f7;justify-content:space-between">
+        <div class="row">
+          <button class="btn good" data-act="going">Going</button>
+          <button class="btn" data-act="interested">Interested</button>
+          <button class="btn" data-act="no">Not going</button>
+        </div>
+        <div class="row">
+          <button class="btn" data-act="cal">Add to calendar</button>
+          <button class="btn primary" data-act="msg">Message host</button>
+        </div>
+      </div>`;
+    wrap.onclick=(e)=>{
+      const act=e.target?.dataset?.act; if(!act) return;
+      if(act==='msg'){ if(window.ctMessage) return window.ctMessage(ev.host||''); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(ev.host||''); location.href='messages.html?msg='+encodeURIComponent(ev.host||''); }
+      if(act==='cal'){ ics(ev); }
+      if(['going','interested','no'].includes(act)){ const R=rsvps(); R[ev.id]=act; saveRsvps(R); toast('Response saved'); renderAll(); }
+    };
+    // show current RSVP
+    const r=rsvps()[ev.id]; if(r){ $$('button[data-act]', wrap).forEach(b=>{ if(b.dataset.act===r) b.classList.add('good'); }); }
+    return wrap;
+  }
+
+  function renderAll(){
+    const E=events();
+    // left (mine)
+    $("#myEvents").innerHTML='';
+    E.filter(x=>x.host===me).forEach(x=>$("#myEvents").appendChild(myRow(x)));
+
+    // right list
+    const q=($("#q").value||'').trim().toLowerCase();
+    const vis=$("#fVis").value||'';
+    const sort=$("#sort").value;
+
+    let A=E.slice();
+    if(q) A=A.filter(x=>[x.title,x.desc,x.where,x.host].join(' ').toLowerCase().includes(q));
+    if(vis) A=A.filter(x=>x.vis===vis);
+    if(sort==='new') A=A.sort((a,b)=>b.created-a.created);
+    else A=A.sort((a,b)=>new Date(a.start)-new Date(b.start));
+
+    const box=$("#list"); box.innerHTML='';
+    if(!A.length){ box.innerHTML='<div class="muted">No events match.</div>'; return; }
+    A.forEach(x=> box.appendChild(card(x)));
+  }
+
+  /* ===== actions ===== */
+  $("#apply").onclick=renderAll;
+  $("#clearEvent").onclick=()=>{ ["eTitle","eWhere","eBanner","eDesc"].forEach(id=>$("#"+id).value=''); $("#eVis").value='public'; $("#eWhen").value=''; $("#eEnd").value=''; delete $("#saveEvent").dataset.edit; };
+
+  $("#saveEvent").onclick=()=>{
+    const title=($("#eTitle").value||'').trim();
+    const start=$("#eWhen").value? new Date($("#eWhen").value).toISOString() : '';
+    const end=$("#eEnd").value? new Date($("#eEnd").value).toISOString() : '';
+    const where=($("#eWhere").value||'').trim();
+    const vis=$("#eVis").value||'public';
+    const banner=($("#eBanner").value||'').trim();
+    const desc=($("#eDesc").value||'').trim();
+    if(!title || !start){ alert('Title and start date/time are required.'); return; }
+    let E=events();
+    const editId=$("#saveEvent").dataset.edit;
+    if(editId){
+      const i=E.findIndex(x=>x.id===editId); if(i>=0){ E[i]={...E[i], title,start,end,where,vis,banner,desc}; }
+      delete $("#saveEvent").dataset.edit;
+    }else{
+      E.unshift({ id:'e_'+Date.now(), title,start,end,where,vis,banner,desc, host:me, created:Date.now() });
+    }
+    saveEvents(E); renderAll(); toast('Event saved'); $("#clearEvent").click();
+  };
+
+  /* ===== init ===== */
+  renderAll();
+})();
+</script>
+</body>
+</html>
