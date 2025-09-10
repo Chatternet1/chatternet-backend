@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Media</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{ --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2 }
+  *{ box-sizing:border-box }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 'Segoe UI',Arial,sans-serif }
+  a{ color:inherit; text-decoration:none }
+
+  /* Header */
+  .top-bar{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .top-bar h2{margin:0;font-weight:800}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#0f172a;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.9);object-fit:cover;cursor:pointer}
+
+  /* Layout */
+  .wrap{max-width:1160px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:320px 1fr;gap:14px}
+  @media (max-width:940px){ .wrap{grid-template-columns:1fr} }
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
+  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input,select,textarea,button{font:inherit}
+  input,select,textarea{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
+  textarea{resize:vertical;min-height:90px}
+  .btn{padding:9px 12px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
+  .muted{color:var(--muted)}
+  .pill{display:inline-block;padding:4px 8px;border:1px solid #d7d7d7;border-radius:999px;background:#f8fafc;font-size:12px;margin-right:6px}
+
+  /* Grid */
+  .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  @media (max-width:1000px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media (max-width:640px){ .grid{grid-template-columns:1fr} }
+  .tile{border:1px solid #ececec;background:#fafafa;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+  .thumb{aspect-ratio:16/9;background:#e8ecf3;border-bottom:1px solid #ececec;display:flex;align-items:center;justify-content:center}
+  .thumb img,.thumb video{width:100%;height:100%;object-fit:cover;display:block}
+  .tile .meta{padding:10px}
+  .name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .small{font-size:12px;color:#667085}
+  .tile .actions{display:flex;gap:8px;margin-top:8px}
+  .heart{padding:6px 10px;border:1px solid #e6e8f2;border-radius:10px;background:#f6f7fb;cursor:pointer}
+  .heart.active{background:#ffe7ed;border-color:#ffd3de}
+
+  /* Viewer modal */
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2000}
+  .sheet{background:#fff;border-radius:14px;max-width:900px;width:96%;max-height:90vh;overflow:auto;box-shadow:0 18px 40px rgba(0,0,0,.28);padding:14px}
+  .viewer-media{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff}
+  .viewer-media img{width:100%;display:block}
+  .viewer-media video{width:100%}
+  .viewer-media iframe{width:100%;aspect-ratio:16/9}
+
+  /* Notif/Inbox */
+  .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+
+  /* Toast */
+  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="top-bar">
+  <h2>Media</h2>
+  <div class="top-actions">
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="myProfile" title="My Profile" />
+  </div>
+</div>
+
+<!-- Notif / Inbox -->
+<div class="modalbg" id="notifBg">
+  <div class="sheet">
+    <h3 class="section-title" style="margin:0 0 8px">Notifications</h3>
+    <div id="notifList"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn primary" id="clearNotif">Clear</button>
+      <button class="btn" id="closeNotif">Close</button>
+    </div>
+  </div>
+</div>
+<div class="modalbg" id="inboxBg">
+  <div class="sheet">
+    <h3 class="section-title" style="margin:0 0 8px">Inbox</h3>
+    <div id="inboxList"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="closeInbox">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- Sidebar: Add media + tools -->
+  <aside class="card">
+    <h3 class="section-title">Add Media</h3>
+    <div class="row"><input id="mTitle" placeholder="Title"></div>
+    <div class="row"><textarea id="mDesc" placeholder="Description (optional)"></textarea></div>
+    <div class="row"><input id="mUrl" placeholder="URL (image / video / YouTube)"></div>
+    <div class="row">
+      <input type="file" id="mFile" accept="image/*,video/*">
+      <button class="btn" id="btnUseFile">Use uploaded</button>
+    </div>
+    <div class="row">
+      <input id="mTags" placeholder="Tags (comma separated)">
+      <select id="mVis">
+        <option value="public">Public</option>
+        <option value="friends">Friends</option>
+        <option value="private">Only me</option>
+      </select>
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn primary" id="btnAdd">Add to Library</button>
+      <button class="btn" id="btnClear">Clear</button>
+    </div>
+
+    <hr style="margin:14px -14px;border:none;border-top:1px solid #eee">
+
+    <h4 style="margin:0 0 8px">Library Tools</h4>
+    <div class="row">
+      <input id="q" placeholder="Search title or tag…">
+      <select id="visFilter">
+        <option value="">All</option>
+        <option value="public">Public</option>
+        <option value="friends">Friends</option>
+        <option value="private">Only me</option>
+      </select>
+    </div>
+    <div class="row">
+      <button class="btn ghost" id="btnExport">Export</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none">
+      <button class="btn" id="btnImport">Import</button>
+    </div>
+  </aside>
+
+  <!-- Main: Library grid -->
+  <main class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h3 class="section-title" style="margin:0">Library</h3>
+      <div class="muted" id="libCount">0 items</div>
+    </div>
+    <div id="grid" class="grid"></div>
+  </main>
+</div>
+
+<!-- Viewer -->
+<div class="modalbg" id="viewBg">
+  <div class="sheet">
+    <div class="viewer-media" id="viewMedia"></div>
+    <div style="margin-top:10px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h3 id="viewTitle" style="margin:0"></h3>
+        <div class="row"><button class="heart" id="viewLike">❤ Like</button><a id="viewOpen" class="btn" target="_blank" rel="noopener">Open</a><button class="btn" id="viewClose">Close</button></div>
+      </div>
+      <div id="viewDesc" class="muted" style="margin-top:6px"></div>
+      <div id="viewMeta" class="small" style="margin-top:6px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- Footer scripts (always included) -->
+<script>
+  // Set backend base for all pages
+  (function(){ try {
+    window.CT_API_BASE = 'https://chatternet-backend-1.onrender.com';
+    localStorage.setItem('ct_api_base', window.CT_API_BASE);
+  }catch{} })();
+</script>
+<script src="../assets/common.js"></script>
+<script src="../assets/messenger.js"></script>
+<script src="../auth.js"></script>
+<script src="../api.js"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ===== Keys + utils ===== */
+  const LS = { MEDIA:'ct_media_v1', PROFILE:'ct_profile_data_v1', USERS:'ct_users_v3', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1' };
+  const $ = s=>document.querySelector(s);
+  const $$ = s=>Array.from(document.querySelectorAll(s));
+  const load=(k,f)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;} };
+  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
+  const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+  const nowISO=()=>new Date().toISOString();
+  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;');
+  const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n)}`;
+
+  function toYouTubeEmbed(url){ try{ const u=new URL(url); const host=u.hostname.replace(/^www\./,'').replace(/^m\./,''); let id=''; if(host==='youtu.be'){ id=u.pathname.split('/')[1]||''; } else if(host.endsWith('youtube.com')){ if(u.pathname==='/watch') id=u.searchParams.get('v')||''; else id=(u.pathname.split('/')[2]||''); } if(!id) return null; return `https://www.youtube.com/embed/${encodeURIComponent(id)}?rel=0&modestbranding=1&playsinline=1`; }catch{ return null; } }
+  function detectMedia(url){
+    if(!url) return null;
+    try{ new URL(url); }catch{ return null; }
+    const yt=toYouTubeEmbed(url); const lower=url.toLowerCase();
+    if(yt) return {type:'embed',src:yt,allow:"accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"};
+    if(/\.(png|jpg|jpeg|gif|webp)(\?|$)/.test(lower)) return {type:'image',src:url};
+    if(/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|$)/.test(lower)) return {type:'video',src:url};
+    return {type:'link',src:url};
+  }
+  const toast=(m)=>{ const t=$("#toast"); t.textContent=m; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); };
+
+  /* ===== Seed profile so header avatar shows ===== */
+  (function seedUsers(){
+    let u=load(LS.USERS,null);
+    if(!u || !Array.isArray(u) || !u.length) u=[{name:'Me', avatar:face('Me')}];
+    if(!u.find(x=>x.name==='Me')) u.unshift({name:'Me', avatar:face('Me')});
+    save(LS.USERS,u);
+  })();
+
+  /* ===== Header wiring + overlay messages ===== */
+  (function wireHeader(){
+    const prof=(load(LS.PROFILE,{}))['Me']||{};
+    const img=$("#myProfile"); if(img){ img.src=prof.avatar||face('Me'); img.alt=prof.displayName||'Me'; img.onclick=()=>location.href='profile.html'; }
+    $("#btnMsgs").onclick=(e)=>{ e.preventDefault(); e.stopPropagation();
+      if(window.ctOpen) return window.ctOpen();
+      if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+      location.href='messages.html';
+    };
+    document.addEventListener('click',(e)=>{ const a=e.target.closest('a[href*="messages.html"]'); if(!a) return; if(window.ctOpen||window.ChatternetMessenger?.open){ e.preventDefault(); (window.ctOpen||window.ChatternetMessenger.open)(); } },true);
+  })();
+
+  /* ===== Notif / Inbox ===== */
+  function renderNotif(){ const arr=load('ct_notifications_v1',[]); const box=$("#notifList"); box.innerHTML = arr.length? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}</div>`).join('') : '<div class="notifitem">No notifications yet.</div>'; }
+  function renderInbox(){ const arr=load('ct_inbox_v1',[]); const box=$("#inboxList"); box.innerHTML = arr.length? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}</div>`).join('') : '<div class="notifitem">Inbox is empty.</div>'; }
+  $("#btnNotif").onclick=()=>{ renderNotif(); $("#notifBg").style.display='flex'; };
+  $("#clearNotif").onclick=()=>{ save('ct_notifications_v1',[]); renderNotif(); };
+  $("#closeNotif").onclick=()=>{ $("#notifBg").style.display='none'; };
+  $("#btnInbox").onclick=()=>{ renderInbox(); $("#inboxBg").style.display='flex'; };
+  $("#closeInbox").onclick=()=>{ $("#inboxBg").style.display='none'; };
+
+  /* ===== Media data ===== */
+  function getLib(){ return load(LS.MEDIA,[]); }
+  function setLib(a){ save(LS.MEDIA,a); }
+
+  // Seed example items if empty
+  (function seedMedia(){
+    if(getLib().length) return;
+    const demo=[
+      {id:uid('m'), title:'Welcome poster', desc:'Demo image', url:'https://images.unsplash.com/photo-1520975922284-9bcd8b6caad7?w=1200', tags:['poster','demo'], vis:'public', likes:1, time:nowISO()},
+      {id:uid('m'), title:'Trailer: Nature', desc:'YouTube sample', url:'https://www.youtube.com/watch?v=Zi_XLOBDo_Y', tags:['youtube','demo'], vis:'public', likes:0, time:nowISO()}
+    ];
+    setLib(demo);
+  })();
+
+  /* ===== Add media ===== */
+  $("#btnUseFile").onclick=()=>{
+    const f=$("#mFile").files && $("#mFile").files[0]; if(!f) return alert("Choose a file first.");
+    const r=new FileReader(); r.onload=e=>{ $("#mUrl").value=e.target.result||''; toast("File ready"); }; r.readAsDataURL(f);
+  };
+  $("#btnAdd").onclick=()=>{
+    const title=($("#mTitle").value||'').trim(); const url=($("#mUrl").value||'').trim();
+    if(!title || !url) return alert("Title and URL are required.");
+    const it={ id:uid('m'), title, desc:($("#mDesc").value||'').trim(), url, tags:($("#mTags").value||'').split(',').map(t=>t.trim()).filter(Boolean), vis:$("#mVis").value||'public', likes:0, time:nowISO() };
+    const lib=getLib(); lib.unshift(it); setLib(lib);
+    $("#mTitle").value=''; $("#mDesc").value=''; $("#mUrl").value=''; $("#mTags").value=''; $("#mVis").value='public'; $("#mFile").value='';
+    render(); toast("Added to library");
+  };
+  $("#btnClear").onclick=()=>{ $("#mTitle").value=''; $("#mDesc").value=''; $("#mUrl").value=''; $("#mTags").value=''; $("#mFile").value=''; };
+
+  /* ===== Export / Import ===== */
+  $("#btnExport").onclick=()=>{
+    const blob=new Blob([JSON.stringify(getLib(),null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='chatternet-media.json'; a.click(); URL.revokeObjectURL(a.href);
+  };
+  $("#btnImport").onclick=()=>$("#importFile").click();
+  $("#importFile").addEventListener('change',()=>{
+    const f=$("#importFile").files && $("#importFile").files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=e=>{ try{ const arr=JSON.parse(e.target.result||'[]'); if(Array.isArray(arr)){ setLib(arr); render(); toast("Imported"); } }catch(err){ alert("Import error: "+(err.message||err)); } }; r.readAsText(f);
+  });
+
+  /* ===== Render grid ===== */
+  $("#q").addEventListener('input', render); $("#visFilter").addEventListener('change', render);
+  function render(){
+    const box=$("#grid"); const q=($("#q").value||'').trim().toLowerCase(); const vis=$("#visFilter").value;
+    let arr=getLib().slice();
+    if(q) arr=arr.filter(x=>(x.title||'').toLowerCase().includes(q) || (x.tags||[]).join(' ').toLowerCase().includes(q));
+    if(vis) arr=arr.filter(x=>x.vis===vis);
+    $("#libCount").textContent = `${arr.length} item${arr.length===1?'':'s'}`;
+    box.innerHTML='';
+    if(!arr.length){ box.innerHTML='<div class="muted">No media yet.</div>'; return; }
+    arr.forEach(it=>{
+      const m=detectMedia(it.url);
+      const tile=document.createElement('div'); tile.className='tile'; tile.dataset.id=it.id;
+      const thumb=document.createElement('div'); thumb.className='thumb';
+      if(m?.type==='image'){ const img=new Image(); img.src=m.src; thumb.appendChild(img); }
+      else if(m?.type==='video'){ const v=document.createElement('video'); v.src=m.src; v.muted=true; v.playsInline=true; thumb.appendChild(v); }
+      else { thumb.innerHTML = `<div class="small">Link/Embed</div>`; }
+      tile.appendChild(thumb);
+
+      const meta=document.createElement('div'); meta.className='meta';
+      meta.innerHTML = `<div class="name" title="${esc(it.title)}">${esc(it.title)}</div>
+                        <div class="small">${esc((it.tags||[]).join(', ')) || '—'} • ${esc(it.vis)}</div>
+                        <div class="actions"><button class="heart${it.likes? ' active':''}" data-like>❤ ${it.likes||0}</button>
+                        <button class="btn" data-open>Open</button>
+                        <button class="btn" data-del>Delete</button></div>`;
+      tile.appendChild(meta);
+
+      tile.addEventListener('click',(e)=>{
+        if(e.target.closest('[data-like]')){ e.stopPropagation(); it.likes=(it.likes||0)+ (e.target.classList.contains('active')?-1:1); if(it.likes<0) it.likes=0; e.target.classList.toggle('active'); e.target.textContent='❤ '+it.likes; setLib(getLib().map(x=>x.id===it.id?it:x)); return; }
+        if(e.target.closest('[data-del]')){ e.stopPropagation(); if(!confirm('Delete this item?')) return; setLib(getLib().filter(x=>x.id!==it.id)); render(); return; }
+        if(e.target.closest('[data-open]')){ e.stopPropagation(); openViewer(it); return; }
+        openViewer(it);
+      });
+
+      box.appendChild(tile);
+    });
+  }
+
+  /* ===== Viewer ===== */
+  function openViewer(it){
+    const m=detectMedia(it.url); const box=$("#viewMedia"); box.innerHTML='';
+    if(m?.type==='image'){ const img=new Image(); img.src=m.src; box.appendChild(img); }
+    else if(m?.type==='video'){ const v=document.createElement('video'); v.src=m.src; v.controls=true; v.playsInline=true; box.appendChild(v); }
+    else if(m?.type==='embed'){ const ifr=document.createElement('iframe'); ifr.src=m.src; ifr.allow=m.allow||''; ifr.frameBorder='0'; box.appendChild(ifr); }
+    else { box.innerHTML=`<div style="padding:20px" class="muted">Cannot preview. <a href="${esc(it.url)}" target="_blank" rel="noopener">Open link</a>.</div>`; }
+
+    $("#viewTitle").textContent=it.title||'';
+    $("#viewDesc").textContent=it.desc||'';
+    $("#viewMeta").textContent=`Visibility: ${it.vis||'public'} • Tags: ${(it.tags||[]).join(', ')||'—'} • ${new Date(it.time).toLocaleString()}`;
+    $("#viewOpen").href=it.url;
+    const likeBtn=$("#viewLike"); likeBtn.classList.toggle('active', !!it.likes); likeBtn.textContent='❤ Like ('+(it.likes||0)+')';
+    likeBtn.onclick=()=>{ it.likes=(it.likes||0)+ (likeBtn.classList.contains('active')?-1:1); if(it.likes<0) it.likes=0; likeBtn.classList.toggle('active'); likeBtn.textContent='❤ Like ('+it.likes+')'; setLib(getLib().map(x=>x.id===it.id?it:x)); render(); };
+    $("#viewClose").onclick=()=>{ $("#viewBg").style.display='none'; };
+    $("#viewBg").style.display='flex';
+  }
+
+  /* ===== Live search re-render ===== */
+  window.addEventListener('storage',(e)=>{ if(e.key===LS.MEDIA) render(); });
+
+  // Initial render + header avatar set
+  (function init(){
+    const me=(load(LS.PROFILE,{}))['Me']||{};
+    const img=$("#myProfile"); if(img){ img.src=me.avatar||face('Me'); }
+    render();
+  })();
+
+})();
+</script>
+</body>
+</html>
