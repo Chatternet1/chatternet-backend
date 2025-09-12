@@ -6,189 +6,356 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
-    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
-    --ok:#0f766e;--bad:#b91c1c
+    --brand:#3498db;--brand-2:#2980b9;--ink:#0f172a;--bg:#f5f7fb;--card:#fff;--muted:#6b7280;--line:#e6eaf2;
+    --ct-bluebar-top:120px;--ct-bluebar-h:58px;--ct-nav-h:44px;--ct-gap:8px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
-  a{color:inherit;text-decoration:none}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif;height:auto;overflow-x:hidden;overflow-y:visible}
 
-  /* Header */
-  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
-  .top-actions{display:flex;gap:8px;align-items:center}
-  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
-  .top-actions button:hover{background:#eef4ff}
-  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
+  /* Blue header */
+  .top-bar{
+    position:fixed;left:0;right:0;top:var(--ct-bluebar-top);z-index:70;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;height:var(--ct-bluebar-h);
+    background:linear-gradient(0deg,var(--brand),var(--brand-2));color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12)
+  }
+  .top-bar h2{margin:0;font-weight:800}
+  .act{display:flex;gap:8px;align-items:center}
+  .act button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700}
+  .act button:hover{background:rgba(255,255,255,.22)}
+  .act img{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.55);object-fit:cover}
 
-  /* Layout */
-  .wrap{max-width:1100px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:1fr 1.2fr;gap:14px}
-  @media (max-width:900px){ .wrap{grid-template-columns:1fr} }
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
-  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
-  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  input,textarea,select,button{font-family:'Segoe UI',Arial,sans-serif}
-  input,textarea,select{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;background:#fff}
-  textarea{min-height:140px;resize:vertical}
-  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  /* App nav */
+  .nav{
+    position:fixed;left:0;right:0;top:calc(var(--ct-bluebar-top) + var(--ct-bluebar-h) + var(--ct-gap));
+    z-index:65;background:#e9f2ff;border-bottom:1px solid #d7e6ff;
+    padding:8px 12px;display:flex;gap:10px;flex-wrap:wrap
+  }
+  .nav a{color:#0b3a67;text-decoration:none;font-weight:600;border:1px solid #e6eaf2;background:#fff;padding:8px 12px;border-radius:999px}
+  .nav a[aria-current="page"]{background:#e8f1ff;border-color:#cfe0ff}
+  .nav a:hover{background:#eef4ff}
+
+  .ct-spacer{height:calc(var(--ct-bluebar-h) + var(--ct-nav-h) + var(--ct-gap));}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 12px 28px}
+  .row{display:grid;grid-template-columns:340px 1fr;gap:14px}
+  @media (max-width:980px){ .row{grid-template-columns:1fr} }
+
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:12px 0 18px}
+  .title{font-weight:800;margin:0 0 8px;font-size:22px}
+  .muted{color:var(--muted)}
+  .btn{padding:10px 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .btn.primary:hover{background:var(--brand-2)}
-  .pill{display:inline-block;padding:4px 8px;border:1px solid #d7d7d7;border-radius:999px;background:#f8fafc;font-size:12px;margin-right:6px}
-  .muted{color:var(--muted)}
+  input,textarea,select{width:100%;padding:10px 12px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  textarea{min-height:120px;resize:vertical}
 
-  /* List */
-  .post{display:flex;gap:12px;border:1px solid #ececec;background:#fafafa;border-radius:12px;padding:12px;margin:10px 0}
-  .ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff;flex:0 0 auto}
-  .title{font-weight:800}
-  .meta{color:#475569;font-size:13px}
+  .drop{display:grid;place-items:center;height:120px;border:1px dashed #d7d7d7;border-radius:10px;background:#fafbff;color:#6b7280;font-size:13px}
+  .drop.drag{background:#eef2ff;border-color:#bfdbfe}
+
+  .list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media (max-width:980px){ .list{grid-template-columns:1fr} }
+  .post{border:1px solid #ececec;background:#fff;border-radius:12px;overflow:hidden}
+  .cover{width:100%;height:160px;object-fit:cover;background:#f1f5f9}
+  .px{padding:10px 12px}
+  .meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#334155}
+  .b-ava{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#e5e7eb;border:1px solid #d1d5e1;flex:0 0 28px;display:block}
+  .b-ava.sm{width:26px;height:26px}
+  .line{display:flex;align-items:center;gap:6px;color:#64748b;font-size:12px}
+  .heart{display:inline-flex;align-items:center;gap:6px}
+  .heart button{width:34px;height:34px;border-radius:9px;border:1px solid #e6e8f2;background:#f6f7fb;cursor:pointer}
+  .heart button.active{background:#ffe7ed;border-color:#ffd3de}
+  .heart svg{width:18px;height:18px;fill:none;stroke:#555;stroke-width:2}
+  .heart button.active svg{fill:#ff3b5c;stroke:#ff3b5c}
+
+  .comments{border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px}
+  .comment{background:#fff;border:1px solid #eee;border-radius:10px;padding:8px;display:flex;gap:8px;align-items:flex-start;margin:6px 0}
+  .c-body{flex:1}
+  .c-head{display:flex;align-items:center;gap:8px;font-size:12px;color:#475569;margin-bottom:4px}
+  .c-name{font-weight:700}
+  .c-new{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+  .c-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  @media (max-width:700px){ .c-two{grid-template-columns:1fr} }
+  .clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500}
+  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="top-bar">
+<header class="top-bar" id="topBar">
   <h2>Blogs</h2>
-  <div class="top-actions">
+  <div class="act">
     <button id="btnNotif">Notifications</button>
     <button id="btnInbox">Inbox</button>
     <button id="btnMsgs">Messages</button>
     <img id="myProfile" alt="Me" />
   </div>
-</div>
+</header>
+
+<nav class="nav" id="appNav">
+  <a href="index.html">Home</a>
+  <a href="feed.html">Feed</a>
+  <a href="friends.html">Friends</a>
+  <a href="chattermarket.html">Market</a>
+  <a href="groups.html">Groups</a>
+  <a href="events.html">Events</a>
+  <a href="media.html">Media</a>
+  <a href="dating.html">Dating</a>
+  <a href="blogs.html" aria-current="page">Blogs</a>
+  <a href="polls.html">Polls</a>
+  <a href="music.html">Music</a>
+  <a href="messages.html">Messages</a>
+  <a href="profile.html">Profile</a>
+  <a href="settings.html">Settings</a>
+</nav>
+
+<div class="ct-spacer" id="ctSpacer"></div>
 
 <div class="wrap">
+  <div class="row">
+    <!-- Composer -->
+    <section class="card">
+      <h3 class="title">Write a Blog</h3>
+      <label>Title<input id="bTitle" placeholder="Enter title"></label>
+      <div class="muted" style="margin:6px 0">Posting as <span id="postingAs">Me</span></div>
+      <label>Cover image URL (optional)<input id="bCoverUrl" placeholder="https://example.com/cover.jpg"></label>
+      <div class="drop" id="dropZone">Drop an image here or click Upload</div>
+      <div style="display:flex;gap:8px;margin:8px 0">
+        <input type="file" id="fileInp" accept="image/*" hidden>
+        <button class="btn" id="chooseFile">Upload image</button>
+        <button class="btn" id="removeCover">Remove</button>
+      </div>
+      <label>Content<textarea id="bBody" placeholder="Write something..."></textarea></label>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn primary" id="publishBtn">Publish</button>
+      </div>
+      <div class="muted" id="postState" style="margin-top:6px"></div>
+    </section>
 
-  <!-- Compose -->
-  <section class="card">
-    <h3 class="section-title">Write a blog post</h3>
-    <div class="row"><input id="pTitle" placeholder="Post title"></div>
-    <div class="row"><textarea id="pBody" placeholder="Write your post…"></textarea></div>
-    <div class="row">
-      <label style="display:flex;align-items:center;gap:8px">Visibility
-        <select id="pVis" style="width:auto">
-          <option value="public">Public</option>
-          <option value="friends">Friends</option>
-          <option value="private">Only me</option>
-        </select>
-      </label>
-      <button class="btn primary" id="pPublish">Publish</button>
-      <span class="pill" id="pStatus">—</span>
-    </div>
-  </section>
-
-  <!-- List -->
-  <section class="card">
-    <h3 class="section-title">Latest posts</h3>
-    <div class="row" style="gap:8px">
-      <input id="q" placeholder="Search title/text/author…">
-      <select id="filter" style="width:auto">
-        <option value="all">All</option>
-        <option value="public">Public</option>
-        <option value="friends">Friends</option>
-        <option value="private">Only me</option>
-      </select>
-      <span class="pill" id="count">0 posts</span>
-    </div>
-    <div id="list"></div>
-  </section>
-
+    <!-- Latest -->
+    <section class="card">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+        <h3 class="title" style="margin:0">Latest Blogs</h3>
+        <input id="search" placeholder="Search title or author..." style="max-width:260px">
+      </div>
+      <div id="list" class="list" style="margin-top:8px"></div>
+      <div id="empty" class="muted" style="padding:10px;display:none">No blogs yet.</div>
+    </section>
+  </div>
 </div>
 
-<!-- Assets (shared header wiring + messenger overlay) -->
-<script src="/assets/common.js"></script>
-<script src="/assets/messenger.js"></script>
+<!-- Notif / Inbox -->
+<div class="modalbg" id="notifBg"><div class="sheet">
+  <h3 class="title" style="margin:0 0 10px">Notifications</h3>
+  <div id="notifList"></div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button id="clearNotif" class="btn primary">Clear</button>
+    <button id="closeNotif" class="btn">Close</button>
+  </div>
+</div></div>
+<div class="modalbg" id="inboxBg"><div class="sheet">
+  <h3 class="title" style="margin:0 0 10px">Inbox</h3>
+  <div id="inboxList"></div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button id="closeInbox" class="btn">Close</button>
+  </div>
+</div></div>
 
+<!-- Positioning: compute offsets under Weebly header -->
 <script>
 (function(){
-  "use strict";
-
-  const LS={ BLOG:'ct_blog_posts_v1', PROFILE:'ct_profile_data_v1', USERS:'ct_users_v3', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1' };
-  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-  const load=(k,f)=>{ try{const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
-  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
-  const face=n=>`https://i.pravatar.cc/100?u=${encodeURIComponent(n||'Me')}`;
-  const nowISO=()=>new Date().toISOString();
-  const uid=p=>(p||'id')+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
-  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
-
-  // header wiring (avatar + buttons)
-  try{ window.CT && CT.wireHeader && CT.wireHeader(); }catch{}
-  try{ window.CT && CT.bindMessageButtons && CT.bindMessageButtons(document); }catch{}
-  // Fallback Messages click (if common.js not loaded)
-  $('#btnMsgs')?.addEventListener('click', (e)=>{ e.preventDefault(); if (window.ctOpen) ctOpen(); else location.href='messages.html'; });
-
-  function me(){ const p=load(LS.PROFILE,{}); return p['Me'] || { displayName:'Me', avatar:face('Me') }; }
-  (function setAvatar(){ const img=$('#myProfile'); if(img){ img.src = me().avatar || face('Me'); img.onclick=()=>location.href='profile.html'; } })();
-
-  function posts(){ return load(LS.BLOG,[]); }
-  function setPosts(p){ save(LS.BLOG,p); }
-
-  function addNotif(t){ const a=load(LS.NOTIF,[]); a.unshift({id:uid('n'), text:t, time:nowISO()}); save(LS.NOTIF,a); }
-  function addInbox(t){ const a=load(LS.INBOX,[]); a.unshift({id:uid('m'), text:t, time:nowISO()}); save(LS.INBOX,a); }
-
-  function publish(){
-    const title=($('#pTitle').value||'').trim();
-    const body =($('#pBody').value||'').trim();
-    const vis  = $('#pVis').value || 'public';
-    if(!title && !body) return alert('Write something first.');
-    const m=me();
-    const p={ id:uid('post'), title, body, vis, authorName:m.displayName||'Me', authorAvatar:m.avatar||face('Me'), createdAt:nowISO(), likes:0, comments:[] };
-    const arr=posts(); arr.unshift(p); setPosts(arr);
-    $('#pTitle').value=''; $('#pBody').value=''; $('#pStatus').textContent='Published';
-    addNotif(`New blog post: ${title||'(no title)'}`);
-    render();
-  }
-  $('#pPublish').addEventListener('click', publish);
-
-  function render(){
-    const q=($('#q').value||'').toLowerCase();
-    const f=$('#filter').value;
-    const arr=posts().filter(p=>{
-      const okVis = (f==='all') || p.vis===f;
-      const okQ   = !q || (String(p.title).toLowerCase().includes(q) || String(p.body).toLowerCase().includes(q) || String(p.authorName).toLowerCase().includes(q));
-      return okVis && okQ;
-    }).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-    $('#count').textContent = `${arr.length} posts`;
-
-    const box=$('#list'); box.innerHTML='';
-    if(!arr.length){ box.innerHTML='<div class="muted">No posts yet.</div>'; return; }
-
-    arr.forEach(p=>{
-      const row=document.createElement('div'); row.className='post';
-      row.innerHTML=`
-        <img class="ava" src="${esc(p.authorAvatar||face(p.authorName))}">
-        <div style="flex:1;min-width:0">
-          <div class="title">${esc(p.title||'(no title)')}</div>
-          <div class="meta">${esc(p.authorName||'Me')} • ${new Date(p.createdAt).toLocaleString()} • <span class="pill">${esc(p.vis)}</span></div>
-          <div style="margin-top:6px;white-space:pre-wrap">${esc(p.body||'')}</div>
-          <div class="row" style="margin-top:8px;gap:6px">
-            <button class="btn" data-like="${p.id}">👍 Like (${p.likes||0})</button>
-            <button class="btn" data-share="${p.id}">Share → Feed</button>
-            <button class="btn" data-del="${p.id}">Delete</button>
-          </div>
-        </div>`;
-      // handlers
-      row.querySelector('[data-like]')?.addEventListener('click',()=>{ const all=posts(); const i=all.findIndex(x=>x.id===p.id); if(i>-1){ all[i].likes=(all[i].likes||0)+1; setPosts(all); render(); }});
-      row.querySelector('[data-del]')?.addEventListener('click',()=>{ if(!confirm('Delete this post?')) return; const all=posts().filter(x=>x.id!==p.id); setPosts(all); render(); });
-      row.querySelector('[data-share]')?.addEventListener('click',()=>{
-        const gKey='ct_global_feed_v1';
-        const g=load(gKey,[]);
-        if(!g.find(x=>x._srcId===p.id)){
-          g.unshift({ id:uid('g'), _srcId:p.id, title:p.title, content:p.body, authorName:p.authorName, createdAt:p.createdAt, media:null });
-          save(gKey,g);
-          addInbox(`Shared to Feed: ${p.title||'(no title)'}`);
-          alert('Shared to Global Feed');
-        }
-      });
-      box.appendChild(row);
+  const EXCLUDE=new Set(['topBar','appNav','ctSpacer']);
+  const GAP=8, LIFT_UP=22;
+  function headerBottom(){
+    const sels=['header','.wsite-header','#wsite-header','.site-banner','.wsite-menus','.w-nav','.navbar','.weebly-header','.weebly-nav'];
+    let b=0;
+    document.querySelectorAll(sels.join(',')).forEach(el=>{
+      if(EXCLUDE.has(el.id)) return;
+      const r=el.getBoundingClientRect(); b=Math.max(b, r.bottom + window.scrollY);
     });
+    return Math.max(b,80);
   }
-  $('#q').addEventListener('input',render);
-  $('#filter').addEventListener('change',render);
-  window.addEventListener('storage',e=>{ if(e.key===LS.BLOG) render(); });
-
-  render();
+  function apply(){
+    const top=Math.max(0, Math.round(headerBottom()+GAP-LIFT_UP));
+    document.documentElement.style.setProperty('--ct-bluebar-top', top+'px');
+    const nav=document.getElementById('appNav'); const navH=nav?Math.round(nav.getBoundingClientRect().height):44;
+    document.documentElement.style.setProperty('--ct-nav-h', navH+'px');
+    const sp=document.getElementById('ctSpacer'); if(sp){ sp.style.height=`calc(var(--ct-bluebar-h) + ${navH}px + var(--ct-gap))`; }
+  }
+  apply(); window.addEventListener('load',apply,{once:true});
+  window.addEventListener('resize',()=>{ clearTimeout(window.__ct_b_rz); window.__ct_b_rz=setTimeout(apply,120); });
+  setTimeout(apply,250); setTimeout(apply,900);
 })();
 </script>
+
+<!-- Messenger loader (messages-only) -->
+<script>
+(function(){
+  function tryLoad(urls,done){(function next(i){if(i>=urls.length){done(false);return}var s=document.createElement('script');s.src=urls[i];s.async=true;s.onload=function(){done(true)};s.onerror=function(){s.remove();next(i+1)};(document.head||document.documentElement).appendChild(s)})(0)}
+  var base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+  var candidates=[base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'];
+  tryLoad(candidates,function(ok){
+    if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
+      window.ctOpen=function(){window.ChatternetMessenger.open(); onlyMessages();};
+      function onlyMessages(){
+        try{
+          const root=document.querySelector('#ctMessengerRoot,.ct-messenger,[data-ct="messenger"]'); if(!root) return;
+          const tab=[...root.querySelectorAll('button,[role="tab"],a')].find(el=>/messages?/i.test(el.textContent||'')); tab && tab.click();
+        }catch{}
+      }
+      setTimeout(onlyMessages,200);
+    }
+  });
+})();
+</script>
+
+<script>
+/* ===== helpers / storage ===== */
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+const nowISO=()=>new Date().toISOString();
+const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+const LS={ USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1', BLOGS:'ct_blogs_v1' };
+
+const FALLBACK_AVA = "data:image/svg+xml;utf8,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect width='64' height='64' fill='#e5e7eb'/><circle cx='32' cy='24' r='12' fill='#cbd5e1'/><rect x='16' y='42' width='32' height='14' rx='7' fill='#cbd5e1'/></svg>`);
+function getMeDisplayName(){ const p=load(LS.PROFILE,{})['Me']; return p?.displayName?.trim()||'Me'; }
+function getAvatarFor(name){
+  const prof=load(LS.PROFILE,{})[name];
+  if(prof && (prof.avatar||prof.avatarUrl||prof.photo)) return prof.avatar||prof.avatarUrl||prof.photo;
+  const users=load(LS.USERS,[]); const u=users.find(x=>x.name===name);
+  if(u && u.avatar) return u.avatar;
+  return `https://i.pravatar.cc/100?u=${encodeURIComponent(name||'me')}`;
+}
+function ensureAva(img, name){
+  if(!img) return;
+  img.referrerPolicy='no-referrer'; img.loading='lazy'; img.decoding='async';
+  img.src=getAvatarFor(name||'Me'); img.onerror=()=>{img.onerror=null; img.src=FALLBACK_AVA;};
+}
+
+/* header wiring */
+(function header(){
+  const img=$('#myProfile'); if(img){ ensureAva(img,'Me'); img.alt=getMeDisplayName(); img.onclick=()=>location.href='profile.html'; }
+  $('#btnMsgs')?.addEventListener('click',e=>{ e.preventDefault(); if(window.ctOpen) ctOpen(); });
+  const notifBg=$('#notifBg'), inboxBg=$('#inboxBg');
+  const rNotif=()=>{ const arr=load(LS.NOTIF,[]); $('#notifList').innerHTML=arr.length?arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; };
+  const rInbox=()=>{ const arr=load(LS.INBOX,[]); $('#inboxList').innerHTML=arr.length?arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; };
+  $('#btnNotif').onclick=()=>{ rNotif(); notifBg.style.display='flex'; };
+  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rNotif(); };
+  $('#closeNotif').onclick=()=>{ notifBg.style.display='none'; };
+  $('#btnInbox').onclick=()=>{ rInbox(); inboxBg.style.display='flex'; };
+  $('#closeInbox').onclick=()=>{ inboxBg.style.display='none'; };
+})();
+
+/* seed users once */
+(function seedUsers(){
+  let users=load(LS.USERS,null);
+  if(!users){ users=[{name:'Me',avatar:`https://i.pravatar.cc/100?u=me`}]; }
+  if(!users.find(u=>u.name==='Me')) users.unshift({name:'Me',avatar:`https://i.pravatar.cc/100?u=me`});
+  save(LS.USERS,users);
+})();
+
+/* cover drag/drop + choose */
+const drop=$('#dropZone'), fileInp=$('#fileInp'); let coverDataUrl='';
+$('#chooseFile').onclick=()=>fileInp.click();
+fileInp.onchange=async e=>{ const f=e.target.files?.[0]; if(!f) return; const url=await fileToDataURL(f); coverDataUrl=url; visualizeDrop(true); };
+drop.addEventListener('click',()=>fileInp.click());
+drop.addEventListener('dragover',e=>{e.preventDefault(); drop.classList.add('drag');});
+drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
+drop.addEventListener('drop',async e=>{ e.preventDefault(); drop.classList.remove('drag'); const f=e.dataTransfer.files?.[0]; if(!f) return; const url=await fileToDataURL(f); coverDataUrl=url; visualizeDrop(true); });
+$('#removeCover').onclick=()=>{ coverDataUrl=''; $('#bCoverUrl').value=''; visualizeDrop(false); };
+function visualizeDrop(has){ drop.textContent = has ? 'Image selected ✓ (will be used)' : 'Drop an image here or click Upload'; }
+function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsDataURL(file); }); }
+
+/* blogs state */
+let BLOGS=[];
+const API_BASE=(window.CT_API_BASE||localStorage.getItem('ct_api_base')||'/api').replace(/\/+$/,'');
+async function api(path,opts={}){ const r=await fetch(API_BASE+path,{credentials:'include',headers:{'Content-Type':'application/json'},...opts}); const t=await r.text(); try{const j=t?JSON.parse(t):{}; if(!r.ok) throw new Error(j.error||t||'Request failed'); return j;}catch{ if(!r.ok) throw new Error(t||'Request failed'); return {}; }}
+async function fetchBlogs(){ try{ BLOGS=await api('/blogs'); save(LS.BLOGS,BLOGS); }catch{ BLOGS=load(LS.BLOGS,[])||[]; } }
+async function createBlogRemote(p){ return api('/blogs',{method:'POST',body:JSON.stringify(p)}); }
+
+/* render list (with comments) */
+function render(){
+  const list=$('#list'), empty=$('#empty'); const q=($('#search').value||'').toLowerCase();
+  const items=[...BLOGS].filter(b=>!q || (b.title||'').toLowerCase().includes(q) || (b.authorName||'').toLowerCase().includes(q))
+    .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+  list.innerHTML=''; if(!items.length){ empty.style.display='block'; return; } empty.style.display='none';
+  items.forEach(b=>{
+    const el=document.createElement('div'); el.className='post';
+    const cover=b.cover||b.coverUrl||'';
+    el.innerHTML=`
+      <img class="cover" alt="" ${cover?`src="${esc(cover)}"`:''}>
+      <div class="px">
+        <div class="clamp-1" style="font-weight:800">${esc(b.title||'(untitled)')}</div>
+        <div class="meta" style="margin:6px 0">
+          <img class="b-ava" alt="${esc(b.authorName||'Me')}" referrerpolicy="no-referrer">
+          <div style="display:flex;flex-direction:column">
+            <div class="clamp-1">${esc(b.authorName||'Me')}</div>
+            <div class="line"><span>${new Date(b.createdAt||nowISO()).toLocaleString()}</span></div>
+          </div>
+        </div>
+        <div class="clamp-2" style="margin:6px 0 8px">${esc(b.content||'')}</div>
+        <div class="heart">
+          <button type="button" aria-label="like"><svg viewBox="0 0 24 24"><path d="M12 21s-6.716-4.27-9.167-7.38C.63 11.154 1.57 7.9 3.985 6.54c1.75-1.01 4.005-.63 5.348.89L12 9.2l2.667-1.77c1.343-1.52 3.598-1.9 5.348-.89 2.414 1.36 3.354 4.614 1.152 7.08C18.716 16.73 12 21 12 21z"/></svg></button>
+          <span class="muted"><span class="cnt">${(b.likes||[]).length||0}</span></span>
+        </div>
+        <div class="comments">
+          <div class="muted" style="margin-bottom:6px">${(b.comments||[]).length||0} comment${(b.comments||[]).length===1?'':'s'}</div>
+          <div class="c-list"></div>
+          <div class="c-two">
+            <input class="c-name" placeholder="Your name (defaults to Me)">
+            <input class="c-text" placeholder="Write a comment…">
+          </div>
+          <div class="c-new">
+            <div class="muted">Tip: Leave name blank to post as <strong>${esc(getMeDisplayName())}</strong>.</div>
+            <button class="btn primary c-add">Comment</button>
+          </div>
+        </div>
+      </div>`;
+    ensureAva(el.querySelector('.b-ava'), b.authorName||'Me');
+    const btn=el.querySelector('button'); const cnt=el.querySelector('.cnt');
+    btn.classList.toggle('active',(b.likes||[]).includes('Me'));
+    btn.onclick=()=>{ const set=new Set(b.likes||[]); set.has('Me')?set.delete('Me'):set.add('Me'); b.likes=[...set]; cnt.textContent=String(set.size); save(LS.BLOGS,BLOGS); };
+    const cList=el.querySelector('.c-list');
+    function draw(){ cList.innerHTML=''; (b.comments||[]).forEach(c=>{ const row=document.createElement('div'); row.className='comment';
+      row.innerHTML=`<img class="b-ava sm" alt="${esc(c.userName||'Me')}"><div class="c-body"><div class="c-head"><span class="c-name">${esc(c.userName||'Me')}</span> • <span>${new Date(c.createdAt||nowISO()).toLocaleString()}</span></div><div>${esc(c.text||'')}</div></div>`;
+      ensureAva(row.querySelector('img'), c.userName||'Me'); cList.appendChild(row); }); }
+    draw();
+    const addBtn=el.querySelector('.c-add'), nameInp=el.querySelector('.c-name'), textInp=el.querySelector('.c-text');
+    addBtn.onclick=()=>{ const nm=(nameInp.value||'').trim()||getMeDisplayName(); const tx=(textInp.value||'').trim(); if(!tx){ alert('Write a comment.'); return; }
+      (b.comments ||= []).push({ id:uid('c'), userName:nm, text:tx, createdAt:nowISO(), likes:[] }); save(LS.BLOGS,BLOGS);
+      try{ const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text:`${nm} commented on “${b.title||'blog'}”.`,time:nowISO()}); save(LS.NOTIF,arr);}catch{}
+      textInp.value=''; nameInp.value=''; draw(); };
+    list.appendChild(el);
+  });
+}
+
+/* publish */
+document.getElementById('postingAs').textContent=getMeDisplayName();
+document.getElementById('publishBtn').onclick=async()=>{
+  const title=document.getElementById('bTitle').value.trim();
+  const content=document.getElementById('bBody').value.trim();
+  const url=(document.getElementById('bCoverUrl').value||'').trim();
+  if(!title && !content){ document.getElementById('postState').textContent='Add a title or content.'; return; }
+  const draft={ title, content, cover: (window.coverDataUrl||'') || url, authorName:'Me', createdAt: nowISO(), likes:[], comments:[] };
+  document.getElementById('postState').textContent='Publishing…';
+  try{ const created=await createBlogRemote(draft); BLOGS.unshift(created); }
+  catch{ draft.id=uid('blog'); BLOGS.unshift(draft); }
+  save(LS.BLOGS,BLOGS); document.getElementById('postState').textContent='Published ✓';
+  document.getElementById('bTitle').value=''; document.getElementById('bBody').value=''; document.getElementById('bCoverUrl').value=''; window.coverDataUrl=''; visualizeDrop(false); render();
+};
+document.getElementById('search').addEventListener('input',render);
+
+/* boot */
+(async function(){ try{ await fetchBlogs(); }catch{} render(); })();
+
+/* keep header avatar fresh across tabs */
+window.addEventListener('storage',e=>{ if(e.key===LS.PROFILE){ const img=document.getElementById('myProfile'); if(img) ensureAva(img,'Me'); }});
+</script>
+
 </body>
 </html>
