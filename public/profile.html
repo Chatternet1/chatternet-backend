@@ -6,409 +6,355 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
-    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
-    --danger:#b91c1c;--ok:#0f766e
+    --brand:#3498db;--brand-2:#2980b9;--ink:#0f172a;--bg:#f5f7fb;--card:#fff;--muted:#667085;--line:#e6eaf2;
+    --ct-bluebar-top:120px;--ct-bluebar-h:58px;--ct-nav-h:44px;--ct-gap:8px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
-  a{color:inherit;text-decoration:none}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif;height:auto;overflow-x:hidden;overflow-y:visible}
 
-  /* Header */
-  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
-  .top-actions{display:flex;gap:8px;align-items:center}
-  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
-  .top-actions button:hover{background:#eef4ff}
-  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;object-fit:cover}
+  /* Blue header */
+  .top-bar{
+    position:fixed;left:0;right:0;top:var(--ct-bluebar-top);z-index:70;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;height:var(--ct-bluebar-h);
+    background:linear-gradient(0deg,var(--brand),var(--brand-2));color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12)
+  }
+  .top-bar h2{margin:0;font-weight:800}
+  .act{display:flex;gap:8px;align-items:center}
+  .act .btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700}
+  .act .btn:hover{background:rgba(255,255,255,.22)}
+  .act img{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.55);object-fit:cover}
 
-  /* Page */
-  .page{max-width:1000px;margin:18px auto;padding:0 12px 28px}
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:14px 0}
+  /* App nav */
+  .nav{
+    position:fixed;left:0;right:0;top:calc(var(--ct-bluebar-top) + var(--ct-bluebar-h) + var(--ct-gap));
+    z-index:65;background:#e9f2ff;border-bottom:1px solid #d7e6ff;
+    padding:8px 12px;display:flex;gap:10px;flex-wrap:wrap
+  }
+  .nav a{color:#0b3a67;text-decoration:none;font-weight:600;border:1px solid #e6eaf2;background:#fff;padding:8px 12px;border-radius:999px}
+  .nav a[aria-current="page"]{background:#e8f1ff;border-color:#cfe0ff}
+  .nav a:hover{background:#eef4ff}
+
+  .ct-spacer{height:calc(var(--ct-bluebar-h) + var(--ct-nav-h) + var(--ct-gap));}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 12px 28px}
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:12px 0 18px}
   .muted{color:var(--muted)}
-  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{padding:10px 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .btn.primary:hover{background:var(--brand-2)}
   .btn.ghost{background:#f6f9ff;border-color:#e5edff}
-  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
-  .pill{display:inline-block;padding:6px 10px;border:1px solid #d7d7d7;border-radius:999px;background:#fff}
+  .btn.warn{background:#fee2e2;border-color:#fecaca;color:#991b1b}
 
-  /* Cover + header */
-  .cover{position:relative;height:220px;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;background:#e5e7eb}
-  .cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .pro-head{display:flex;gap:14px;align-items:flex-end;margin-top:-34px;padding:0 6px}
-  .pro-ava{width:96px;height:96px;border-radius:50%;object-fit:cover;border:4px solid #fff;background:#fff}
-  .pro-main{flex:1}
-  .pro-name{font-size:22px;font-weight:800}
-  .pro-bio{color:#475569;margin-top:4px;white-space:pre-wrap}
-  .pro-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  /* Header block */
+  .cover{width:100%;height:220px;border-radius:14px;object-fit:cover;background:#e5e7eb}
+  .profile-head{display:flex;gap:14px;transform:translateY(-40px);align-items:flex-end}
+  .ava{width:96px;height:96px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+  .name{font-size:24px;font-weight:900;margin:0}
+  .stats{display:flex;gap:10px;flex-wrap:wrap}
+  .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #d7d7d7;border-radius:999px;background:#fff;padding:6px 10px;font-weight:600}
+  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+  @media (max-width:900px){ .grid{grid-template-columns:1fr} .profile-head{flex-direction:column;align-items:flex-start;transform:none} }
 
-  /* Stats + tabs */
-  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:700}
-  .tab.active{background:#e9f2ff;border-color:#cfe1ff}
-  .pane{display:none}
-  .pane.active{display:block}
+  /* Tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .tab{background:#fff;border:1px solid #d7d7d7;color:#0f172a;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:700}
+  .tab.active{background:#e9f2ff;border-color:#b9d6ff;color:#0b63c5}
 
-  /* Posts list */
-  .post{display:flex;gap:12px;padding:12px;border:1px solid #ececec;background:#fafafa;border-radius:12px;margin:12px 0}
-  .ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff}
-  .p-head{display:flex;justify-content:space-between;align-items:center}
-  .p-name{font-weight:800}
-  .p-time{font-size:12px;color:#6b7280}
-  .p-body{margin-top:6px;white-space:pre-wrap;word-break:break-word}
-  .p-img{margin-top:8px;max-width:100%;border-radius:12px;border:1px solid #e5e7eb}
-  .link{cursor:pointer;color:#2563eb}
-  .danger{color:#b91c1c;cursor:pointer}
+  /* Lists */
+  .list{display:flex;flex-direction:column;gap:10px}
+  .item{border:1px solid #e6eaf2;background:#fff;border-radius:12px;padding:10px}
+  .post-title{font-weight:800}
+  .media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;background:#eceff3}
+  @media (max-width:900px){ .media-grid{grid-template-columns:1fr 1fr} }
+  @media (max-width:600px){ .media-grid{grid-template-columns:1fr} }
 
-  /* Photo grid */
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  @media (max-width:720px){ .grid{grid-template-columns:repeat(2,1fr)} }
-  .grid img{width:100%;height:160px;object-fit:cover;border-radius:12px;border:1px solid #e5e7eb;background:#fff}
-
-  /* Modals (Notif/Inbox) */
-  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:3500}
-  .sheet{background:#fff;border-radius:14px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
-  .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
-
-  /* Toast */
-  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
-  #toast.show{opacity:1}
+  /* Modals */
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500}
+  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
 </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="top-bar">
+<header class="top-bar" id="topBar">
   <h2>Profile</h2>
-  <div class="top-actions">
-    <button id="btnNotif">Notifications</button>
-    <button id="btnInbox">Inbox</button>
-    <button id="btnMsgs">Messages</button>
-    <img id="myProfile" title="My Profile" />
+  <div class="act">
+    <button class="btn" id="btnNotif">Notifications</button>
+    <button class="btn" id="btnInbox">Inbox</button>
+    <button class="btn" id="btnMsgs">Messages</button>
+    <img id="meAvatar" alt="Me" />
   </div>
-</div>
+</header>
 
-<!-- Notifications / Inbox -->
-<div class="modalbg" id="notifModal">
-  <div class="sheet">
-    <h3 style="margin:0 0 10px;font-weight:800">Notifications</h3>
-    <div id="notifList"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-      <button class="btn primary" id="clearNotif">Clear</button>
-      <button class="btn" id="closeNotif">Close</button>
-    </div>
-  </div>
-</div>
-<div class="modalbg" id="inboxModal">
-  <div class="sheet">
-    <h3 style="margin:0 0 10px;font-weight:800">Inbox</h3>
-    <div id="inboxList"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-      <button class="btn" id="closeInbox">Close</button>
-    </div>
-  </div>
-</div>
+<nav class="nav" id="appNav">
+  <a href="index.html">Home</a>
+  <a href="feed.html">Feed</a>
+  <a href="friends.html">Friends</a>
+  <a href="chattermarket.html">Market</a>
+  <a href="groups.html">Groups</a>
+  <a href="events.html">Events</a>
+  <a href="media.html">Media</a>
+  <a href="dating.html">Dating</a>
+  <a href="blogs.html">Blogs</a>
+  <a href="polls.html">Polls</a>
+  <a href="music.html">Music</a>
+  <a href="messages.html">Messages</a>
+  <a href="profile.html" aria-current="page">Profile</a>
+  <a href="settings.html">Settings</a>
+</nav>
 
-<div class="page">
-  <!-- Profile header -->
+<div class="ct-spacer" id="ctSpacer"></div>
+
+<div class="wrap">
+  <!-- Header card -->
   <section class="card" id="headerCard">
-    <div class="cover" id="coverBox"><img id="coverImg" alt=""></div>
-    <div class="pro-head">
-      <img id="viewAva" class="pro-ava" alt="">
-      <div class="pro-main">
-        <div class="pro-name" id="viewName">User</div>
-        <div class="pro-bio" id="viewBio"></div>
-        <div class="stats">
-          <span class="pill" id="statPosts">0 Posts</span>
-          <span class="pill" id="statFriends">0 Friends</span>
-          <span class="pill" id="statYou">You</span>
-          <span class="pill" id="statFriend" style="display:none">Friend</span>
+    <img id="coverImg" class="cover" alt="">
+    <div class="profile-head">
+      <img id="avatarImg" class="ava" alt="">
+      <div style="flex:1;min-width:0">
+        <h1 class="name" id="dispName">Me</h1>
+        <div class="row">
+          <div class="pill" id="statPosts">0 Posts</div>
+          <div class="pill" id="statMedia">0 Media</div>
+          <div class="pill" id="statFriends">0 Friends</div>
         </div>
-        <div class="pro-actions" id="actionsRow" style="margin-top:8px">
-          <button class="btn primary" id="btnMessage">Message</button>
-          <button class="btn" id="btnAdd">Add Friend</button>
-          <button class="btn danger" id="btnRemove" style="display:none">Remove Friend</button>
-          <a class="btn ghost" id="btnEdit" href="settings.html" style="display:none">Edit Profile</a>
-        </div>
+        <div class="muted" id="bioTxt" style="margin-top:6px"></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnFollow">Follow</button>
+        <button class="btn primary" id="btnMessage">Message</button>
+        <button class="btn ghost" id="btnEdit">Edit Profile</button>
+        <a class="btn" id="btnSupport" target="_blank" rel="noopener" style="display:none">Support / Unlock</a>
       </div>
     </div>
   </section>
 
   <!-- Tabs -->
-  <section class="card">
-    <div class="tabs">
-      <div class="tab active" data-tab="posts">Posts</div>
-      <div class="tab" data-tab="about">About</div>
-      <div class="tab" data-tab="photos">Photos</div>
-    </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="about">About</button>
+    <button class="tab" data-tab="posts">Posts</button>
+    <button class="tab" data-tab="media">Media</button>
+    <button class="tab" data-tab="friends">Friends</button>
+  </div>
 
-    <div class="pane active" id="pane-posts">
-      <div id="postList"></div>
-    </div>
-
-    <div class="pane" id="pane-about">
-      <h3 style="margin:6px 0 8px;font-weight:800">About</h3>
-      <div class="muted" id="aboutBox">No bio yet.</div>
-      <div style="margin-top:10px">
-        <a class="pill" href="friends.html">Friends</a>
-        <a class="pill" href="media.html">Media</a>
-        <a class="pill" href="feed.html">Feed</a>
+  <div class="grid">
+    <!-- Left column -->
+    <section class="card" id="panel-about">
+      <h3 style="margin:0 0 8px;font-size:20px;font-weight:900">About</h3>
+      <div class="muted" id="aboutEmpty">Nothing here yet. Add a bio in Settings.</div>
+      <div id="aboutBox" style="display:none"></div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn" id="btnCopyLink">Share profile link</button>
       </div>
-    </div>
+    </section>
 
-    <div class="pane" id="pane-photos">
-      <div id="photoGrid" class="grid"></div>
-      <div id="photosEmpty" class="muted">No photos yet.</div>
-    </div>
-  </section>
+    <!-- Right column (switchable panels) -->
+    <section class="card" id="panel-posts" style="display:none">
+      <h3 style="margin:0 0 8px;font-size:20px;font-weight:900">Posts</h3>
+      <div id="postsList" class="list"></div>
+      <div id="postsEmpty" class="muted">No posts yet.</div>
+    </section>
+
+    <section class="card" id="panel-media" style="display:none">
+      <h3 style="margin:0 0 8px;font-size:20px;font-weight:900">Media</h3>
+      <div id="mediaGrid" class="media-grid"></div>
+      <div id="mediaEmpty" class="muted">No media yet.</div>
+    </section>
+
+    <section class="card" id="panel-friends" style="display:none">
+      <h3 style="margin:0 0 8px;font-size:20px;font-weight:900">Friends</h3>
+      <div id="friendsList" class="list"></div>
+      <div id="friendsEmpty" class="muted">No friends yet.</div>
+    </section>
+  </div>
 </div>
 
-<div id="toast"></div>
+<!-- Notif / Inbox -->
+<div class="modalbg" id="notifBg"><div class="sheet">
+  <h3 style="margin:0 0 10px">Notifications</h3>
+  <div id="notifList"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="clearNotif" class="btn primary">Clear</button>
+    <button id="closeNotif" class="btn">Close</button>
+  </div>
+</div></div>
+<div class="modalbg" id="inboxBg"><div class="sheet">
+  <h3 style="margin:0 0 10px">Inbox</h3>
+  <div id="inboxList"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="closeInbox" class="btn">Close</button>
+  </div>
+</div></div>
 
-<!-- Keep only your app scripts here; common/messenger load in your universal footer -->
-<script src="auth.js"></script>
-<script src="api.js"></script>
+<!-- Positioning under Weebly header -->
+<script>
+(function(){
+  const EXCLUDE=new Set(['topBar','appNav','ctSpacer']);
+  const GAP=8, LIFT_UP=22;
+  function headerBottom(){
+    const sels=['header','.wsite-header','#wsite-header','.site-banner','.wsite-menus','.w-nav','.navbar','.weebly-header','.weebly-nav'];
+    let b=0;
+    document.querySelectorAll(sels.join(',')).forEach(el=>{
+      if(EXCLUDE.has(el.id)) return;
+      const r=el.getBoundingClientRect(); b=Math.max(b, r.bottom + window.scrollY);
+    });
+    return Math.max(b,80);
+  }
+  function apply(){
+    const top=Math.max(0, Math.round(headerBottom()+GAP-LIFT_UP));
+    document.documentElement.style.setProperty('--ct-bluebar-top', top+'px');
+    const nav=document.getElementById('appNav'); const navH=nav?Math.round(nav.getBoundingClientRect().height):44;
+    document.documentElement.style.setProperty('--ct-nav-h', navH+'px');
+    const sp=document.getElementById('ctSpacer'); if(sp){ sp.style.height=`calc(var(--ct-bluebar-h) + ${navH}px + var(--ct-gap))`; }
+  }
+  apply(); window.addEventListener('load',apply,{once:true});
+  window.addEventListener('resize',()=>{ clearTimeout(window.__ct_p_rz); window.__ct_p_rz=setTimeout(apply,120); });
+  setTimeout(apply,250); setTimeout(apply,900);
+})();
+</script>
+
+<!-- Messenger loader (messages-only) -->
+<script>
+(function(){
+  function tryLoad(urls,done){(function next(i){if(i>=urls.length){done(false);return}var s=document.createElement('script');s.src=urls[i];s.async=true;s.onload=function(){done(true)};s.onerror=function(){s.remove();next(i+1)};(document.head||document.documentElement).appendChild(s)})(0)}
+  var base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+  var candidates=[base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'];
+  tryLoad(candidates,function(ok){
+    if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
+      window.ctOpen=function(){window.ChatternetMessenger.open(); onlyMessages();};
+      window.ctMessage=function(n){window.ChatternetMessenger.open(n||""); onlyMessages();};
+      function onlyMessages(){
+        try{
+          const root=document.querySelector('#ctMessengerRoot,.ct-messenger,[data-ct="messenger"]'); if(!root) return;
+          const tab=[...root.querySelectorAll('button,[role="tab"],a')].find(el=>/messages?/i.test(el.textContent||'')); tab && tab.click();
+        }catch{}
+      }
+      setTimeout(onlyMessages,200);
+    }
+  });
+})();
+</script>
 
 <script>
-/* ===== helpers & keys ===== */
-const $ = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-const LS = {
-  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', VIEW:'ct_profile_view_v1',
-  POSTS:'ct_feed_posts_v7', FRIENDS:'ct_friend_list_v2',
-  NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'
+/* Storage + helpers */
+const LS={
+  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', SETTINGS:'ct_settings_v1', SETTINGS_GLOBAL:'ct_settings_global',
+  FRIENDS:'ct_friend_list_v2', POSTS:'ct_feed_posts_v7', MEDIA:'ct_media_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'
 };
-const face = n => `https://i.pravatar.cc/160?u=${encodeURIComponent(n||'Me')}`;
-const toast = (m)=>{ const t=$("#toast"); t.textContent=m; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); };
-function load(k,f){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{return f;} }
-function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
-const getProfile = (name)=> (load(LS.PROFILE,{}))[name] || {};
-const avatarFor = (name)=> getProfile(name).avatar || getProfile(name).avatarUrl || (load(LS.USERS,[]).find(u=>u.name===name)?.avatar) || face(name);
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 
-/* ===== seed “Me” and a sample friend so page never blanks ===== */
+/* Header wiring */
+(function(){
+  const prof=(load(LS.PROFILE,{}))['Me']||{};
+  const img=$('#meAvatar'); if(img){ img.referrerPolicy='no-referrer'; img.src=prof.avatar||prof.avatarUrl||prof.photo||`https://i.pravatar.cc/100?u=me`; img.onclick=()=>location.href='profile.html'; }
+  const nbg=$('#notifBg'), ibg=$('#inboxBg');
+  function rN(){ const arr=load(LS.NOTIF,[]); $('#notifList').innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; }
+  function rI(){ const arr=load(LS.INBOX,[]); $('#inboxList').innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; }
+  $('#btnNotif').onclick=()=>{ rN(); nbg.style.display='flex'; };
+  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); };
+  $('#closeNotif').onclick=()=>{ nbg.style.display='none'; };
+  $('#btnInbox').onclick=()=>{ rI(); ibg.style.display='flex'; };
+  $('#closeInbox').onclick=()=>{ ibg.style.display='none'; };
+  $('#btnMsgs')?.addEventListener('click',e=>{ e.preventDefault(); if(window.ctOpen) return ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); location.href='messages.html'; });
+})();
+
+/* Seed minimal users to avoid blank */
 (function seed(){
-  let u = load(LS.USERS,null);
-  if(!u || !Array.isArray(u) || !u.length){
-    u = [{name:'Me', avatar:face('Me')}, {name:'Grace Lee', avatar:face('Grace Lee')}];
-    save(LS.USERS,u);
-  }else if(!u.find(x=>x.name==='Me')){
-    u.unshift({name:'Me', avatar:face('Me')}); save(LS.USERS,u);
-  }
-  if(!Array.isArray(load(LS.FRIENDS,null))) save(LS.FRIENDS, []);
+  let u=load(LS.USERS,null);
+  if(!u){ u=[{name:'Me',avatar:`https://i.pravatar.cc/100?u=me`}]; save(LS.USERS,u); }
 })();
 
-/* ===== who are we viewing? ===== */
-function getViewName(){
-  try{
-    const v = load(LS.VIEW,null);
-    if (v && v.name) return v.name;
-  }catch{}
-  return 'Me';
+/* Profile hydrate */
+function stats(){
+  $('#statFriends').textContent=(load(LS.FRIENDS,[]).length||0)+' Friends';
+  $('#statPosts').textContent=(load(LS.POSTS,[]).length||0)+' Posts';
+  $('#statMedia').textContent=(load(LS.MEDIA,[]).length||0)+' Media';
 }
-let VIEW = getViewName();
-const IS_ME = (VIEW==='Me');
+function hydrate(){
+  const settings = load(LS.SETTINGS, load(LS.SETTINGS_GLOBAL, {}));
+  const prof = (load(LS.PROFILE,{}))['Me']||{};
+  const displayName = settings?.profile?.displayName || prof.displayName || 'Me';
+  const avatar = settings?.profile?.avatarUrl || prof.avatar || `https://i.pravatar.cc/150?u=me`;
+  const cover  = settings?.profile?.coverUrl  || prof.cover  || '';
+  const bio    = settings?.profile?.bio || prof.bio || '';
 
-/* ===== header avatar & buttons ===== */
-(function wireHeader(){
-  const me = getProfile('Me');
-  const img = $("#myProfile");
-  if (img){
-    img.src = me.avatar || me.avatarUrl || face('Me');
-    img.alt = me.displayName || 'Me';
-    img.onclick = ()=>{ save(LS.VIEW,{name:'Me'}); location.href='profile.html'; };
-  }
-  // Notifs
-  const nModal=$("#notifModal"), nList=$("#notifList");
-  function rNotif(){
-    const arr=load(LS.NOTIF,[]);
-    nList.innerHTML = arr.length
-      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
-      : '<div class="notifitem">No notifications yet.</div>';
-  }
-  $("#btnNotif").addEventListener('click',()=>{ rNotif(); nModal.style.display='flex'; });
-  $("#clearNotif").addEventListener('click',()=>{ save(LS.NOTIF,[]); rNotif(); });
-  $("#closeNotif").addEventListener('click',()=> nModal.style.display='none');
-  // Inbox
-  const iModal=$("#inboxModal"), iList=$("#inboxList");
-  function rInbox(){
-    const arr=load(LS.INBOX,[]);
-    iList.innerHTML = arr.length
-      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
-      : '<div class="notifitem">Inbox is empty.</div>';
-  }
-  $("#btnInbox").addEventListener('click',()=>{ rInbox(); iModal.style.display='flex'; });
-  $("#closeInbox").addEventListener('click',()=> iModal.style.display='none');
+  $('#dispName').textContent = displayName;
+  const a=$('#avatarImg'); a.src=avatar; a.referrerPolicy='no-referrer';
+  const c=$('#coverImg'); if(cover){ c.src=cover; c.referrerPolicy='no-referrer'; } else { c.style.background='#e5e7eb'; }
+  $('#bioTxt').textContent = bio || '';
+  $('#aboutEmpty').style.display = bio ? 'none':'block';
+  $('#aboutBox').style.display = bio ? 'block':'none'; $('#aboutBox').textContent=bio||'';
+  stats();
 
-  // Messages -> overlay if present
-  $("#btnMsgs").addEventListener('click',(e)=>{
-    e.preventDefault(); e.stopPropagation();
-    if (window.ctOpen) return window.ctOpen();
-    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-    location.href='messages.html';
+  const pay=settings?.monetization?.paywall?.trim(); const supportBtn=$('#btnSupport');
+  if(pay){ supportBtn.href=pay; supportBtn.style.display='inline-flex'; } else supportBtn.style.display='none';
+}
+hydrate();
+
+/* Actions */
+$('#btnEdit').onclick=()=>location.href='settings.html';
+$('#btnMessage').onclick=()=>{ if(window.ctOpen) ctOpen(); else if(window.ChatternetMessenger?.open) window.ChatternetMessenger.open(); else location.href='messages.html'; };
+$('#btnCopyLink').onclick=async()=>{
+  try{ await navigator.clipboard.writeText(location.href.split('#')[0]); alert('Profile link copied'); }catch{ alert('Copy failed'); }
+};
+
+/* Follow (local demo) */
+(function follow(){
+  const KEY='ct_following_me_v1';
+  const isFollowing=()=>!!load(KEY,false);
+  function render(){ $('#btnFollow').textContent=isFollowing()?'Following':'Follow'; $('#btnFollow').classList.toggle('ghost',isFollowing()); }
+  $('#btnFollow').onclick=()=>{ save(KEY,!isFollowing()); render(); };
+  render();
+})();
+
+/* Tabs + panels */
+$('#tabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t) return;
+  $$('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  ['about','posts','media','friends'].forEach(id=>{
+    const show=(id===t.dataset.tab);
+    document.getElementById('panel-'+id).style.display=show?'block':'none';
   });
-})();
-
-/* ===== hydrate profile header ===== */
-function hydrateHeader(){
-  const prof = getProfile(VIEW);
-  const display = prof.displayName?.trim() || VIEW;
-  $("#viewName").textContent = display;
-  $("#viewBio").textContent = prof.bio || 'No bio yet.';
-  $("#viewAva").src = avatarFor(VIEW);
-  $("#viewAva").alt = display;
-  const cover = prof.cover || prof.coverUrl || '';
-  if (cover){ $("#coverImg").src = cover; $("#coverImg").style.display='block'; }
-  else { $("#coverImg").src=''; $("#coverImg").style.display='none'; }
-
-  // Stats
-  const posts = load(LS.POSTS,[]).filter(p=> (p.by||'Me')===VIEW);
-  $("#statPosts").textContent = posts.length + " Posts";
-  const friends = load(LS.FRIENDS,[]);
-  $("#statFriends").textContent = (friends.length||0) + " Friends";
-
-  // You / Friend badges
-  $("#statYou").style.display = IS_ME ? 'inline-block' : 'none';
-  const isFriend = !IS_ME && friends.includes(VIEW);
-  $("#statFriend").style.display = isFriend ? 'inline-block':'none';
-
-  // Actions
-  $("#btnEdit").style.display = IS_ME ? 'inline-block' : 'none';
-  $("#btnAdd").style.display = (!IS_ME && !isFriend) ? 'inline-block':'none';
-  $("#btnRemove").style.display = (!IS_ME && isFriend) ? 'inline-block':'none';
-}
-hydrateHeader();
-
-/* ===== actions: message / add friend / remove friend ===== */
-$("#btnMessage").addEventListener('click', ()=>{
-  if (window.ctMessage) return window.ctMessage(VIEW);
-  if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-  location.href = 'messages.html';
 });
 
-$("#btnAdd").addEventListener('click', ()=>{
-  const friends = load(LS.FRIENDS,[]);
-  if (!friends.includes(VIEW)) friends.unshift(VIEW);
-  save(LS.FRIENDS, friends);
-  // tiny in-app notif
-  const ns = load(LS.NOTIF,[]); ns.unshift({time:Date.now(), text:`You added ${VIEW} as a friend.`}); save(LS.NOTIF,ns);
-  hydrateHeader();
-  toast('Friend added');
-});
-
-$("#btnRemove").addEventListener('click', ()=>{
-  if (!confirm(`Remove ${VIEW} from friends?`)) return;
-  const friends = load(LS.FRIENDS,[]).filter(n=>n!==VIEW);
-  save(LS.FRIENDS, friends);
-  hydrateHeader();
-  toast('Removed');
-});
-
-/* ===== tabs ===== */
-$(".tabs").addEventListener('click',(e)=>{
-  const t = e.target.closest('.tab'); if(!t) return;
-  const id = t.dataset.tab;
-  $$(".tab").forEach(x=>x.classList.toggle('active', x===t));
-  $$(".pane").forEach(p=>p.classList.toggle('active', p.id===`pane-${id}`));
-});
-
-/* ===== render posts by this user ===== */
-function timeAgo(ts){
-  try{
-    const t = new Date(ts).getTime();
-    const d = Math.max(1, Math.floor((Date.now()-t)/1000));
-    if (d<60) return d+'s';
-    if (d<3600) return Math.floor(d/60)+'m';
-    if (d<86400) return Math.floor(d/3600)+'h';
-    return Math.floor(d/86400)+'d';
-  }catch{return '';}
-}
+/* Populate posts/media/friends from local data */
 function renderPosts(){
-  const meName = 'Me'; // edits only if you're viewing your own posts
-  const posts = load(LS.POSTS,[]).filter(p=>(p.by||'Me')===VIEW);
-  const box = $("#postList");
-  if(!posts.length){ box.innerHTML = '<div class="muted">No posts yet.</div>'; return; }
-  box.innerHTML = '';
-  posts.forEach(p=>{
-    const row = document.createElement('div');
-    row.className='post';
-    row.innerHTML = `
-      <img class="ava" src="${p.avatar||avatarFor(VIEW)}" alt="">
-      <div style="flex:1">
-        <div class="p-head">
-          <div>
-            <div class="p-name">${p.by||VIEW}</div>
-            <div class="p-time">${timeAgo(p.time)} · ${p.vis||'public'}</div>
-          </div>
-          <div>
-            ${ IS_ME ? `<span class="link" data-act="edit">Edit</span> · <span class="danger" data-act="del">Delete</span>` : '' }
-          </div>
-        </div>
-        <div class="p-body">${(p.text||'').replaceAll('&','&amp;').replaceAll('<','&lt;')}</div>
-        ${ p.img ? `<img class="p-img" src="${p.img}" alt="">` : '' }
-      </div>`;
-    // actions
-    row.querySelectorAll('[data-act]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const all = load(LS.POSTS,[]);
-        const idx = all.findIndex(x=>x.id===p.id);
-        const act = btn.getAttribute('data-act');
-        if (idx<0) return;
-        if (act==='del'){
-          if (!confirm('Delete this post?')) return;
-          all.splice(idx,1); save(LS.POSTS,all); renderPosts(); renderPhotos(); hydrateHeader();
-        }
-        if (act==='edit'){
-          const txt = prompt('Edit your post text:', all[idx].text||'');
-          if (txt==null) return;
-          all[idx].text = txt; all[idx].time = new Date().toISOString();
-          save(LS.POSTS,all); renderPosts();
-        }
-      });
-    });
-    box.appendChild(row);
+  const list=$('#postsList'); const empty=$('#postsEmpty'); const arr=load(LS.POSTS,[]);
+  list.innerHTML=''; if(!arr.length){ empty.style.display='block'; return; } empty.style.display='none';
+  arr.slice().reverse().forEach(p=>{
+    const it=document.createElement('div'); it.className='item';
+    it.innerHTML=`<div class="post-title">${esc(p.title||'(post)')}</div><div class="muted" style="font-size:12px;margin:4px 0">${new Date(p.time||p.createdAt||Date.now()).toLocaleString()}</div><div>${esc(p.text||p.content||'')}</div>`;
+    list.appendChild(it);
   });
 }
-renderPosts();
-
-/* ===== About tab ===== */
-function renderAbout(){
-  const prof = getProfile(VIEW);
-  $("#aboutBox").textContent = prof.bio || 'No bio yet.';
-}
-renderAbout();
-
-/* ===== Photos tab (from feed images) ===== */
-function renderPhotos(){
-  const pics = load(LS.POSTS,[]).filter(p=>(p.by||'Me')===VIEW && p.img).map(p=>p.img);
-  const grid=$("#photoGrid"), empty=$("#photosEmpty");
-  grid.innerHTML='';
-  if(!pics.length){ empty.style.display='block'; return; }
-  empty.style.display='none';
-  pics.forEach(src=>{
-    const img = document.createElement('img');
-    img.src = src; img.alt='photo';
+function renderMedia(){
+  const grid=$('#mediaGrid'); const empty=$('#mediaEmpty'); const arr=load(LS.MEDIA,[]);
+  grid.innerHTML=''; if(!arr.length){ empty.style.display='block'; return; } empty.style.display='none';
+  arr.slice().reverse().forEach(m=>{
+    const img=document.createElement('img'); img.className='thumb'; img.referrerPolicy='no-referrer'; img.alt='';
+    img.src=m.url || m.src || m.dataUrl || '';
     grid.appendChild(img);
   });
 }
-renderPhotos();
+function renderFriends(){
+  const box=$('#friendsList'); const empty=$('#friendsEmpty'); const arr=load(LS.FRIENDS,[]);
+  box.innerHTML=''; if(!arr.length){ empty.style.display='block'; return; } empty.style.display='none';
+  arr.forEach(n=>{
+    const row=document.createElement('div'); row.className='item';
+    row.innerHTML=`<div class="row" style="justify-content:space-between"><div class="row"><img alt="" class="ava" style="width:40px;height:40px;border:1px solid #e5e7eb" referrerpolicy="no-referrer" src="https://i.pravatar.cc/100?u=${encodeURIComponent(n)}"><div><div style="font-weight:800">${esc(n)}</div><div class="muted" style="font-size:12px">@${esc(n.toLowerCase().replace(/\s+/g,'.'))}</div></div></div><button class="btn" onclick="location.href='messages.html'">Message</button></div>`;
+    box.appendChild(row);
+  });
+}
+renderPosts(); renderMedia(); renderFriends();
 
-/* react to storage changes */
-window.addEventListener('storage', (e)=>{
-  if ([LS.POSTS,LS.PROFILE,LS.FRIENDS].includes(e.key)){
-    hydrateHeader(); renderPosts(); renderPhotos();
-  }
-});
-
-/* If someone clicks a messages.html link on this page, open overlay instead */
-document.addEventListener('click', (e)=>{
-  const a = e.target.closest && e.target.closest('a[href*="messages.html"]');
-  if(!a) return;
-  if (window.ctOpen || (window.ChatternetMessenger&&window.ChatternetMessenger.open)){
-    e.preventDefault();
-    (window.ctOpen || window.ChatternetMessenger.open)();
-  }
-}, true);
+/* Keep UI synced across tabs */
+window.addEventListener('storage',(ev)=>{ if([LS.SETTINGS,LS.SETTINGS_GLOBAL,LS.PROFILE,LS.POSTS,LS.MEDIA,LS.FRIENDS].includes(ev.key)){ hydrate(); stats(); renderPosts(); renderMedia(); renderFriends(); }});
 </script>
+
 </body>
 </html>
