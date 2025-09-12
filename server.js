@@ -3,9 +3,7 @@
   "version": "1.1.0",
   "private": true,
   "type": "commonjs",
-  "engines": {
-    "node": ">=18"
-  },
+  "engines": { "node": ">=18" },
   "scripts": {
     "start": "node server.js",
     "dev": "NODE_ENV=development nodemon server.js"
