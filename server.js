@@ -1,19 +1,4 @@
-// server.js — Chatternet backend (users + sessions + profiles + settings)
-// ----------------------------------------------------------------------
-// This file is a full Express server ready for Render. It exposes:
-//  - GET  /                  friendly index page
-//  - GET  /healthz           liveness
-//  - GET  /api/health        JSON health
-//  - GET  /api/db/health     DB ping (requires DATABASE_URL)
-//  - POST /api/auth/register {email,password,displayName}
-//  - POST /api/auth/login    {email,password}
-//  - POST /api/auth/logout
-//  - GET  /api/auth/me       returns session user
-//  - GET  /api/settings
-//  - PATCH /api/settings/profile        {displayName,bio,avatarUrl,coverUrl,actor}
-//  - PATCH /api/settings/privacy        { ...free JSON... }
-//  - PATCH /api/settings/notifications  { ...free JSON... }
-// Serves /assets/* from local ./assets directory (your messenger/common files)
+// server.js — Chatternet backend (Postgres sessions enforced in production)
 
 const path = require('path');
 const fs = require('fs');
@@ -25,38 +10,43 @@ const bcrypt = require('bcryptjs');
 const cors = require('cors');
 const { v4: uuid } = require('uuid');
 
-// ---------- ENV ----------
-const PORT = process.env.PORT ? Number(process.env.PORT) : 10000;
+const app = express();
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
-// IMPORTANT: set this to your front-end origin (Weebly/Render/Custom domain)
-const CT_FRONTEND_ORIGIN =
-  (process.env.CT_FRONTEND_ORIGIN || 'https://www.chatterfriends-movies.com').replace(/\/+$/, '');
+const NODE_ENV = process.env.NODE_ENV || 'production';
+const PORT = Number(process.env.PORT || 10000);
 
+// Your website origin (Weebly/custom). Used for CORS.
+const CT_FRONTEND_ORIGIN = (process.env.CT_FRONTEND_ORIGIN || 'https://www.chatterfriends-movies.com').replace(/\/+$/, '');
+// Long random string
 const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-me';
-
-// DATABASE_URL must be set in Render if you want DB-backed auth/settings
+// Render Postgres Internal URL
 const DATABASE_URL = process.env.DATABASE_URL || '';
 
-const app = express();
-app.set('trust proxy', 1); // secure cookies behind Render proxy
+const IS_PROD = NODE_ENV === 'production';
+const IS_CROSS_SITE = true; // frontend is on different origin (Weebly/Render site)
 
-// ---------- DB ----------
+// --------- DB POOL (required in production) ----------
+if (IS_PROD && !DATABASE_URL) {
+  // Hard fail to avoid MemoryStore in prod
+  throw new Error('DATABASE_URL is required in production for Postgres session storage.');
+}
+
 let pool = null;
 if (DATABASE_URL) {
   pool = new Pool({
     connectionString: DATABASE_URL,
-    // Render Postgres usually does SSL
     ssl: (process.env.PGSSLMODE || '').toLowerCase() === 'disable'
       ? false
       : { rejectUnauthorized: false }
   });
 }
 
-// Create core tables if needed
+// Ensure core tables
 async function ensureSchema() {
   if (!pool) return;
 
-  // users (single table for account + profile basics)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id            UUID PRIMARY KEY,
@@ -71,7 +61,6 @@ async function ensureSchema() {
     );
   `);
 
-  // settings (jsonb blobs)
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_settings (
       user_id       UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -81,23 +70,24 @@ async function ensureSchema() {
       updated_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
   `);
-
-  // connect-pg-simple session table (auto-create)
-  // The store below sets createTableIfMissing: true, so nothing to do here
 }
 
-// ---------- MIDDLEWARE ----------
+// --------- MIDDLEWARE ----------
 app.use(express.json({ limit: '1mb' }));
 
-// CORS for browser clients
+// CORS (credentials on)
+const ALLOW = new Set([CT_FRONTEND_ORIGIN, 'http://localhost:3000', 'http://localhost:5173', 'http://localhost:5500'].filter(Boolean));
 app.use(
   cors({
-    origin: [CT_FRONTEND_ORIGIN],
-    credentials: true,
+    origin(origin, cb) {
+      if (!origin) return cb(null, true);
+      cb(null, ALLOW.has(origin));
+    },
+    credentials: true
   })
 );
 
-// Session (cookie) + Postgres store
+// Sessions: ALWAYS Postgres in production; Memory only allowed in dev
 let store;
 if (pool) {
   store = new PgStore({
@@ -105,6 +95,9 @@ if (pool) {
     tableName: 'session',
     createTableIfMissing: true
   });
+  console.log('Session store: Postgres');
+} else {
+  console.warn('Session store: Memory (development only)');
 }
 
 app.use(
@@ -113,46 +106,40 @@ app.use(
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: store || undefined, // if no DB, sessions will be in-memory (dev only)
+    store: store, // undefined only if no DB (dev)
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // true on Render HTTPS
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days
+      secure: IS_PROD,                      // Render is HTTPS
+      sameSite: IS_CROSS_SITE ? 'none' : 'lax', // cross-site cookie for different front-end origin
+      maxAge: 1000 * 60 * 60 * 24 * 30      // 30 days
     }
   })
 );
 
-// Serve assets like /assets/messenger.js
+// Serve /assets/*
 const assetsDir = path.join(__dirname, 'assets');
 if (fs.existsSync(assetsDir)) {
-  app.use('/assets', express.static(assetsDir, { fallthrough: true }));
+  app.use('/assets', express.static(assetsDir, { maxAge: '5m' }));
 }
 
-// ---------- SMALL HELPERS ----------
+// --------- HELPERS ----------
 function safeUser(u) {
   if (!u) return null;
   const { password_hash, ...rest } = u;
   return rest;
 }
-
 function authRequired(req, res, next) {
-  if (!req.session || !req.session.userId) {
-    return res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
-  }
+  if (!req.session || !req.session.userId) return res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
   next();
 }
-
 async function getUserById(id) {
-  const { rows } = await pool.query(`SELECT * FROM users WHERE id = $1`, [id]);
+  const { rows } = await pool.query('SELECT * FROM users WHERE id=$1', [id]);
   return rows[0] || null;
 }
-
 async function getUserByEmail(email) {
-  const { rows } = await pool.query(`SELECT * FROM users WHERE email = $1`, [email.toLowerCase()]);
+  const { rows } = await pool.query('SELECT * FROM users WHERE email=$1', [String(email).toLowerCase()]);
   return rows[0] || null;
 }
-
 async function ensureSettingsRow(userId) {
   await pool.query(
     `INSERT INTO user_settings (user_id, privacy, notifications, security)
@@ -161,57 +148,42 @@ async function ensureSettingsRow(userId) {
     [userId]
   );
 }
-
 async function getSettings(userId) {
-  const { rows } = await pool.query(`SELECT * FROM user_settings WHERE user_id = $1`, [userId]);
+  const { rows } = await pool.query('SELECT * FROM user_settings WHERE user_id=$1', [userId]);
   return rows[0] || { user_id: userId, privacy: {}, notifications: {}, security: {} };
 }
 
-// ---------- ROUTES ----------
-
-// Friendly index page
+// --------- ROUTES ----------
 app.get('/', (req, res) => {
-  const hasDb = !!DATABASE_URL;
   res.type('html').send(`<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
+<html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Chatternet backend ✓</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  body{font:16px/1.4 system-ui,Segoe UI,Arial,sans-serif;padding:24px}
-  a{color:#0059c9;text-decoration:none}
-  a:hover{text-decoration:underline}
-  code{background:#f3f4f6;border:1px solid #e5e7eb;padding:1px 6px;border-radius:6px}
-</style>
-</head>
-<body>
-  <h1>Chatternet backend ✓</h1>
-  <p>Running on <code>PORT ${PORT}</code>.</p>
-  <ul>
-    <li><a href="/healthz">/healthz</a></li>
-    <li><a href="/api/health">/api/health</a></li>
-    <li><a href="/api/db/health">/api/db/health</a> ${hasDb ? '' : '(needs DATABASE_URL)'}</li>
-    <li><a href="/assets/messenger.js">/assets/messenger.js</a></li>
-  </ul>
-</body>
-</html>`);
+<style>body{font:16px/1.5 system-ui,Segoe UI,Arial,sans-serif;padding:32px}a{color:#2563eb;text-decoration:none}</style>
+</head><body>
+<h1>Chatternet backend ✓</h1>
+<ul>
+  <li><a href="/healthz">/healthz</a></li>
+  <li><a href="/api/health">/api/health</a></li>
+  <li><a href="/api/db/health">/api/db/health</a></li>
+  <li><a href="/assets/messenger.js">/assets/messenger.js</a></li>
+</ul>
+</body></html>`);
 });
 
 app.get('/healthz', (_req, res) => res.type('text').send('ok'));
-app.get('/api/health', (_req, res) => res.json({ ok: true, service: 'chatternet-backend', time: new Date().toISOString() }));
+app.get('/api/health', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
 app.get('/api/db/health', async (_req, res) => {
   if (!pool) return res.status(503).json({ ok: false, error: 'NO_DATABASE_URL' });
   try {
-    const { rows } = await pool.query('SELECT NOW() as now');
-    return res.json({ ok: true, now: rows[0].now });
+    const { rows } = await pool.query('SELECT NOW() AS now');
+    res.json({ ok: true, now: rows[0].now });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e.message || String(e) });
+    res.status(500).json({ ok: false, error: e.message || String(e) });
   }
 });
 
-// ---- Auth ----
+// --- Auth ---
 app.post('/api/auth/register', async (req, res) => {
   if (!pool) return res.status(503).json({ ok: false, error: 'NO_DATABASE_URL' });
   const { email, password, displayName } = req.body || {};
@@ -223,21 +195,17 @@ app.post('/api/auth/register', async (req, res) => {
 
     const id = uuid();
     const hash = await bcrypt.hash(String(password), 10);
-
     const name = (displayName || email.split('@')[0] || 'Me').slice(0, 64);
 
     await pool.query(
       `INSERT INTO users (id, email, password_hash, display_name)
-       VALUES ($1, $2, $3, $4)`,
-      [id, email.toLowerCase(), hash, name]
+       VALUES ($1,$2,$3,$4)`,
+      [id, String(email).toLowerCase(), hash, name]
     );
     await ensureSettingsRow(id);
-
-    // sign in
     req.session.userId = id;
 
-    const user = await getUserById(id);
-    res.json({ ok: true, user: safeUser(user) });
+    res.json({ ok: true, user: safeUser(await getUserById(id)) });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message || String(e) });
   }
@@ -249,14 +217,14 @@ app.post('/api/auth/login', async (req, res) => {
   if (!email || !password) return res.status(400).json({ ok: false, error: 'EMAIL_AND_PASSWORD_REQUIRED' });
 
   try {
-    const user = await getUserByEmail(email);
-    if (!user) return res.status(401).json({ ok: false, error: 'INVALID_CREDENTIALS' });
+    const u = await getUserByEmail(email);
+    if (!u) return res.status(401).json({ ok: false, error: 'INVALID_CREDENTIALS' });
 
-    const ok = await bcrypt.compare(String(password), user.password_hash);
+    const ok = await bcrypt.compare(String(password), u.password_hash);
     if (!ok) return res.status(401).json({ ok: false, error: 'INVALID_CREDENTIALS' });
 
-    req.session.userId = user.id;
-    res.json({ ok: true, user: safeUser(user) });
+    req.session.userId = u.id;
+    res.json({ ok: true, user: safeUser(u) });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message || String(e) });
   }
@@ -270,110 +238,80 @@ app.post('/api/auth/logout', (req, res) => {
 app.get('/api/auth/me', async (req, res) => {
   if (!pool) return res.status(503).json({ ok: false, error: 'NO_DATABASE_URL' });
   if (!req.session || !req.session.userId) return res.json({ ok: true, user: null });
-  const user = await getUserById(req.session.userId);
-  res.json({ ok: true, user: safeUser(user) });
+  res.json({ ok: true, user: safeUser(await getUserById(req.session.userId)) });
 });
 
-// ---- Settings API ----
+// --- Settings ---
 app.get('/api/settings', authRequired, async (req, res) => {
-  if (!pool) return res.status(503).json({ ok: false, error: 'NO_DATABASE_URL' });
-  try {
-    const user = await getUserById(req.session.userId);
-    const settings = await getSettings(req.session.userId);
-    res.json({
-      ok: true,
-      profile: {
-        displayName: user.display_name,
-        bio: user.bio,
-        avatarUrl: user.avatar_url,
-        coverUrl: user.cover_url,
-        actor: user.actor
-      },
-      privacy: settings.privacy || {},
-      notifications: settings.notifications || {},
-      security: settings.security || {}
-    });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message || String(e) });
-  }
+  const u = await getUserById(req.session.userId);
+  const s = await getSettings(req.session.userId);
+  res.json({
+    ok: true,
+    profile: {
+      displayName: u.display_name,
+      bio: u.bio,
+      avatarUrl: u.avatar_url,
+      coverUrl: u.cover_url,
+      actor: u.actor
+    },
+    privacy: s.privacy || {},
+    notifications: s.notifications || {},
+    security: s.security || {}
+  });
 });
 
 app.patch('/api/settings/profile', authRequired, async (req, res) => {
-  if (!pool) return res.status(503).json({ ok: false, error: 'NO_DATABASE_URL' });
   const { displayName, bio, avatarUrl, coverUrl, actor } = req.body || {};
-  try {
-    await pool.query(
-      `UPDATE users
+  await pool.query(
+    `UPDATE users
        SET display_name = COALESCE($2, display_name),
            bio          = COALESCE($3, bio),
            avatar_url   = COALESCE($4, avatar_url),
            cover_url    = COALESCE($5, cover_url),
            actor        = COALESCE($6, actor)
-       WHERE id = $1`,
-      [req.session.userId, displayName, bio, avatarUrl, coverUrl, actor]
-    );
-    const user = await getUserById(req.session.userId);
-    res.json({ ok: true, profile: {
-      displayName: user.display_name,
-      bio: user.bio,
-      avatarUrl: user.avatar_url,
-      coverUrl: user.cover_url,
-      actor: user.actor
-    }});
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message || String(e) });
-  }
+     WHERE id = $1`,
+    [req.session.userId, displayName, bio, avatarUrl, coverUrl, actor]
+  );
+  const u = await getUserById(req.session.userId);
+  res.json({ ok: true, profile: {
+    displayName: u.display_name,
+    bio: u.bio,
+    avatarUrl: u.avatar_url,
+    coverUrl: u.cover_url,
+    actor: u.actor
+  }});
 });
 
 app.patch('/api/settings/privacy', authRequired, async (req, res) => {
-  if (!pool) return res.status(503).json({ ok: false, error: 'NO_DATABASE_URL' });
-  const incoming = req.body || {};
-  try {
-    await ensureSettingsRow(req.session.userId);
-    await pool.query(
-      `UPDATE user_settings
-       SET privacy = $2, updated_at = NOW()
-       WHERE user_id = $1`,
-      [req.session.userId, JSON.stringify(incoming)]
-    );
-    res.json({ ok: true, privacy: incoming });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message || String(e) });
-  }
+  await ensureSettingsRow(req.session.userId);
+  await pool.query(
+    `UPDATE user_settings SET privacy=$2, updated_at=NOW() WHERE user_id=$1`,
+    [req.session.userId, JSON.stringify(req.body || {})]
+  );
+  res.json({ ok: true, privacy: req.body || {} });
 });
 
 app.patch('/api/settings/notifications', authRequired, async (req, res) => {
-  if (!pool) return res.status(503).json({ ok: false, error: 'NO_DATABASE_URL' });
-  const incoming = req.body || {};
-  try {
-    await ensureSettingsRow(req.session.userId);
-    await pool.query(
-      `UPDATE user_settings
-       SET notifications = $2, updated_at = NOW()
-       WHERE user_id = $1`,
-      [req.session.userId, JSON.stringify(incoming)]
-    );
-    res.json({ ok: true, notifications: incoming });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message || String(e) });
-  }
+  await ensureSettingsRow(req.session.userId);
+  await pool.query(
+    `UPDATE user_settings SET notifications=$2, updated_at=NOW() WHERE user_id=$1`,
+    [req.session.userId, JSON.stringify(req.body || {})]
+  );
+  res.json({ ok: true, notifications: req.body || {} });
 });
 
-// Example secure endpoint that front-end can call to resolve current profile quickly
-app.get('/api/profiles/me', authRequired, async (req, res) => {
-  if (!pool) return res.status(503).json({ ok: false, error: 'NO_DATABASE_URL' });
-  const user = await getUserById(req.session.userId);
-  res.json({ ok: true, user: safeUser(user) });
-});
-
-// ---------- BOOT ----------
-(async function boot(){
+// --------- BOOT ----------
+(async () => {
   try {
-    if (pool) await ensureSchema();
+    if (pool) {
+      await pool.query('SELECT 1'); // sanity
+      console.log('[db] connected');
+      await ensureSchema();
+    }
   } catch (e) {
-    console.error('ensureSchema error:', e);
+    console.error('[db] startup error:', e);
+    if (IS_PROD) process.exit(1); // enforce DB in prod
   }
-  app.listen(PORT, () => {
-    console.log(`Chatternet backend listening on ${PORT} (origin ${CT_FRONTEND_ORIGIN})`);
-  });
+
+  app.listen(PORT, () => console.log(`Chatternet backend listening on ${PORT}`));
 })();
