@@ -2,126 +2,158 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Chatternet — Settings</title>
+<title>Chatternet — Settings (Fixed)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
-    --brand:#3498db;--brand-2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085;
-    --ct-bluebar-top:120px;   /* computed under Weebly header */
-    --ct-bluebar-h:58px;      /* blue header height */
-    --ct-nav-h:44px;          /* app nav height (computed) */
-    --ct-gap:8px;             /* white gap below Weebly header */
+    --brand:#3498db;--brand-2:#2980b9;--bg:#f0f2f5;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
+    --bad:#b91c1c;--ok:#0f766e;--warn:#b45309;
+    --ct-header-bottom:0px;       /* computed at runtime */
+    --ct-scroll-pad:10px;
   }
   *{box-sizing:border-box}
-  html,body{
-    margin:0;background:var(--bg);color:var(--ink);
-    font:15px/1.45 'Segoe UI',Arial,sans-serif;
-    /* ensure ONLY the browser scrollbar */
-    height:auto; overflow-x:hidden; overflow-y:visible;
-  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif;max-width:100%;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
 
-  /* Blue header (fixed, under Weebly) */
-  .top-bar{
-    position:fixed;left:0;right:0;top:var(--ct-bluebar-top);z-index:70;
-    display:flex;justify-content:space-between;align-items:center;
-    padding:10px 14px;height:var(--ct-bluebar-h);
-    background:linear-gradient(0deg,var(--brand),var(--brand-2));color:#fff;
-    box-shadow:0 2px 10px rgba(0,0,0,.12)
-  }
-  .top-bar h2{margin:0;font-weight:800}
-  .top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .top-actions button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700}
-  .top-actions button:hover{background:rgba(255,255,255,.22)}
-  .top-actions img{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.55);object-fit:cover}
-
-  /* App nav (fixed just below blue bar) */
+  /* ===== Site pill nav (optional; safe to keep) ===== */
   .app-nav{
-    position:fixed;left:0;right:0;top:calc(var(--ct-bluebar-top) + var(--ct-bluebar-h) + var(--ct-gap));
-    z-index:65;background:#e9f2ff;border-bottom:1px solid #d7e6ff;
-    padding:8px 12px;display:flex;gap:10px;flex-wrap:wrap
+    position:relative; z-index:5;
+    background:linear-gradient(#edf4ff,#eaf2ff);
+    border-bottom:1px solid #d7e6ff;
   }
-  .app-nav a{color:#0b3a67;text-decoration:none;font-weight:600;border:1px solid #e6eaf2;background:#fff;padding:8px 12px;border-radius:999px}
-  .app-nav a[aria-current="page"]{background:#e8f1ff;border-color:#cfe0ff}
-  .app-nav a:hover{background:#eef4ff}
+  .app-nav .inner{
+    max-width:1200px; margin:0 auto; padding:10px 14px;
+    display:flex; flex-wrap:wrap; gap:12px; align-items:center;
+  }
+  .app-nav a{
+    padding:8px 12px; border-radius:999px; background:#fff; border:1px solid #dfe5f5;
+    font-weight:700; color:#0f2742; letter-spacing:.2px;
+  }
+  .app-nav a:hover{ background:#f6f9ff; border-color:#cfe1ff }
+  .app-nav a[aria-current="page"]{ border-color:#2b78e4; box-shadow:0 3px 10px rgba(34,139,230,.18); color:#0b3a67 }
 
-  /* Spacer ensures content starts below fixed bars */
-  .ct-spacer{height:calc(var(--ct-bluebar-h) + var(--ct-nav-h) + var(--ct-gap));}
+  /* ===== Sticky blue header (now click-through safe) ===== */
+  .top-bar{
+    position:sticky;
+    top:var(--ct-header-bottom,0px);        /* placed just under Weebly header + app nav */
+    z-index:3000;
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;background:var(--brand);color:#fff;
+    box-shadow:0 2px 8px rgba(0,0,0,.2);
 
-  /* Page wrapper */
-  .page{max-width:1100px;margin:0 auto;padding:16px 12px 28px}
+    /* The magic: the bar itself won’t swallow clicks under it */
+    pointer-events:none;
+    margin-bottom:8px;
+  }
+  .top-bar > *{ pointer-events:auto }       /* but its own content works */
+  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
+  .top-actions button:hover{background:#eef4ff}
+  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;object-fit:cover}
 
-  /* TABS — placed BETWEEN blue bar & first card (not sticky to avoid overlap) */
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px;z-index:60}
-  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:700}
+  /* ===== Layout ===== */
+  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;position:relative;z-index:10}
+  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:700;user-select:none}
   .tab.active{background:#e9f2ff;border-color:#cfe1ff}
-
-  /* Cards / form */
   .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:14px 0}
   .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
+  .muted{color:var(--muted)}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .row>*{flex:1}
+  .row>*{flex:1 1 auto}
   input,select,textarea,button{font-family:'Segoe UI',Arial,sans-serif}
   input,select,textarea{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px;background:#fff}
+  select{cursor:pointer}
   textarea{resize:vertical;min-height:90px}
-  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer;font-weight:700}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .btn.primary:hover{background:var(--brand-2)}
   .btn.ghost{background:#f6f9ff;border-color:#e5edff}
   .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
   .pill{display:inline-block;padding:4px 8px;border:1px solid #d7d7d7;border-radius:999px;background:#f8fafc;font-size:12px;margin-right:6px}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
   @media (max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+  .small{font-size:12px}
+  .kbd{font-family:ui-monospace, Menlo, Consolas, monospace;background:#f1f59;padding:2px 6px;border:1px solid #e2e8f0;border-radius:6px}
   .hint{font-size:12px;color:#475569}
-  .kbd{font-family:ui-monospace, Menlo, Consolas, monospace;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:2px 6px}
 
-  /* Toast + modals */
+  /* Tiny toast */
   #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
   #toast.show{opacity:1}
-  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500}
+
+  /* Error overlay */
+  #errOverlay{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.55);z-index:3000}
+  #errPanel{margin-top:24px;background:#fff;color:#111;border-radius:12px;max-width:900px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
+  #errPanel pre{white-space:pre-wrap;overflow:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;max-height:50vh}
+
+  /* Simple modals */
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:3500}
   .sheet{background:#fff;border-radius:14px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
   .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
 </style>
 </head>
 <body>
 
-<!-- Blue bar -->
-<header class="top-bar" id="topBar">
+<!-- Optional pill nav (can remove if you already include it site-wide) -->
+<nav class="app-nav" aria-label="App">
+  <div class="inner">
+    <a href="index.html">Home</a>
+    <a href="feed.html">Feed</a>
+    <a href="friends.html">Friends</a>
+    <a href="chattermarket.html">Market</a>
+    <a href="groups.html">Groups</a>
+    <a href="events.html">Events</a>
+    <a href="media.html">Media</a>
+    <a href="dating.html">Dating</a>
+    <a href="blogs.html">Blogs</a>
+    <a href="polls.html">Polls</a>
+    <a href="music.html">Music</a>
+    <a href="messages.html">Messages</a>
+    <a href="profile.html">Profile</a>
+    <a href="settings.html" aria-current="page">Settings</a>
+  </div>
+</nav>
+
+<!-- Blue header -->
+<div class="top-bar">
   <h2>Settings</h2>
   <div class="top-actions">
     <button id="btnNotif">Notifications</button>
     <button id="btnInbox">Inbox</button>
     <button id="btnMsgs">Messages</button>
-    <img id="myProfile" title="My Profile" alt="Me" />
+    <img id="myProfile" alt="Me" />
   </div>
-</header>
+</div>
 
-<!-- App nav -->
-<nav class="app-nav" id="appNav" aria-label="Chatternet navigation">
-  <a href="index.html">Home</a>
-  <a href="feed.html">Feed</a>
-  <a href="friends.html">Friends</a>
-  <a href="chattermarket.html">Market</a>
-  <a href="groups.html">Groups</a>
-  <a href="events.html">Events</a>
-  <a href="media.html">Media</a>
-  <a href="dating.html">Dating</a>
-  <a href="blogs.html">Blogs</a>
-  <a href="polls.html">Polls</a>
-  <a href="music.html">Music</a>
-  <a href="messages.html">Messages</a>
-  <a href="profile.html">Profile</a>
-  <a href="settings.html" aria-current="page">Settings</a>
-</nav>
+<!-- Notifications / Inbox Modals -->
+<div class="modalbg" id="notifModal">
+  <div class="sheet">
+    <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
+    <div id="notifList"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="clearNotif" class="btn primary">Clear</button>
+      <button id="closeNotif" class="btn">Close</button>
+    </div>
+  </div>
+</div>
 
-<!-- Spacer (keeps content below fixed bars) -->
-<div class="ct-spacer" id="ctSpacer"></div>
+<div class="modalbg" id="inboxModal">
+  <div class="sheet">
+    <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
+    <div id="inboxList"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="closeInbox" class="btn">Close</button>
+    </div>
+  </div>
+</div>
 
 <div class="page">
-
-  <!-- TABS (now truly between header and the first card) -->
+  <!-- Tabs -->
   <div class="tabs" id="tabsBar">
-    <div class="tab active" data-tab="account">Account</div>
+    <div class="tab" data-tab="account">Account</div>
     <div class="tab" data-tab="security">Security</div>
     <div class="tab" data-tab="notifications">Notifications</div>
     <div class="tab" data-tab="privacy">Privacy</div>
@@ -184,11 +216,13 @@
           <div class="hint">Used for recovery + notifications (if enabled).</div>
         </div>
         <div class="row" style="align-items:flex-end">
-          <span id="emailStatus" class="pill">Not set</span>
-          <button class="btn" id="btnSaveEmail">Save</button>
-          <button class="btn ghost" id="btnSendCode">Send verify code</button>
-          <input id="codeInput" placeholder="6-digit code">
-          <button class="btn primary" id="btnVerifyCode">Verify</button>
+          <div><span id="emailStatus" class="pill muted">Not set</span></div>
+          <div class="row" style="flex:1">
+            <button class="btn" id="btnSaveEmail">Save</button>
+            <button class="btn ghost" id="btnSendCode">Send verify code</button>
+            <input id="codeInput" placeholder="Enter 6-digit code">
+            <button class="btn primary" id="btnVerifyCode">Verify</button>
+          </div>
         </div>
       </div>
 
@@ -199,11 +233,13 @@
           <div class="hint">Optional, used for password resets and login alerts.</div>
         </div>
         <div class="row" style="align-items:flex-end">
-          <span id="phoneStatus" class="pill">Not set</span>
-          <button class="btn" id="btnSavePhone">Save</button>
-          <button class="btn ghost" id="btnSendPhoneCode">Send SMS code</button>
-          <input id="phoneCodeInput" placeholder="6-digit">
-          <button class="btn primary" id="btnVerifyPhone">Verify</button>
+          <div><span id="phoneStatus" class="pill muted">Not set</span></div>
+          <div class="row" style="flex:1">
+            <button class="btn" id="btnSavePhone">Save</button>
+            <button class="btn ghost" id="btnSendPhoneCode">Send SMS code</button>
+            <input id="phoneCodeInput" placeholder="6-digit">
+            <button class="btn primary" id="btnVerifyPhone">Verify</button>
+          </div>
         </div>
       </div>
     </div>
@@ -221,7 +257,7 @@
         <input id="pwResetCode" placeholder="Reset code">
         <button class="btn ghost" id="btnApplyReset">Apply reset</button>
       </div>
-      <div class="hint" style="margin-top:6px">If your site has <span class="kbd">auth.js</span>, we use it. Otherwise this protects your local device only.</div>
+      <div id="pwHint" class="hint" style="margin-top:6px">If your site has <span class="kbd">auth.js</span>, we use it. Otherwise this protects your local device only.</div>
     </div>
 
     <div class="card" style="margin:8px 0">
@@ -230,14 +266,16 @@
           <strong>Two-Step Verification (email codes)</strong>
           <div class="hint">On login, require a code sent to your email or one of your backup codes.</div>
         </div>
-        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="twoFA" style="width:auto"> Enable</label>
+        <label style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="twoFA" style="width:auto"> Enable
+        </label>
       </div>
       <div class="row" style="margin-top:8px">
         <button class="btn" id="btnGenBackups">Generate backup codes</button>
         <button class="btn ghost" id="btnShowBackups">Show backup codes</button>
         <button class="btn danger" id="btnRevokeBackups">Revoke backup codes</button>
       </div>
-      <div id="backupBox" class="codebox small" style="display:none;margin-top:8px"></div>
+      <div id="backupBox" class="small" style="display:none;margin-top:8px;border:1px dashed #d7d7d7;border-radius:10px;padding:10px;word-break:break-all;background:#f8fafc"></div>
     </div>
   </section>
 
@@ -245,25 +283,25 @@
   <section class="card panel" id="panel-notifications" style="display:none">
     <h3 class="section-title">Notifications</h3>
     <div class="grid3">
-      <label><input id="nDM" type="checkbox" style="width:auto"> Direct messages</label>
-      <label><input id="nComments" type="checkbox" style="width:auto"> Comments & replies</label>
-      <label><input id="nLikes" type="checkbox" style="width:auto"> Likes</label>
-      <label><input id="nFollows" type="checkbox" style="width:auto"> New followers</label>
-      <label><input id="nBlogs" type="checkbox" style="width:auto"> Blog activity</label>
-      <label><input id="nPolls" type="checkbox" style="width:auto"> Poll activity</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="nDM" type="checkbox" style="width:auto"> Direct messages</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="nComments" type="checkbox" style="width:auto"> Comments & replies</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="nLikes" type="checkbox" style="width:auto"> Likes</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="nFollows" type="checkbox" style="width:auto"> New followers</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="nBlogs" type="checkbox" style="width:auto"> Blog activity</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="nPolls" type="checkbox" style="width:auto"> Poll activity</label>
     </div>
     <div class="grid2" style="margin-top:10px">
       <div>
         <strong>Channels</strong>
-        <div class="row" style="margin-top:6px">
-          <label><input id="chInapp" type="checkbox" style="width:auto"> In-app</label>
-          <label><input id="chEmail" type="checkbox" style="width:auto"> Email</label>
-          <label><input id="nSound" type="checkbox" style="width:auto"> Play sound</label>
+        <div class="row" style="margin-top:6px;align-items:flex-start">
+          <div style="flex:1"><label style="display:flex;align-items:center;gap:8px"><input id="chInapp" type="checkbox" style="width:auto"> In-app</label></div>
+          <div style="flex:1"><label style="display:flex;align-items:center;gap:8px"><input id="chEmail" type="checkbox" style="width:auto"> Email (requires verified email)</label></div>
+          <div style="flex:1"><label style="display:flex;align-items:center;gap:8px"><input id="nSound" type="checkbox" style="width:auto"> Play sound</label></div>
         </div>
       </div>
       <div>
         <strong>Delivery</strong>
-        <div class="row" style="margin-top:6px">
+        <div class="row" style="margin-top:6px;align-items:flex-start">
           <label style="flex:1">Frequency
             <select id="nFreq">
               <option value="instant">Instant</option>
@@ -271,9 +309,14 @@
               <option value="weekly">Weekly Digest</option>
             </select>
           </label>
-          <label style="display:flex;align-items:center;gap:8px"><input id="dndEn" type="checkbox" style="width:auto"> DND</label>
-          <input id="dndStart" type="time" value="22:00" style="flex:0 0 140px">
-          <input id="dndEnd" type="time" value="08:00" style="flex:0 0 140px">
+          <div style="flex:2">
+            <label style="margin:0 0 6px;display:block">Do Not Disturb</label>
+            <div class="row">
+              <label class="small muted" style="flex:1;display:flex;align-items:center;gap:6px"><input id="dndEn" type="checkbox" style="width:auto"> Enable</label>
+              <input id="dndStart" type="time" value="22:00">
+              <input id="dndEnd" type="time" value="08:00">
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -297,9 +340,9 @@
       <label>Allow DMs from
         <select id="pvDM"><option value="everyone">Everyone</option><option value="friends">Friends</option><option value="none">No one</option></select>
       </label>
-      <label><input id="pvOnline" type="checkbox" style="width:auto"> Show “online” status</label>
-      <label><input id="pvShowLikes" type="checkbox" style="width:auto"> Show likes</label>
-      <label><input id="pvShowComments" type="checkbox" style="width:auto"> Show comments</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="pvOnline" type="checkbox" style="width:auto"> Show “online” status</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="pvShowLikes" type="checkbox" style="width:auto"> Show likes</label>
+      <label style="display:flex;align-items:center;gap:8px"><input id="pvShowComments" type="checkbox" style="width:auto"> Show comments</label>
     </div>
     <div class="row" style="margin-top:10px">
       <button class="btn primary" id="btnSavePrivacy">Save privacy</button>
@@ -311,8 +354,9 @@
     <h3 class="section-title">Monetization</h3>
     <div class="grid2">
       <div>
-        <label class="small muted">Paywall link</label>
+        <label class="small muted">Paywall link (Stripe/PayPal/Patreon/custom)</label>
         <input id="mPaywall" placeholder="https://">
+        <div class="hint">If set, your Profile can show a “Support/Unlock” button.</div>
       </div>
       <div>
         <label class="small muted">Access code (optional)</label>
@@ -327,217 +371,436 @@
   <!-- DATA TOOLS -->
   <section class="card panel" id="panel-tools" style="display:none">
     <h3 class="section-title">Data Tools</h3>
-    <div class="row" style="flex-wrap:wrap">
+    <div class="row">
       <button class="btn" id="btnExport">Export data.json</button>
       <input type="file" id="importFile" accept="application/json" />
       <button class="btn" id="btnImport">Import</button>
       <button class="btn danger" id="btnResetLocal">Factory reset (local)</button>
     </div>
-    <div class="hint" style="margin-top:6px">Export/Import affects local data. Backend sync (if any) is separate.</div>
+    <div class="hint" style="margin-top:6px">Export/import affects local data. Backend sync (if any) is separate.</div>
   </section>
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
 
-<!-- Notif/Inbox modals -->
-<div class="modalbg" id="notifBg"><div class="sheet">
-  <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
-  <div id="notifList"></div>
-  <div class="row" style="margin-top:8px"><button id="clearNotif" class="btn primary">Clear</button><button id="closeNotif" class="btn">Close</button></div>
-</div></div>
-<div class="modalbg" id="inboxBg"><div class="sheet">
-  <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
-  <div id="inboxList"></div>
-  <div class="row" style="margin-top:8px"><button id="closeInbox" class="btn">Close</button></div>
+<!-- Error overlay -->
+<div id="errOverlay"><div id="errPanel">
+  <h3 style="margin:4px 0 10px">Error details</h3>
+  <pre id="errText"></pre>
+  <div class="row" style="justify-content:flex-end"><button class="btn" onclick="document.getElementById('errOverlay').style.display='none'">Close</button></div>
 </div></div>
 
-<!-- Positioning: keep bars under Weebly header, compute spacer + nav height -->
 <script>
-(function(){
-  const EXCLUDE_IDS=new Set(['topBar','appNav','ctSpacer']);  // ignore our elements
-  const GAP=8, LIFT_UP=22;
-  function headerBottom(){
-    const sels=['header','.wsite-header','#wsite-header','.site-banner','.wsite-menus','.w-nav','.navbar','.weebly-header','.weebly-nav'];
-    let maxB=0;
-    document.querySelectorAll(sels.join(',')).forEach(el=>{
-      if(EXCLUDE_IDS.has(el.id)) return;
-      const r=el.getBoundingClientRect(); const b=r.bottom+window.scrollY;
-      maxB=Math.max(maxB,b);
-    });
-    return Math.max(maxB,80);
-  }
-  function apply(){
-    const top=Math.max(0, Math.round(headerBottom()+GAP-LIFT_UP));
-    document.documentElement.style.setProperty('--ct-bluebar-top', top+'px');
-    const nav=document.getElementById('appNav'); const navH=nav?Math.round(nav.getBoundingClientRect().height):44;
-    document.documentElement.style.setProperty('--ct-nav-h', navH+'px');
-    const sp=document.getElementById('ctSpacer'); if(sp){ sp.style.height=`calc(var(--ct-bluebar-h) + ${navH}px + var(--ct-gap))`; }
-  }
-  apply(); window.addEventListener('load',apply,{once:true});
-  window.addEventListener('resize',()=>{ clearTimeout(window.__ct_rz); window.__ct_rz=setTimeout(apply,120); });
-  setTimeout(apply,250); setTimeout(apply,900);
+/* Crash catcher so problems pop up visibly */
+(function(){ const show=(msg)=>{ const o=document.getElementById('errOverlay'); const t=document.getElementById('errText'); if(!o||!t) return; t.textContent=String(msg||'Unknown error'); o.style.display='flex'; };
+  window.addEventListener('error',e=>show(e.error? (e.error.stack||e.error.message||e.message) : e.message));
+  window.addEventListener('unhandledrejection',e=>show(e.reason && (e.reason.stack||e.reason.message||String(e.reason))));
 })();
 </script>
 
-<!-- Core logic (storage + tabs + settings) -->
 <script>
+/* ===== Measure Weebly header + app nav so sticky blue bar sits JUST below it ===== */
+(function measureHeaderBottom(){
+  function calc(){
+    var sels=['.edison-header','.wsite-header','.nav.desktop-nav','.navbar','.w-nav','.w-nav-header','header','.app-nav'];
+    var b=0;
+    for(var i=0;i<sels.length;i++){
+      var el=document.querySelector(sels[i]); if(!el) continue;
+      var r=el.getBoundingClientRect(); var mb=parseFloat(getComputedStyle(el).marginBottom||0);
+      b=Math.max(b, r.bottom+mb+window.scrollY);
+    }
+    // convert to css px from viewport top (sticky uses viewport)
+    var viewportTop = window.scrollY || 0;
+    var stickyTop = Math.max(0, b - viewportTop);
+    document.documentElement.style.setProperty('--ct-header-bottom', stickyTop+'px');
+    document.documentElement.style.setProperty('--ct-scroll-pad', (stickyTop+10)+'px');
+  }
+  calc();
+  window.addEventListener('scroll', calc, {passive:true});
+  window.addEventListener('resize', calc, {passive:true});
+  window.addEventListener('orientationchange', calc, {passive:true});
+  setTimeout(calc,120); setTimeout(calc,400);
+})();
+</script>
+
+<script>
+/* ===== Storage with cookie fallback (so it works on Weebly) ===== */
+(function(){
+  const Storage = (()=>{ function lsOk(){ try{ const k="__ct_probe__"; localStorage.setItem(k,"1"); localStorage.removeItem(k); return true; }catch{ return false; } }
+    const HAS_LS = lsOk();
+    function getCookie(name){ const m=document.cookie.match(new RegExp("(?:^|; )"+encodeURIComponent(name)+"=([^;]*)")); return m?decodeURIComponent(m[1]):null; }
+    function setCookie(name,val){ try{ document.cookie=encodeURIComponent(name)+"="+encodeURIComponent(val)+"; path=/; max-age=31536000"; }catch{} }
+    function get(k,f){ if(HAS_LS){ try{ const v=localStorage.getItem(k); if(v!=null) return JSON.parse(v); }catch{} } const c=getCookie(k); if(c){ try{ return JSON.parse(c); }catch{} } return f; }
+    function set(k,v){ const s=JSON.stringify(v); if(HAS_LS){ try{ localStorage.setItem(k,s); }catch{} } setCookie(k,s); }
+    window.__CTSTORE__ = { get,set,hasLS:HAS_LS };  // expose for below
+  })();
+})();
+</script>
+
+<script>
+/* ===== Settings logic (persistent) ===== */
 (function(){
   "use strict";
-  /* Storage (with cookie fallback for Weebly) */
-  const Storage=(()=>{function ok(){try{localStorage.setItem("__p","1");localStorage.removeItem("__p");return true;}catch{return false;}}
-    const HAS=ok();function gc(n){const m=document.cookie.match(new RegExp("(?:^|; )"+encodeURIComponent(n)+"=([^;]*)"));return m?decodeURIComponent(m[1]):null;}
-    function sc(n,v){try{document.cookie=encodeURIComponent(n)+"="+encodeURIComponent(v)+"; path=/; max-age=31536000";}catch{}}
-    return{get:(k,f)=>{if(HAS){try{const v=localStorage.getItem(k);if(v!=null)return JSON.parse(v);}catch{}}const c=gc(k);if(c){try{return JSON.parse(c);}catch{}}return f;},
-           set:(k,v)=>{const s=JSON.stringify(v);if(HAS){try{localStorage.setItem(k,s);}catch{}}sc(k,s)},hasLS:HAS};})();
-  const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-  const LS={USERS:"ct_users_v3",PROFILE:"ct_profile_data_v1",SETTINGS:"ct_settings_v1",SETTINGS_GLOBAL:"ct_settings_global",FRIENDS:"ct_friend_list_v2",POSTS:"ct_feed_posts_v7",MEDIA:"ct_media_v1",NOTIF:"ct_notifications_v1",INBOX:"ct_inbox_v1"};
-  const DEFAULT={profile:{displayName:"",bio:"",avatarUrl:"",coverUrl:"",actor:"Me"},
-    notifications:{dm:true,comments:true,likes:true,follows:true,blogs:true,polls:true,channels:{inapp:true,email:false,sound:false},freq:"instant",dnd:{enabled:false,start:"22:00",end:"08:00"}},
-    privacy:{profile:"public",post:"public",dm:"everyone",online:true,showLikes:true,showComments:true},
-    monetization:{paywall:"",code:""},security:{email:"",emailVerified:false,phone:"",phoneVerified:false,twoFA:false,backups:[]},sessions:[]};
 
-  function toast(m){const t=$("#toast");t.textContent=m;t.className="";void t.offsetWidth;t.className="show";setTimeout(()=>t.className="",1300);}
-  const load=(k,f)=>Storage.get(k,f), save=(k,v)=>Storage.set(k,v);
-  function settings(){return load(LS.SETTINGS,DEFAULT)}
-  function saveSettings(o){save(LS.SETTINGS,o);save(LS.SETTINGS_GLOBAL,o);try{window.dispatchEvent(new CustomEvent("chatternet:settings-updated",{detail:o}))}catch{} try{localStorage.setItem("ct_settings_poke",String(Date.now()))}catch{}}
+  const Storage = window.__CTSTORE__;
+  const $  = (s)=>document.querySelector(s);
+  const $$ = (s)=>Array.from(document.querySelectorAll(s));
+  const LS = {
+    USERS:"ct_users_v3", PROFILE:"ct_profile_data_v1",
+    SETTINGS:"ct_settings_v1", SETTINGS_GLOBAL:"ct_settings_global",
+    FRIENDS:"ct_friend_list_v2", POSTS:"ct_feed_posts_v7", MEDIA:"ct_media_v1",
+    NOTIF:"ct_notifications_v1", INBOX:"ct_inbox_v1"
+  };
+  const DEFAULT = {
+    profile:{ displayName:"Me", bio:"", avatarUrl:"", coverUrl:"", actor:"Me" },
+    notifications:{ dm:true, comments:true, likes:true, follows:true, blogs:true, polls:true,
+      channels:{ inapp:true, email:false, sound:false }, freq:"instant",
+      dnd:{ enabled:false, start:"22:00", end:"08:00" } },
+    privacy:{ profile:"public", post:"public", dm:"everyone", online:true, showLikes:true, showComments:true },
+    monetization:{ paywall:"", code:"" },
+    security:{ email:"", emailVerified:false, phone:"", phoneVerified:false, twoFA:false, backups:[] },
+    sessions:[]
+  };
 
-  /* Header actions */
-  (function(){
-    const prof=(load(LS.PROFILE,{})["Me"]||{}); const img=$("#myProfile");
-    if(img){img.src=(prof.avatar||prof.avatarUrl||"https://i.pravatar.cc/100?u=me"); img.alt=(prof.displayName||"Me"); img.onclick=()=>location.href="profile.html";}
-    const nbg=$("#notifBg"), ibg=$("#inboxBg");
-    function rN(){ const a=load(LS.NOTIF,[]); $("#notifList").innerHTML=a.length?a.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${n.text||""}</div>`).join(""):'<div class="notifitem">No notifications yet.</div>'; }
-    function rI(){ const a=load(LS.INBOX,[]); $("#inboxList").innerHTML=a.length?a.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${n.text||""}</div>`).join(""):'<div class="notifitem">Inbox is empty.</div>'; }
-    $("#btnNotif")?.addEventListener("click",()=>{rN(); nbg.style.display='flex';});
-    $("#clearNotif")?.addEventListener("click",()=>{save(LS.NOTIF,[]); rN();});
-    $("#closeNotif")?.addEventListener("click",()=>{nbg.style.display='none';});
-    $("#btnInbox")?.addEventListener("click",()=>{rI(); ibg.style.display='flex';});
-    $("#closeInbox")?.addEventListener("click",()=>{ibg.style.display='none';});
-    $("#btnMsgs")?.addEventListener("click",(e)=>{e.preventDefault(); if(window.ctOpen) return ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); location.href="messages.html";});
+  function toast(msg){ const t=$("#toast"); if(!t) return; t.textContent=msg; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); }
+  function settings(){ return Storage.get(LS.SETTINGS, DEFAULT); }
+  function saveSettings(obj){
+    Storage.set(LS.SETTINGS, obj);
+    Storage.set(LS.SETTINGS_GLOBAL, obj);
+    try{ window.dispatchEvent(new CustomEvent("chatternet:settings-updated", { detail: obj })); }catch{}
+    try{ localStorage.setItem("ct_settings_poke", String(Date.now())); }catch{}
+  }
+  const load=(k,f)=>Storage.get(k,f);
+  const save=(k,v)=>Storage.set(k,v);
+
+  /* Header wiring */
+  (function wireHeader(){
+    const prof=(load(LS.PROFILE,{}))["Me"]||{};
+    const img=$("#myProfile");
+    if(img){ img.src=(prof.avatar||prof.avatarUrl||"https://i.pravatar.cc/100?u=me"); img.alt=(prof.displayName||"Me"); img.style.cursor="pointer"; img.onclick=()=>location.href="profile.html"; }
+
+    const notifModal=$("#notifModal"), notifList=$("#notifList");
+    function renderNotif(){
+      const arr=load(LS.NOTIF,[]);
+      notifList.innerHTML = arr.length
+        ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||"")}</div>`).join("")
+        : '<div class="notifitem">No notifications yet.</div>';
+    }
+    $("#btnNotif")?.addEventListener("click",()=>{ renderNotif(); notifModal.style.display="flex"; });
+    $("#clearNotif")?.addEventListener("click",()=>{ save(LS.NOTIF,[]); renderNotif(); });
+    $("#closeNotif")?.addEventListener("click",()=>{ notifModal.style.display="none"; });
+
+    const inboxModal=$("#inboxModal"), inboxList=$("#inboxList");
+    function renderInbox(){
+      const arr=load(LS.INBOX,[]);
+      inboxList.innerHTML = arr.length
+        ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||"")}</div>`).join("")
+        : '<div class="notifitem">Inbox is empty.</div>';
+    }
+    $("#btnInbox")?.addEventListener("click",()=>{ renderInbox(); inboxModal.style.display="flex"; });
+    $("#closeInbox")?.addEventListener("click",()=>{ inboxModal.style.display="none"; });
+
+    $("#btnMsgs")?.addEventListener("click",(e)=>{ e.preventDefault(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); location.href="messages.html"; });
   })();
 
-  /* Tabs */
-  function activateTab(id){
-    $$("#tabsBar .tab").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));
-    $$(".panel").forEach(p=>p.style.display=(p.id==="panel-"+id)?"block":"none");
-    Storage.set("ct_last_settings_tab",id);
+  /* Tabs: robust & always clickable */
+  function showTab(id){
+    $$("#tabsBar .tab").forEach(x=>x.classList.toggle("active", x.getAttribute("data-tab")===id));
+    $$(".panel").forEach(p=>p.style.display = (p.id === "panel-"+id) ? "block" : "none");
+    try{ Storage.set("ct_last_settings_tab", id); }catch{}
   }
-  $("#tabsBar").addEventListener("click",(e)=>{const t=e.target.closest(".tab"); if(!t) return; activateTab(t.dataset.tab);});
-  activateTab(Storage.get("ct_last_settings_tab","account"));
+  (function initTabs(){
+    const bar=$("#tabsBar");
+    if(bar){
+      bar.addEventListener("click",(e)=>{
+        const t=e.target.closest(".tab"); if(!t) return;
+        e.preventDefault(); showTab(t.getAttribute("data-tab"));
+      });
+    }
+    const first=(Storage.get("ct_last_settings_tab","account"))||"account";
+    showTab(first);
+  })();
 
-  /* Seed 'Me' so actor list exists */
-  (function(){let u=load(LS.USERS,null); if(!u){u=[{name:"Me",avatar:`https://i.pravatar.cc/100?u=me`},{name:"Grace Lee",avatar:`https://i.pravatar.cc/100?u=grace.lee`}];}
-    else if(!u.find(x=>x.name==="Me")) u.unshift({name:"Me",avatar:`https://i.pravatar.cc/100?u=me`}); save(LS.USERS,u);})();
+  /* Ensure at least Me exists so actor select works */
+  (function seedUsers(){
+    let u = load(LS.USERS, null);
+    if(!u){
+      u = [{name:"Me", avatar:`https://i.pravatar.cc/100?u=me`},
+           {name:"Grace Lee", avatar:`https://i.pravatar.cc/100?u=grace.lee`}];
+      save(LS.USERS, u);
+    } else {
+      if(!u.find(x=>x.name==="Me")) u.unshift({name:"Me", avatar:`https://i.pravatar.cc/100?u=me`});
+      save(LS.USERS, u);
+    }
+  })();
 
-  function fillStats(){ $("#statFriends").textContent=(load(LS.FRIENDS,[]).length||0)+" Friends"; $("#statPosts").textContent=(load(LS.POSTS,[]).length||0)+" Posts"; $("#statMedia").textContent=(load(LS.MEDIA,[]).length||0)+" Media"; }
-  function setStatus(el, ok, label){ el.textContent=label||(ok?"Verified":"Not set"); el.className="pill "+(ok?"ok":"bad"); }
-
+  /* Stats + hydrate */
+  function fillStats(){
+    $("#statFriends").textContent = (load(LS.FRIENDS,[]).length||0) + " Friends";
+    $("#statPosts").textContent   = (load(LS.POSTS,[]).length||0) + " Posts";
+    $("#statMedia").textContent   = (load(LS.MEDIA,[]).length||0) + " Media";
+  }
   function hydrate(){
-    const s=settings();
-    const sel=$("#actorSel"); sel.innerHTML=""; load(LS.USERS,[]).forEach(u=>{const o=document.createElement("option");o.value=u.name;o.textContent=u.name;sel.appendChild(o)}); sel.value=s.profile.actor||"Me";
-    $("#dName").value=s.profile.displayName||"Me"; $("#dBio").value=s.profile.bio||""; $("#dAvatarUrl").value=s.profile.avatarUrl||""; $("#dCoverUrl").value=s.profile.coverUrl||"";
-    $("#secEmail").value=s.security.email||""; setStatus($("#emailStatus"), !!s.security.emailVerified, s.security.email? (s.security.emailVerified?"Verified":"Saved (unverified)"):"Not set");
-    $("#secPhone").value=s.security.phone||""; setStatus($("#phoneStatus"), !!s.security.phoneVerified, s.security.phone? (s.security.phoneVerified?"Verified":"Saved (unverified)"):"Not set");
-    $("#twoFA").checked=!!s.security.twoFA;
+    const s = settings();
+    const sel = $("#actorSel"); sel.innerHTML = "";
+    (load(LS.USERS, [])).forEach(u=>{ const o=document.createElement("option"); o.value=u.name; o.textContent=u.name; sel.appendChild(o); });
+    sel.value = s.profile.actor || "Me";
 
-    $("#nDM").checked=!!s.notifications.dm; $("#nComments").checked=!!s.notifications.comments; $("#nLikes").checked=!!s.notifications.likes; $("#nFollows").checked=!!s.notifications.follows; $("#nBlogs").checked=!!s.notifications.blogs; $("#nPolls").checked=!!s.notifications.polls;
-    $("#chInapp").checked=!!s.notifications.channels.inapp; $("#chEmail").checked=!!s.notifications.channels.email; $("#nSound").checked=!!s.notifications.channels.sound;
-    $("#nFreq").value=s.notifications.freq||"instant"; $("#dndEn").checked=!!s.notifications.dnd.enabled; $("#dndStart").value=s.notifications.dnd.start||"22:00"; $("#dndEnd").value=s.notifications.dnd.end||"08:00";
-
-    $("#pvProfile").value=s.privacy.profile||"public"; $("#pvPost").value=s.privacy.post||"public"; $("#pvDM").value=s.privacy.dm||"everyone"; $("#pvOnline").checked=!!s.privacy.online; $("#pvShowLikes").checked=!!s.privacy.showLikes; $("#pvShowComments").checked=!!s.privacy.showComments;
-
-    $("#mPaywall").value=s.monetization.paywall||""; $("#mCode").value=s.monetization.code||"";
-
-    const prof=(load(LS.PROFILE,{})["Me"]||{}); const img=$("#myProfile"); if(img){img.src=(prof.avatar||prof.avatarUrl||"https://i.pravatar.cc/100?u=me"); img.alt=(prof.displayName||"Me");}
+    $("#dName").value      = s.profile.displayName || "Me";
+    $("#dBio").value       = s.profile.bio || "";
+    $("#dAvatarUrl").value = s.profile.avatarUrl || "";
+    $("#dCoverUrl").value  = s.profile.coverUrl || "";
     fillStats();
+
+    const prof = (load(LS.PROFILE, {})["Me"] || {});
+    const img = $("#myProfile");
+    if (img){ img.src = (prof.avatar || prof.avatarUrl || "https://i.pravatar.cc/100?u=me"); img.alt = (prof.displayName || "Me"); }
+
+    // Notifications hydrate
+    $("#nDM").checked        = !!s.notifications.dm;
+    $("#nComments").checked  = !!s.notifications.comments;
+    $("#nLikes").checked     = !!s.notifications.likes;
+    $("#nFollows").checked   = !!s.notifications.follows;
+    $("#nBlogs").checked     = !!s.notifications.blogs;
+    $("#nPolls").checked     = !!s.notifications.polls;
+    $("#chInapp").checked    = !!s.notifications.channels.inapp;
+    $("#chEmail").checked    = !!s.notifications.channels.email;
+    $("#nSound").checked     = !!s.notifications.channels.sound;
+    $("#nFreq").value        = s.notifications.freq || "instant";
+    $("#dndEn").checked      = !!s.notifications.dnd.enabled;
+    $("#dndStart").value     = s.notifications.dnd.start || "22:00";
+    $("#dndEnd").value       = s.notifications.dnd.end || "08:00";
+
+    // Privacy hydrate
+    $("#pvProfile").value    = s.privacy.profile;
+    $("#pvPost").value       = s.privacy.post;
+    $("#pvDM").value         = s.privacy.dm;
+    $("#pvOnline").checked   = !!s.privacy.online;
+    $("#pvShowLikes").checked    = !!s.privacy.showLikes;
+    $("#pvShowComments").checked = !!s.privacy.showComments;
+
+    // Monetization hydrate
+    $("#mPaywall").value     = s.monetization.paywall || "";
+    $("#mCode").value        = s.monetization.code || "";
+
+    // Security hydrate status
+    const updateStat=(el,ok,txt)=>{ el.textContent = txt || (ok?"Verified":"Not set"); el.className = "pill " + (ok?"ok":"bad"); };
+    updateStat($("#emailStatus"), !!s.security.emailVerified, s.security.email ? (s.security.emailVerified?"Verified":"Saved (unverified)") : "Not set");
+    updateStat($("#phoneStatus"), !!s.security.phoneVerified, s.security.phone ? (s.security.phoneVerified?"Verified":"Saved (unverified)") : "Not set");
+    $("#secEmail").value = s.security.email || "";
+    $("#secPhone").value = s.security.phone || "";
+    $("#twoFA").checked  = !!s.security.twoFA;
   }
 
-  function bindFileUse(btnId,inputId,outId){ $(btnId).addEventListener("click",()=>{ const f=$(inputId).files && $(inputId).files[0]; if(!f) return; const r=new FileReader(); r.onload=e=>{ $(outId).value=e.target.result||""; }; r.readAsDataURL(f); }); }
-  bindFileUse("#btnUseAvatar","#dAvatarFile","#dAvatarUrl");
-  bindFileUse("#btnUseCover","#dCoverFile","#dCoverUrl");
+  // file->data URL helpers
+  function bindFileUse(btnId, inputId, outId){
+    (document.querySelector(btnId)).addEventListener("click", ()=>{
+      const f=(document.querySelector(inputId).files||[])[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload = e => { (document.querySelector(outId)).value = e.target.result || ""; };
+      r.readAsDataURL(f);
+    });
+  }
+  bindFileUse("#btnUseAvatar", "#dAvatarFile", "#dAvatarUrl");
+  bindFileUse("#btnUseCover",  "#dCoverFile",  "#dCoverUrl");
 
-  function writeVerify(key,obj){ save(key,obj); const back=load(key,null); return JSON.stringify(back)===JSON.stringify(obj); }
+  /* Save handlers */
+  function writeVerify(key, obj){
+    save(key, obj);
+    const back = load(key, null);
+    return JSON.stringify(back) === JSON.stringify(obj);
+  }
 
-  $("#btnSaveProfile").onclick=()=>{
-    const s=settings();
-    s.profile.displayName=($("#dName").value||"").trim()||"Me";
-    s.profile.bio=($("#dBio").value||"").trim();
-    s.profile.avatarUrl=($("#dAvatarUrl").value||"").trim();
-    s.profile.coverUrl=($("#dCoverUrl").value||"").trim();
-    s.profile.actor=$("#actorSel").value||"Me";
-    const profiles=load(LS.PROFILE,{}); profiles["Me"]=profiles["Me"]||{};
-    profiles["Me"].displayName=s.profile.displayName; profiles["Me"].bio=s.profile.bio;
-    if(s.profile.avatarUrl) profiles["Me"].avatar=s.profile.avatarUrl;
-    if(s.profile.coverUrl)  profiles["Me"].cover=s.profile.coverUrl;
-    writeVerify(LS.PROFILE,profiles); saveSettings(s); toast("Profile saved"); hydrate();
+  $("#btnSaveProfile").onclick = ()=>{
+    const s = settings();
+    s.profile.displayName = ($("#dName").value||"").trim() || "Me";
+    s.profile.bio        = ($("#dBio").value||"").trim();
+    s.profile.avatarUrl  = ($("#dAvatarUrl").value||"").trim();
+    s.profile.coverUrl   = ($("#dCoverUrl").value||"").trim();
+    s.profile.actor      = $("#actorSel").value || "Me";
+
+    const profiles = load(LS.PROFILE, {});
+    profiles["Me"] = profiles["Me"] || {};
+    profiles["Me"].displayName = s.profile.displayName;
+    if (s.profile.avatarUrl) profiles["Me"].avatar = s.profile.avatarUrl;
+    if (s.profile.coverUrl)  profiles["Me"].cover  = s.profile.coverUrl;
+    profiles["Me"].bio = s.profile.bio;
+
+    const ok1 = writeVerify(LS.PROFILE, profiles);
+    saveSettings(s);
+    const ok2 = (JSON.stringify(settings()) === JSON.stringify(s));
+    toast(ok1 && ok2 ? "Profile saved" : "Saved (fallback)");
+    try{ const arr=load(LS.NOTIF,[]); arr.unshift({time:new Date().toISOString(),text:"Profile saved."}); save(LS.NOTIF,arr);}catch{}
+    fillStats();
   };
-  $("#btnViewProfile").onclick=()=>location.href="profile.html";
+  $("#btnViewProfile").onclick = ()=> location.href="profile.html";
 
-  function mirrorContact(){ const s=settings(); const p=load(LS.PROFILE,{}); p["Me"]=p["Me"]||{}; p["Me"].email=s.security.email||""; p["Me"].phone=s.security.phone||""; p["Me"].emailVerified=!!s.security.emailVerified; p["Me"].phoneVerified=!!s.security.phoneVerified; writeVerify(LS.PROFILE,p); }
-  $("#btnSaveEmail").onclick=()=>{ const s=settings(); s.security.email=($("#secEmail").value||"").trim(); s.security.emailVerified=false; saveSettings(s); mirrorContact(); $("#emailStatus").textContent="Saved (unverified)"; toast("Email saved"); };
-  $("#btnSendCode").onclick =()=>{ const s=settings(); if(!s.security.email) return alert("Set email first."); s.security._emailCode=(""+Math.floor(100000+Math.random()*900000)); saveSettings(s); toast("Verification code sent (demo)"); };
-  $("#btnVerifyCode").onclick=()=>{ const s=settings(); const c=($("#codeInput").value||"").trim(); if(c && c===s.security._emailCode){ s.security.emailVerified=true; delete s.security._emailCode; saveSettings(s); mirrorContact(); $("#emailStatus").textContent="Verified"; toast("Email verified"); } else alert("Wrong code."); };
+  // Security
+  const status = (el, ok, label)=>{ el.textContent = label || (ok?"Verified":"Not set"); el.className = "pill " + (ok?"ok":"bad"); };
+  $("#btnSaveEmail").onclick = ()=>{ const s=settings(); s.security.email = ($("#secEmail").value||"").trim(); s.security.emailVerified=false; saveSettings(s); status($("#emailStatus"), false, "Saved (unverified)"); toast("Email saved"); };
+  $("#btnSendCode").onclick  = ()=>{ const s=settings(); if(!s.security.email) return alert("Set email first."); s.security._emailCode=(""+Math.floor(100000+Math.random()*900000)); saveSettings(s); toast("Verification code sent (demo)"); };
+  $("#btnVerifyCode").onclick= ()=>{ const s=settings(); const code=($("#codeInput").value||"").trim(); if(code && code===s.security._emailCode){ s.security.emailVerified=true; delete s.security._emailCode; saveSettings(s); status($("#emailStatus"), true, "Verified"); toast("Email verified"); } else alert("Wrong code."); };
 
-  $("#btnSavePhone").onclick=()=>{ const s=settings(); s.security.phone=($("#secPhone").value||"").trim(); s.security.phoneVerified=false; saveSettings(s); mirrorContact(); $("#phoneStatus").textContent="Saved (unverified)"; toast("Phone saved"); };
-  $("#btnSendPhoneCode").onclick=()=>{ const s=settings(); if(!s.security.phone) return alert("Set phone first."); s.security._smsCode=(""+Math.floor(100000+Math.random()*900000)); saveSettings(s); toast("SMS code sent (demo)"); };
-  $("#btnVerifyPhone").onclick  =()=>{ const s=settings(); const c=($("#phoneCodeInput").value||"").trim(); if(c && c===s.security._smsCode){ s.security.phoneVerified=true; delete s.security._smsCode; saveSettings(s); mirrorContact(); $("#phoneStatus").textContent="Verified"; toast("Phone verified"); } else alert("Wrong code."); };
+  $("#btnSavePhone").onclick = ()=>{ const s=settings(); s.security.phone = ($("#secPhone").value||"").trim(); s.security.phoneVerified=false; saveSettings(s); status($("#phoneStatus"), false, "Saved (unverified)"); toast("Phone saved"); };
+  $("#btnSendPhoneCode").onclick = ()=>{ const s=settings(); if(!s.security.phone) return alert("Set phone first."); s.security._smsCode=(""+Math.floor(100000+Math.random()*900000)); saveSettings(s); toast("SMS code sent (demo)"); };
+  $("#btnVerifyPhone").onclick   = ()=>{ const s=settings(); const code=($("#phoneCodeInput").value||"").trim(); if(code && code===s.security._smsCode){ s.security.phoneVerified=true; delete s.security._smsCode; saveSettings(s); status($("#phoneStatus"), true, "Verified"); toast("Phone verified"); } else alert("Wrong code."); };
 
   $("#twoFA").addEventListener("change",(e)=>{ const s=settings(); s.security.twoFA=!!e.target.checked; saveSettings(s); toast("Two-step verification updated"); });
 
-  $("#btnSaveNotify").onclick=()=>{ const s=settings();
-    s.notifications.dm=$("#nDM").checked; s.notifications.comments=$("#nComments").checked; s.notifications.likes=$("#nLikes").checked; s.notifications.follows=$("#nFollows").checked; s.notifications.blogs=$("#nBlogs").checked; s.notifications.polls=$("#nPolls").checked;
-    s.notifications.channels.inapp=$("#chInapp").checked; s.notifications.channels.email=$("#chEmail").checked; s.notifications.channels.sound=$("#nSound").checked;
-    s.notifications.freq=$("#nFreq").value; s.notifications.dnd.enabled=$("#dndEn").checked; s.notifications.dnd.start=$("#dndStart").value||"22:00"; s.notifications.dnd.end=$("#dndEnd").value||"08:00";
-    saveSettings(s); $("#nStatus").textContent="Notification preferences saved."; toast("Notification preferences saved");
+  // Notifications
+  $("#btnSaveNotify").onclick = ()=>{
+    const s=settings();
+    s.notifications.dm       = $("#nDM").checked;
+    s.notifications.comments = $("#nComments").checked;
+    s.notifications.likes    = $("#nLikes").checked;
+    s.notifications.follows  = $("#nFollows").checked;
+    s.notifications.blogs    = $("#nBlogs").checked;
+    s.notifications.polls    = $("#nPolls").checked;
+    s.notifications.channels.inapp = $("#chInapp").checked;
+    s.notifications.channels.email = $("#chEmail").checked;
+    s.notifications.channels.sound = $("#nSound").checked;
+    s.notifications.freq = $("#nFreq").value;
+    s.notifications.dnd.enabled = $("#dndEn").checked;
+    s.notifications.dnd.start   = $("#dndStart").value || "22:00";
+    s.notifications.dnd.end     = $("#dndEnd").value || "08:00";
+    saveSettings(s);
+    $("#nStatus").textContent = "Notification preferences saved.";
+    toast("Notification preferences saved");
   };
-  $("#btnTestNotify").onclick=()=>{ try{ const a=load(LS.NOTIF,[]); a.unshift({time:Date.now(),text:"Test notification from Settings"}); save(LS.NOTIF,a);}catch{} toast("Test notification added"); };
+  $("#btnTestNotify").onclick = ()=>{ try{ const arr=load(LS.NOTIF,[]); arr.unshift({time:new Date().toISOString(),text:"This is a test notification from Settings."}); save(LS.NOTIF,arr);}catch{} toast("Test notification sent"); };
 
-  $("#btnSavePrivacy").onclick=()=>{ const s=settings(); s.privacy.profile=$("#pvProfile").value; s.privacy.post=$("#pvPost").value; s.privacy.dm=$("#pvDM").value; s.privacy.online=$("#pvOnline").checked; s.privacy.showLikes=$("#pvShowLikes").checked; s.privacy.showComments=$("#pvShowComments").checked; saveSettings(s); toast("Privacy saved"); };
-  $("#btnSaveMon").onclick    =()=>{ const s=settings(); s.monetization.paywall=($("#mPaywall").value||"").trim(); s.monetization.code=($("#mCode").value||"").trim(); saveSettings(s); toast("Monetization saved"); };
+  // Privacy
+  $("#btnSavePrivacy").onclick = ()=>{
+    const s=settings();
+    s.privacy.profile      = $("#pvProfile").value;
+    s.privacy.post         = $("#pvPost").value;
+    s.privacy.dm           = $("#pvDM").value;
+    s.privacy.online       = $("#pvOnline").checked;
+    s.privacy.showLikes    = $("#pvShowLikes").checked;
+    s.privacy.showComments = $("#pvShowComments").checked;
+    saveSettings(s);
+    toast("Privacy saved");
+  };
 
-  $("#btnExport").onclick=()=>{ const blob=new Blob([ JSON.stringify({users:load(LS.USERS,[]),profile:load(LS.PROFILE,{}),settings:settings(),friends:load(LS.FRIENDS,[]),posts:load(LS.POSTS,[]),media:load(LS.MEDIA,[])},null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="chatternet-data.json"; a.click(); URL.revokeObjectURL(a.href); };
-  $("#btnImport").onclick=()=>{ const f=$("#importFile").files && $("#importFile").files[0]; if(!f) return alert("Choose a JSON file first."); const r=new FileReader(); r.onload=e=>{ try{ const d=JSON.parse(e.target.result||"{}"); if(d.users)save(LS.USERS,d.users); if(d.profile)save(LS.PROFILE,d.profile); if(d.settings)saveSettings(d.settings); if(d.friends)save(LS.FRIENDS,d.friends); if(d.posts)save(LS.POSTS,d.posts); if(d.media)save(LS.MEDIA,d.media); toast("Import complete"); hydrate(); }catch(err){ alert("Import error: "+(err.message||err)); } }; r.readAsText(f); };
-  $("#btnResetLocal").onclick=()=>{ if(!confirm("Factory reset local data?")) return; try{localStorage.clear();}catch{} ["ct_users_v3","ct_profile_data_v1","ct_settings_v1","ct_settings_global","ct_friend_list_v2","ct_feed_posts_v7","ct_media_v1","ct_last_settings_tab"].forEach(k=>{try{document.cookie=encodeURIComponent(k)+"=; path=/; max-age=0"}catch{}}); location.reload(); };
+  // Monetization
+  $("#btnSaveMon").onclick = ()=>{
+    const s=settings();
+    s.monetization.paywall = ($("#mPaywall").value||"").trim();
+    s.monetization.code    = ($("#mCode").value||"").trim();
+    saveSettings(s);
+    toast("Monetization saved");
+  };
 
-  window.addEventListener("storage",(ev)=>{ if([LS.SETTINGS,LS.SETTINGS_GLOBAL,LS.PROFILE,"ct_settings_poke"].includes(ev.key)){ hydrate(); } });
+  // Data tools
+  $("#btnExport").onclick = ()=>{
+    const blob = new Blob([ JSON.stringify({
+      users: load(LS.USERS,[]),
+      profile: load(LS.PROFILE,{}),
+      settings: settings(),
+      friends: load(LS.FRIENDS,[]),
+      posts: load(LS.POSTS,[]),
+      media: load(LS.MEDIA,[])
+    }, null, 2)], {type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="chatternet-data.json"; a.click(); URL.revokeObjectURL(a.href);
+  };
+  $("#btnImport").onclick = ()=>{
+    const f=$("#importFile").files && $("#importFile").files[0]; if(!f) return alert("Choose a JSON file first.");
+    const r=new FileReader();
+    r.onload = e=>{
+      try{
+        const data=JSON.parse(e.target.result||"{}");
+        if (data.users)    save(LS.USERS,data.users);
+        if (data.profile)  save(LS.PROFILE,data.profile);
+        if (data.settings) saveSettings(data.settings);
+        if (data.friends)  save(LS.FRIENDS,data.friends);
+        if (data.posts)    save(LS.POSTS,data.posts);
+        if (data.media)    save(LS.MEDIA,data.media);
+        toast("Import complete");
+        hydrate();
+      }catch(err){ alert("Import error: "+(err.message||err)); }
+    };
+    r.readAsText(f);
+  };
+  $("#btnResetLocal").onclick = ()=>{
+    if (!confirm("Factory reset local data?")) return;
+    try{ localStorage.clear(); }catch{}
+    try{
+      ["ct_users_v3","ct_profile_data_v1","ct_settings_v1","ct_settings_global",
+       "ct_friend_list_v2","ct_feed_posts_v7","ct_media_v1","ct_last_settings_tab"]
+       .forEach(k=>document.cookie=encodeURIComponent(k)+"=; path=/; max-age=0");
+    }catch{}
+    location.reload();
+  };
 
-  if(!Storage.get(LS.SETTINGS,null)){ save(LS.SETTINGS,DEFAULT); save(LS.SETTINGS_GLOBAL,DEFAULT); }
+  // Keep UI in sync across tabs
+  window.addEventListener("storage",(ev)=>{
+    if ([LS.SETTINGS,LS.SETTINGS_GLOBAL,LS.PROFILE,"ct_settings_poke"].includes(ev.key)){ hydrate(); }
+  });
+
+  // First time seed + paint
+  if (!Storage.get(LS.SETTINGS, null)){ Storage.set(LS.SETTINGS, DEFAULT); Storage.set(LS.SETTINGS_GLOBAL, DEFAULT); }
   hydrate();
 })();
 </script>
 
-<!-- Messenger loader + messages-only shim (same as Friends) -->
+<!-- (Optional) Messenger loader shim so “Messages” opens overlay if present -->
 <script>
 (function(){
-  "use strict";
-  function tryLoad(urls,done){(function next(i){if(i>=urls.length){done(false);return}var s=document.createElement('script');s.src=urls[i];s.async=true;s.onload=function(){done(true)};s.onerror=function(){s.remove();next(i+1)};(document.head||document.documentElement).appendChild(s)})(0)}
-  var base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
-  var candidates=[base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'];
-  tryLoad(candidates,function(ok){
-    if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
-      window.ctOpen=function(){window.ChatternetMessenger.open(); onlyMessages();};
-      window.ctMessage=function(n){window.ChatternetMessenger.open(n||""); onlyMessages();};
-      function onlyMessages(){
-        try{
-          const root=document.querySelector('#ctMessengerRoot,.ct-messenger,[data-ct="messenger"]');
-          if(!root) return;
-          const t=[...root.querySelectorAll('button,[role="tab"],a')].find(el=>/messages?/i.test(el.textContent||'')); t && t.click();
-          const kill=['feed','posts','broadcast','tools','recent'];
-          [...root.querySelectorAll('*')].forEach(el=>{
-            const txt=(el.textContent||'').trim().toLowerCase();
-            if(txt && kill.some(w=>txt===w || txt.includes(w))){
-              if(/tab|nav|menu|toolbar/i.test(el.className)||el.getAttribute('role')==='tab'){ el.style.display='none'; }
-            }
-          });
-        }catch{}
-      }
-      window.__ct_onlyMessages=onlyMessages; setTimeout(onlyMessages,200);
-      const mo=new MutationObserver(()=>setTimeout(onlyMessages,60)); try{mo.observe(document.documentElement,{subtree:true,childList:true})}catch{}
+  var FALLBACK = 'https://chatternet-backend-1.onrender.com';
+  var ls = localStorage.getItem('ct_api_base') || '';
+  var base = (window.CT_API_BASE || ls || FALLBACK).replace(/\/+$/,'');
+  window.CT_API_BASE = base;
+  if (!ls) { try { localStorage.setItem('ct_api_base', base); } catch(e){} }
+
+  function loadChain(list, done){
+    (function next(i){
+      if(i >= list.length){ return done && done(false); }
+      var s = document.createElement('script');
+      s.src = list[i]; s.async = true;
+      s.onload = function(){ done && done(true); };
+      s.onerror = function(){ s.remove(); next(i+1); };
+      (document.head || document.documentElement).appendChild(s);
+    })(0);
+  }
+
+  function ensureMessenger(cb){
+    if (window.ChatternetMessenger && typeof window.ChatternetMessenger.open === 'function'){
+      return cb && cb(true);
     }
-  });
+    var tries = [
+      base + '/assets/messenger.js',
+      '/assets/messenger.js',
+      'assets/messenger.js',
+      '/messenger.js',
+      'messenger.js'
+    ];
+    loadChain(tries, function(ok){
+      if (ok && window.ChatternetMessenger && window.ChatternetMessenger.open){
+        window.ctOpen    = window.ctOpen    || function(){ window.ChatternetMessenger.open(""); };
+        window.ctMessage = window.ctMessage || function(name){ window.ChatternetMessenger.open(name || ""); };
+      }
+      cb && cb(!!ok);
+    });
+  }
+
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest && e.target.closest('a[href*="messages.html"]');
+    if(!a) return;
+    e.preventDefault();
+    if (window.ctOpen) return window.ctOpen();
+    if (window.ChatternetMessenger && window.ChatternetMessenger.open) {
+      return window.ChatternetMessenger.open("");
+    }
+    location.href = 'messages.html';
+  }, true);
+
+  window.ctOpen = window.ctOpen || function(){
+    ensureMessenger(function(ok){
+      if (ok) window.ChatternetMessenger.open("");
+      else location.href = 'messages.html';
+    });
+  };
 })();
 </script>
-
 </body>
 </html>
