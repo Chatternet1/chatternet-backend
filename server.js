@@ -1,166 +1,206 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<title>Chatternet — Sign in</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root{ --brand:#3498db; --ink:#0f172a; --bg:#f5f7fb; --card:#fff; }
-  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif}
-  .wrap{max-width:960px;margin:30px auto;padding:0 14px}
-  .card{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:16px}
-  .tabs{display:flex;gap:8px;margin-bottom:10px}
-  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;font-weight:700;cursor:pointer}
-  .tab.active{background:#e9f2ff;border-color:#cfe1ff}
-  input,button{font:inherit} input{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
-  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
-  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .row>*{flex:1 1 auto}
-  .hint{font-size:12px;color:#475569}
-  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border-radius:10px;padding:10px 14px;opacity:0;transition:opacity .2s}
-  #toast.show{opacity:1}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="card">
-    <div class="tabs">
-      <div class="tab active" data-pane="login">Log in</div>
-      <div class="tab" data-pane="signup">Sign up</div>
-      <div class="tab" data-pane="verify">Verify email</div>
-      <div class="tab" data-pane="forgot">Forgot password</div>
-    </div>
+// server.js  — Chatternet API (Auth + Profiles + Minimal Feed)
+// Run:  node server.js
+// Env:  PORT=8080  JWT_SECRET=change_me  ORIGIN=https://your-frontend.example,https://another-frontend.example
+// Persists to ./chatternet.db (SQLite)
 
-    <!-- login -->
-    <section id="pane-login">
-      <div class="row">
-        <input id="liUser" placeholder="Handle or email">
-        <input id="liPass" type="password" placeholder="Password">
-      </div>
-      <div class="row" style="margin-top:8px;justify-content:flex-end">
-        <button class="btn primary" id="btnLogin">Log in</button>
-      </div>
-    </section>
+const express = require("express");
+const path = require("path");
+const cookie = require("cookie-parser");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const { nanoid } = require("nanoid");
+const Database = require("better-sqlite3");
 
-    <!-- signup -->
-    <section id="pane-signup" style="display:none">
-      <div class="row">
-        <input id="suHandle" placeholder="Handle (letters/numbers/underscore)">
-        <input id="suEmail" type="email" placeholder="Email">
-      </div>
-      <div class="row" style="margin-top:8px">
-        <input id="suPass" type="password" placeholder="Password (8+ chars)">
-      </div>
-      <div class="row" style="margin-top:8px;justify-content:flex-end">
-        <button class="btn primary" id="btnSignup">Create account</button>
-      </div>
-      <div class="hint" id="verifyHint" style="margin-top:6px"></div>
-    </section>
+// --- config
+const PORT = process.env.PORT || 8080;
+const ORIGIN = (process.env.ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
+const DB_FILE = process.env.DB_FILE || path.join(__dirname, "chatternet.db");
 
-    <!-- verify -->
-    <section id="pane-verify" style="display:none">
-      <div class="row">
-        <input id="veCode" placeholder="Verification code (6 chars)">
-      </div>
-      <div class="row" style="margin-top:8px;justify-content:flex-end">
-        <button class="btn primary" id="btnVerify">Verify</button>
-      </div>
-      <div class="hint">If you just signed up, the demo API returns the code to you (in real life this would be emailed).</div>
-    </section>
+// --- app
+const app = express();
+app.use(express.json({ limit: "1.5mb" }));
+app.use(cookie());
+app.use(cors({
+  origin: (origin, cb) => cb(null, !origin || ORIGIN.length === 0 || ORIGIN.includes(origin)),
+  credentials: true,
+}));
+app.use((req,res,next)=>{ res.setHeader("X-Chatternet","api"); next(); });
 
-    <!-- forgot -->
-    <section id="pane-forgot" style="display:none">
-      <div class="row">
-        <input id="fgEmail" type="email" placeholder="Your account email">
-      </div>
-      <div class="row" style="margin-top:8px;justify-content:flex-end">
-        <button class="btn" id="btnSendReset">Send reset code</button>
-      </div>
-      <hr>
-      <div class="row">
-        <input id="fgCode" placeholder="Reset code">
-        <input id="fgNew" type="password" placeholder="New password (8+)">
-      </div>
-      <div class="row" style="margin-top:8px;justify-content:flex-end">
-        <button class="btn primary" id="btnApplyReset">Apply reset</button>
-      </div>
-    </section>
-  </div>
-</div>
+// --- db
+const db = new Database(DB_FILE);
+db.pragma("journal_mode = WAL");
+db.exec(`
+CREATE TABLE IF NOT EXISTS users(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  handle TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  pass_hash TEXT NOT NULL,
+  display_name TEXT NOT NULL DEFAULT 'Me',
+  bio TEXT DEFAULT '',
+  avatar_url TEXT DEFAULT '',
+  cover_url  TEXT DEFAULT '',
+  email_verified INTEGER NOT NULL DEFAULT 0,
+  verify_code TEXT DEFAULT NULL,
+  reset_code  TEXT DEFAULT NULL,
+  created_at TEXT NOT NULL
+);
 
-<div id="toast"></div>
+CREATE TABLE IF NOT EXISTS follows(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  follower_id INTEGER NOT NULL,
+  followee_id INTEGER NOT NULL,
+  UNIQUE(follower_id, followee_id)
+);
 
-<script>
-/* simple toast */
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.className='';void t.offsetWidth;t.className='show';setTimeout(()=>t.className='',1200);}
+CREATE TABLE IF NOT EXISTS posts(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  body TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+`);
 
-/* backend base (same logic as common.js) */
-(function(){ let base=localStorage.getItem('ct_api_base')||window.CT_API_BASE||''; if(!base){ const guess=location.origin.replace(/\/+$/,''); base=guess.includes('localhost')? 'http://localhost:8080' : guess; localStorage.setItem('ct_api_base',base);} window.CT_API_BASE=base;})();
+const selUserById = db.prepare("SELECT id, handle, email, display_name, bio, avatar_url, cover_url, email_verified, created_at FROM users WHERE id=?");
+const selUserByHandle = db.prepare("SELECT id, handle, email, display_name, bio, avatar_url, cover_url, email_verified, created_at FROM users WHERE handle=?");
+const selAuthByHandleOrEmail = db.prepare("SELECT * FROM users WHERE handle=? OR email=?");
 
-async function api(path,opts={}){
-  const res = await fetch((window.CT_API_BASE||'').replace(/\/+$/,'') + path, {
-    credentials: 'include',
-    headers: { 'Content-Type':'application/json', ...(opts.headers||{}) },
-    ...opts
-  });
-  const text = await res.text();
-  let json = {}; try{ json = text? JSON.parse(text):{}; }catch{ json = { raw:text }; }
-  if(!res.ok) throw new Error(json.error||res.statusText);
-  return json;
+// --- helpers
+function nowISO(){ return new Date().toISOString(); }
+function safeUser(u){ if(!u) return null; const {pass_hash, verify_code, reset_code, ...rest} = u; return rest; }
+function sign(res, payload){
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  res.cookie("ct_token", token, { httpOnly:true, sameSite:"lax", secure:false, maxAge: 1000*60*60*24*7, path:"/" });
+}
+function clear(res){ res.clearCookie("ct_token", { path:"/" }); }
+function authed(req,res,next){
+  const t = req.cookies.ct_token;
+  if(!t) return res.status(401).json({ error:"auth_required" });
+  try{ req.user = jwt.verify(t, JWT_SECRET); next(); }
+  catch(e){ return res.status(401).json({ error:"bad_token" }); }
 }
 
-/* tabs */
-document.querySelector('.tabs').addEventListener('click',e=>{
-  const tab=e.target.closest('.tab'); if(!tab) return;
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t===tab));
-  const id=tab.dataset.pane;
-  ['login','signup','verify','forgot'].forEach(p=>{ document.getElementById('pane-'+p).style.display = (p===id)?'block':'none'; });
+// --- static (serve assets + any static frontend you add here)
+app.use("/assets", express.static(path.join(__dirname, "assets")));
+app.use("/public", express.static(path.join(__dirname, "public")));
+
+// --- health
+app.get("/api/health", (req,res)=>res.json({ ok:true, time:nowISO() }));
+
+// --- auth: register
+app.post("/api/auth/register", (req,res)=>{
+  const { handle, email, password } = req.body||{};
+  if(!handle || !email || !password) return res.status(400).json({ error:"missing_fields" });
+  if(!/^[a-z0-9_]{3,20}$/i.test(handle)) return res.status(400).json({ error:"bad_handle" });
+  if(password.length < 8) return res.status(400).json({ error:"weak_password" });
+
+  try{
+    const pass_hash = bcrypt.hashSync(password, 10);
+    const verify_code = nanoid(6).toUpperCase();
+    db.prepare("INSERT INTO users(handle,email,pass_hash,display_name,created_at,verify_code) VALUES(?,?,?,?,?,?)")
+      .run(handle, (email||"").toLowerCase(), pass_hash, handle, nowISO(), verify_code);
+    const u = selUserByHandle.get(handle);
+    sign(res, { id:u.id, handle:u.handle });
+    return res.json({ ok:true, user:safeUser(u), verify_code });
+  }catch(e){
+    if(String(e.message).includes("UNIQUE")) return res.status(409).json({ error:"exists" });
+    console.error(e); return res.status(500).json({ error:"server" });
+  }
 });
 
-/* actions */
-document.getElementById('btnSignup').onclick = async ()=>{
+// --- auth: verify email
+app.post("/api/auth/verify-email", authed, (req,res)=>{
+  const { code } = req.body||{};
+  const user = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+  if(!user) return res.status(404).json({ error:"no_user" });
+  if(!code || code !== user.verify_code) return res.status(400).json({ error:"bad_code" });
+  db.prepare("UPDATE users SET email_verified=1, verify_code=NULL WHERE id=?").run(user.id);
+  const u = selUserById.get(user.id);
+  return res.json({ ok:true, user:safeUser(u) });
+});
+
+// --- auth: login
+app.post("/api/auth/login", (req,res)=>{
+  const { handleOrEmail, password } = req.body||{};
+  const u = selAuthByHandleOrEmail.get(handleOrEmail, (handleOrEmail||"").toLowerCase());
+  if(!u) return res.status(404).json({ error:"no_user" });
+  if(!bcrypt.compareSync(password||"", u.pass_hash)) return res.status(401).json({ error:"bad_password" });
+  sign(res, { id:u.id, handle:u.handle });
+  return res.json({ ok:true, user:safeUser(u) });
+});
+
+// --- auth: logout
+app.post("/api/auth/logout", (req,res)=>{ clear(res); res.json({ ok:true }); });
+
+// --- auth: me
+app.get("/api/auth/me", authed, (req,res)=>{
+  const u = selUserById.get(req.user.id);
+  return res.json({ ok:true, user:safeUser(u) });
+});
+
+// --- password reset (demo)
+app.post("/api/auth/send-reset", (req,res)=>{
+  const { email } = req.body||{};
+  const u = db.prepare("SELECT * FROM users WHERE email=?").get((email||"").toLowerCase());
+  if(!u) return res.json({ ok:true });
+  const code = nanoid(6).toUpperCase();
+  db.prepare("UPDATE users SET reset_code=? WHERE id=?").run(code, u.id);
+  return res.json({ ok:true, reset_code: code }); // email in prod
+});
+app.post("/api/auth/apply-reset", (req,res)=>{
+  const { email, code, newPassword } = req.body||{};
+  const u = db.prepare("SELECT * FROM users WHERE email=?").get((email||"").toLowerCase());
+  if(!u || !code || code !== u.reset_code) return res.status(400).json({ error:"bad_code" });
+  if((newPassword||"").length < 8) return res.status(400).json({ error:"weak_password" });
+  db.prepare("UPDATE users SET pass_hash=?, reset_code=NULL WHERE id=?").run(bcrypt.hashSync(newPassword,10), u.id);
+  return res.json({ ok:true });
+});
+
+// --- profile
+app.put("/api/profile", authed, (req,res)=>{
+  const { displayName, bio, avatarUrl, coverUrl } = req.body||{};
+  db.prepare("UPDATE users SET display_name=?, bio=?, avatar_url=?, cover_url=? WHERE id=?")
+    .run(displayName||"Me", bio||"", avatarUrl||"", coverUrl||"", req.user.id);
+  const u = selUserById.get(req.user.id);
+  return res.json({ ok:true, user:safeUser(u) });
+});
+app.get("/api/users/:handle", (req,res)=>{
+  const u = selUserByHandle.get(req.params.handle);
+  if(!u) return res.status(404).json({ error:"no_user" });
+  res.json({ ok:true, user:safeUser(u) });
+});
+
+// --- follow
+app.post("/api/follow/:handle", authed, (req,res)=>{
+  const target = selUserByHandle.get(req.params.handle);
+  if(!target) return res.status(404).json({ error:"no_user" });
+  if(target.id === req.user.id) return res.status(400).json({ error:"self" });
   try{
-    const r = await api('/api/auth/register', { method:'POST', body: JSON.stringify({
-      handle: document.getElementById('suHandle').value.trim(),
-      email:  document.getElementById('suEmail').value.trim(),
-      password: document.getElementById('suPass').value
-    })});
-    document.getElementById('verifyHint').textContent = 'Your verification code (demo): ' + (r.verify_code||'(check email)');
-    toast('Account created — verify your email');
-  }catch(e){ alert(e.message); }
-};
-document.getElementById('btnVerify').onclick = async ()=>{
-  try{
-    await api('/api/auth/verify-email', { method:'POST', body: JSON.stringify({ code: document.getElementById('veCode').value.trim() })});
-    toast('Email verified');
-  }catch(e){ alert(e.message); }
-};
-document.getElementById('btnLogin').onclick = async ()=>{
-  try{
-    await api('/api/auth/login', { method:'POST', body: JSON.stringify({
-      handleOrEmail: document.getElementById('liUser').value.trim(),
-      password: document.getElementById('liPass').value
-    })});
-    toast('Welcome back'); setTimeout(()=>location.href='feed.html',500);
-  }catch(e){ alert(e.message); }
-};
-document.getElementById('btnSendReset').onclick = async ()=>{
-  try{
-    const r = await api('/api/auth/send-reset', { method:'POST', body: JSON.stringify({ email: document.getElementById('fgEmail').value.trim() })});
-    toast('Reset sent (demo code returned in response console)'); console.log('Reset code', r.reset_code);
-  }catch(e){ alert(e.message); }
-};
-document.getElementById('btnApplyReset').onclick = async ()=>{
-  try{
-    await api('/api/auth/apply-reset', { method:'POST', body: JSON.stringify({
-      email: document.getElementById('fgEmail').value.trim(),
-      code:  document.getElementById('fgCode').value.trim(),
-      newPassword: document.getElementById('fgNew').value
-    })});
-    toast('Password updated — log in now');
-  }catch(e){ alert(e.message); }
-};
-</script>
-</body>
-</html>
+    db.prepare("INSERT INTO follows(follower_id,followee_id) VALUES(?,?)").run(req.user.id, target.id);
+    return res.json({ ok:true, following:true });
+  }catch(e){
+    db.prepare("DELETE FROM follows WHERE follower_id=? AND followee_id=?").run(req.user.id, target.id);
+    return res.json({ ok:true, following:false });
+  }
+});
+
+// --- posts
+app.get("/api/posts", (req,res)=>{
+  const rows = db.prepare(`
+    SELECT p.id, p.body, p.created_at,
+           u.handle, u.display_name, u.avatar_url
+    FROM posts p JOIN users u ON u.id=p.user_id
+    ORDER BY p.id DESC LIMIT 200
+  `).all();
+  res.json({ ok:true, items: rows });
+});
+app.post("/api/posts", authed, (req,res)=>{
+  const { body } = req.body||{};
+  if(!body || !body.trim()) return res.status(400).json({ error:"empty" });
+  db.prepare("INSERT INTO posts(user_id,body,created_at) VALUES(?,?,?)").run(req.user.id, body.trim(), nowISO());
+  res.json({ ok:true });
+});
+
+// --- start
+app.listen(PORT, ()=>console.log(`Chatternet API on :${PORT}`));
