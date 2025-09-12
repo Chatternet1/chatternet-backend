@@ -1,101 +1,166 @@
-// Chatternet backend – simple Express server
-// Serves /public pages, /assets (messenger/common), and small utility APIs.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Chatternet — Sign in</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{ --brand:#3498db; --ink:#0f172a; --bg:#f5f7fb; --card:#fff; }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif}
+  .wrap{max-width:960px;margin:30px auto;padding:0 14px}
+  .card{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:16px}
+  .tabs{display:flex;gap:8px;margin-bottom:10px}
+  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;font-weight:700;cursor:pointer}
+  .tab.active{background:#e9f2ff;border-color:#cfe1ff}
+  input,button{font:inherit} input{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>*{flex:1 1 auto}
+  .hint{font-size:12px;color:#475569}
+  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;border-radius:10px;padding:10px 14px;opacity:0;transition:opacity .2s}
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" data-pane="login">Log in</div>
+      <div class="tab" data-pane="signup">Sign up</div>
+      <div class="tab" data-pane="verify">Verify email</div>
+      <div class="tab" data-pane="forgot">Forgot password</div>
+    </div>
 
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const fs = require('fs');
+    <!-- login -->
+    <section id="pane-login">
+      <div class="row">
+        <input id="liUser" placeholder="Handle or email">
+        <input id="liPass" type="password" placeholder="Password">
+      </div>
+      <div class="row" style="margin-top:8px;justify-content:flex-end">
+        <button class="btn primary" id="btnLogin">Log in</button>
+      </div>
+    </section>
 
-const app = express();
+    <!-- signup -->
+    <section id="pane-signup" style="display:none">
+      <div class="row">
+        <input id="suHandle" placeholder="Handle (letters/numbers/underscore)">
+        <input id="suEmail" type="email" placeholder="Email">
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="suPass" type="password" placeholder="Password (8+ chars)">
+      </div>
+      <div class="row" style="margin-top:8px;justify-content:flex-end">
+        <button class="btn primary" id="btnSignup">Create account</button>
+      </div>
+      <div class="hint" id="verifyHint" style="margin-top:6px"></div>
+    </section>
 
-// ---------- Basics ----------
-app.use(cors({ origin: true, credentials: false }));
-app.use(express.json({ limit: '1mb' }));
+    <!-- verify -->
+    <section id="pane-verify" style="display:none">
+      <div class="row">
+        <input id="veCode" placeholder="Verification code (6 chars)">
+      </div>
+      <div class="row" style="margin-top:8px;justify-content:flex-end">
+        <button class="btn primary" id="btnVerify">Verify</button>
+      </div>
+      <div class="hint">If you just signed up, the demo API returns the code to you (in real life this would be emailed).</div>
+    </section>
 
-// Helpful cache headers for static files
-const staticOptsAssets = { etag: true, lastModified: true, maxAge: '1h', fallthrough: true };
-const staticOptsPublic = { etag: true, lastModified: true, maxAge: '1m', fallthrough: true };
+    <!-- forgot -->
+    <section id="pane-forgot" style="display:none">
+      <div class="row">
+        <input id="fgEmail" type="email" placeholder="Your account email">
+      </div>
+      <div class="row" style="margin-top:8px;justify-content:flex-end">
+        <button class="btn" id="btnSendReset">Send reset code</button>
+      </div>
+      <hr>
+      <div class="row">
+        <input id="fgCode" placeholder="Reset code">
+        <input id="fgNew" type="password" placeholder="New password (8+)">
+      </div>
+      <div class="row" style="margin-top:8px;justify-content:flex-end">
+        <button class="btn primary" id="btnApplyReset">Apply reset</button>
+      </div>
+    </section>
+  </div>
+</div>
 
-// Serve assets (e.g., /assets/messenger.js)
-app.use('/assets', express.static(path.join(__dirname, 'assets'), staticOptsAssets));
+<div id="toast"></div>
 
-// Serve public pages (e.g., /public/settings.html mapped at /settings.html)
-app.use('/', express.static(path.join(__dirname, 'public'), staticOptsPublic));
+<script>
+/* simple toast */
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.className='';void t.offsetWidth;t.className='show';setTimeout(()=>t.className='',1200);}
 
-// ---------- Tiny APIs ----------
-// Health check
-app.get(['/ping','/healthz'], (req, res) => {
-  res.json({
-    ok: true,
-    service: 'chatternet-backend',
-    time: new Date().toISOString(),
-    node: process.version
+/* backend base (same logic as common.js) */
+(function(){ let base=localStorage.getItem('ct_api_base')||window.CT_API_BASE||''; if(!base){ const guess=location.origin.replace(/\/+$/,''); base=guess.includes('localhost')? 'http://localhost:8080' : guess; localStorage.setItem('ct_api_base',base);} window.CT_API_BASE=base;})();
+
+async function api(path,opts={}){
+  const res = await fetch((window.CT_API_BASE||'').replace(/\/+$/,'') + path, {
+    credentials: 'include',
+    headers: { 'Content-Type':'application/json', ...(opts.headers||{}) },
+    ...opts
   });
+  const text = await res.text();
+  let json = {}; try{ json = text? JSON.parse(text):{}; }catch{ json = { raw:text }; }
+  if(!res.ok) throw new Error(json.error||res.statusText);
+  return json;
+}
+
+/* tabs */
+document.querySelector('.tabs').addEventListener('click',e=>{
+  const tab=e.target.closest('.tab'); if(!tab) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t===tab));
+  const id=tab.dataset.pane;
+  ['login','signup','verify','forgot'].forEach(p=>{ document.getElementById('pane-'+p).style.display = (p===id)?'block':'none'; });
 });
 
-// Diagnostics (lightweight, safe to expose)
-app.get('/api/diagnostics', (req, res) => {
-  // Minimal info; no secrets
-  const files = [];
-  try {
-    const pub = path.join(__dirname, 'public');
-    fs.readdirSync(pub).forEach(f => files.push(f));
-  } catch {}
-  res.json({
-    ok: true,
-    env: {
-      PORT: process.env.PORT || null,
-    },
-    pages: files,
-    assets: ['common.js','messenger.js']
-  });
-});
-
-// Simple echo endpoint (handy for testing from the front-end)
-app.post('/api/echo', (req, res) => {
-  const { text = '' } = req.body || {};
-  res.json({ ok: true, echo: String(text), time: new Date().toISOString() });
-});
-
-// ---------- HTML convenience routes (optional) ----------
-const htmlFiles = [
-  'feed.html','friends.html','groups.html','profile.html','settings.html','media.html','messages.html'
-];
-htmlFiles.forEach(name => {
-  app.get('/' + name, (req, res, next) => {
-    const fp = path.join(__dirname, 'public', name);
-    if (fs.existsSync(fp)) return res.sendFile(fp);
-    next();
-  });
-});
-
-// ---------- Fallback ----------
-app.use((req, res, next) => {
-  // If request looks like an html page but not found, show a helpful 404.
-  if (req.accepts('html')) {
-    return res
-      .status(404)
-      .send(
-        `<!doctype html><meta charset="utf-8"/>
-         <title>Not Found</title>
-         <style>body{font-family:Segoe UI,Arial,sans-serif;padding:24px;color:#0f172a;background:#f5f7fb}
-         .card{background:#fff;border:1px solid #e6eaf2;border-radius:12px;padding:16px;max-width:700px}
-         a{color:#2563eb;text-decoration:none}</style>
-         <div class="card">
-           <h2>404 — Page not found</h2>
-           <p>We couldn't find <code>${req.path}</code>.</p>
-           <p>Try one of these pages:</p>
-           <ul>${htmlFiles.map(f=>`<li><a href="/${f}">${f}</a></li>`).join('')}</ul>
-           <p>Health: <a href="/ping">/ping</a> • Diagnostics: <a href="/api/diagnostics">/api/diagnostics</a></p>
-         </div>`
-      );
-  }
-  next();
-});
-
-// ---------- Start ----------
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Health: http://localhost:${PORT}/ping`);
-});
+/* actions */
+document.getElementById('btnSignup').onclick = async ()=>{
+  try{
+    const r = await api('/api/auth/register', { method:'POST', body: JSON.stringify({
+      handle: document.getElementById('suHandle').value.trim(),
+      email:  document.getElementById('suEmail').value.trim(),
+      password: document.getElementById('suPass').value
+    })});
+    document.getElementById('verifyHint').textContent = 'Your verification code (demo): ' + (r.verify_code||'(check email)');
+    toast('Account created — verify your email');
+  }catch(e){ alert(e.message); }
+};
+document.getElementById('btnVerify').onclick = async ()=>{
+  try{
+    await api('/api/auth/verify-email', { method:'POST', body: JSON.stringify({ code: document.getElementById('veCode').value.trim() })});
+    toast('Email verified');
+  }catch(e){ alert(e.message); }
+};
+document.getElementById('btnLogin').onclick = async ()=>{
+  try{
+    await api('/api/auth/login', { method:'POST', body: JSON.stringify({
+      handleOrEmail: document.getElementById('liUser').value.trim(),
+      password: document.getElementById('liPass').value
+    })});
+    toast('Welcome back'); setTimeout(()=>location.href='feed.html',500);
+  }catch(e){ alert(e.message); }
+};
+document.getElementById('btnSendReset').onclick = async ()=>{
+  try{
+    const r = await api('/api/auth/send-reset', { method:'POST', body: JSON.stringify({ email: document.getElementById('fgEmail').value.trim() })});
+    toast('Reset sent (demo code returned in response console)'); console.log('Reset code', r.reset_code);
+  }catch(e){ alert(e.message); }
+};
+document.getElementById('btnApplyReset').onclick = async ()=>{
+  try{
+    await api('/api/auth/apply-reset', { method:'POST', body: JSON.stringify({
+      email: document.getElementById('fgEmail').value.trim(),
+      code:  document.getElementById('fgCode').value.trim(),
+      newPassword: document.getElementById('fgNew').value
+    })});
+    toast('Password updated — log in now');
+  }catch(e){ alert(e.message); }
+};
+</script>
+</body>
+</html>
