@@ -6,13 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
-    --brand:#3498db;--brand-2:#2980b9;--ink:#0f172a;--bg:#f5f7fb;--card:#fff;--muted:#6b7280;--line:#e6eaf2;
-    --ct-bluebar-top:120px;--ct-bluebar-h:58px;--ct-nav-h:44px;--ct-gap:8px;
+    --brand:#3498db; --brand-2:#2980b9; --ink:#0f172a; --bg:#f5f7fb; --card:#fff; --muted:#667085; --line:#e6eaf2;
+    --ct-bluebar-top:120px; --ct-bluebar-h:58px; --ct-nav-h:44px; --ct-gap:8px;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif;height:auto;overflow-x:hidden;overflow-y:visible}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif;overflow-x:hidden;overflow-y:visible}
 
-  /* Blue header */
+  /* Blue header (fixed under Weebly header) */
   .top-bar{
     position:fixed;left:0;right:0;top:var(--ct-bluebar-top);z-index:70;
     display:flex;justify-content:space-between;align-items:center;
@@ -21,11 +21,11 @@
   }
   .top-bar h2{margin:0;font-weight:800}
   .act{display:flex;gap:8px;align-items:center}
-  .act button{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700}
-  .act button:hover{background:rgba(255,255,255,.22)}
+  .act .btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700}
+  .act .btn:hover{background:rgba(255,255,255,.22)}
   .act img{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.55);object-fit:cover}
 
-  /* App nav */
+  /* App nav (pills) */
   .nav{
     position:fixed;left:0;right:0;top:calc(var(--ct-bluebar-top) + var(--ct-bluebar-h) + var(--ct-gap));
     z-index:65;background:#e9f2ff;border-bottom:1px solid #d7e6ff;
@@ -35,13 +35,15 @@
   .nav a[aria-current="page"]{background:#e8f1ff;border-color:#cfe0ff}
   .nav a:hover{background:#eef4ff}
 
+  /* Spacer so content starts below fixed bars */
   .ct-spacer{height:calc(var(--ct-bluebar-h) + var(--ct-nav-h) + var(--ct-gap));}
 
+  /* Page */
   .wrap{max-width:1120px;margin:0 auto;padding:0 12px 28px}
   .row{display:grid;grid-template-columns:340px 1fr;gap:14px}
   @media (max-width:980px){ .row{grid-template-columns:1fr} }
 
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:12px 0 18px}
+  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
   .title{font-weight:800;margin:0 0 8px;font-size:22px}
   .muted{color:var(--muted)}
   .btn{padding:10px 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer}
@@ -50,51 +52,50 @@
   input,textarea,select{width:100%;padding:10px 12px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
   textarea{min-height:120px;resize:vertical}
 
+  /* Drop target */
   .drop{display:grid;place-items:center;height:120px;border:1px dashed #d7d7d7;border-radius:10px;background:#fafbff;color:#6b7280;font-size:13px}
   .drop.drag{background:#eef2ff;border-color:#bfdbfe}
 
+  /* Blog list */
   .list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
   @media (max-width:980px){ .list{grid-template-columns:1fr} }
   .post{border:1px solid #ececec;background:#fff;border-radius:12px;overflow:hidden}
   .cover{width:100%;height:160px;object-fit:cover;background:#f1f5f9}
   .px{padding:10px 12px}
   .meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#334155}
-  .b-ava{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#e5e7eb;border:1px solid #d1d5e1;flex:0 0 28px;display:block}
-  .b-ava.sm{width:26px;height:26px}
+  .b-ava{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#e5e7eb;border:1px solid #d1d5e1;flex:0 0 28px}
   .line{display:flex;align-items:center;gap:6px;color:#64748b;font-size:12px}
+
+  /* Heart + comments */
   .heart{display:inline-flex;align-items:center;gap:6px}
   .heart button{width:34px;height:34px;border-radius:9px;border:1px solid #e6e8f2;background:#f6f7fb;cursor:pointer}
   .heart button.active{background:#ffe7ed;border-color:#ffd3de}
   .heart svg{width:18px;height:18px;fill:none;stroke:#555;stroke-width:2}
   .heart button.active svg{fill:#ff3b5c;stroke:#ff3b5c}
-
   .comments{border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px}
   .comment{background:#fff;border:1px solid #eee;border-radius:10px;padding:8px;display:flex;gap:8px;align-items:flex-start;margin:6px 0}
   .c-body{flex:1}
   .c-head{display:flex;align-items:center;gap:8px;font-size:12px;color:#475569;margin-bottom:4px}
   .c-name{font-weight:700}
-  .c-new{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
   .c-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   @media (max-width:700px){ .c-two{grid-template-columns:1fr} }
-  .clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-  .clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-
-  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500}
-  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
+  .comments .btn{padding:6px 10px;border-radius:8px;font-size:13px}
 </style>
 </head>
 <body>
 
+<!-- Blue header -->
 <header class="top-bar" id="topBar">
   <h2>Blogs</h2>
   <div class="act">
-    <button id="btnNotif">Notifications</button>
-    <button id="btnInbox">Inbox</button>
-    <button id="btnMsgs">Messages</button>
+    <button class="btn" id="btnNotif">Notifications</button>
+    <button class="btn" id="btnInbox">Inbox</button>
+    <button class="btn" id="btnMsgs">Messages</button>
     <img id="myProfile" alt="Me" />
   </div>
 </header>
 
+<!-- App nav (pills) -->
 <nav class="nav" id="appNav">
   <a href="index.html">Home</a>
   <a href="feed.html">Feed</a>
@@ -112,6 +113,7 @@
   <a href="settings.html">Settings</a>
 </nav>
 
+<!-- Spacer under fixed bars -->
 <div class="ct-spacer" id="ctSpacer"></div>
 
 <div class="wrap">
@@ -147,24 +149,28 @@
   </div>
 </div>
 
-<!-- Notif / Inbox -->
-<div class="modalbg" id="notifBg"><div class="sheet">
-  <h3 class="title" style="margin:0 0 10px">Notifications</h3>
-  <div id="notifList"></div>
-  <div style="display:flex;gap:8px;margin-top:8px">
-    <button id="clearNotif" class="btn primary">Clear</button>
-    <button id="closeNotif" class="btn">Close</button>
+<!-- Notifications / Inbox -->
+<div id="notifBg" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500">
+  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+    <h3 class="title" style="margin:0 0 10px">Notifications</h3>
+    <div id="notifList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="clearNotif" class="btn primary">Clear</button>
+      <button id="closeNotif" class="btn">Close</button>
+    </div>
   </div>
-</div></div>
-<div class="modalbg" id="inboxBg"><div class="sheet">
-  <h3 class="title" style="margin:0 0 10px">Inbox</h3>
-  <div id="inboxList"></div>
-  <div style="display:flex;gap:8px;margin-top:8px">
-    <button id="closeInbox" class="btn">Close</button>
+</div>
+<div id="inboxBg" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500">
+  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+    <h3 class="title" style="margin:0 0 10px">Inbox</h3>
+    <div id="inboxList"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="closeInbox" class="btn">Close</button>
+    </div>
   </div>
-</div></div>
+</div>
 
-<!-- Positioning: compute offsets under Weebly header -->
+<!-- Keep bars just under Weebly header -->
 <script>
 (function(){
   const EXCLUDE=new Set(['topBar','appNav','ctSpacer']);
@@ -186,12 +192,12 @@
     const sp=document.getElementById('ctSpacer'); if(sp){ sp.style.height=`calc(var(--ct-bluebar-h) + ${navH}px + var(--ct-gap))`; }
   }
   apply(); window.addEventListener('load',apply,{once:true});
-  window.addEventListener('resize',()=>{ clearTimeout(window.__ct_b_rz); window.__ct_b_rz=setTimeout(apply,120); });
+  window.addEventListener('resize',()=>{ clearTimeout(window.__ct_blogs_rz); window.__ct_blogs_rz=setTimeout(apply,120); });
   setTimeout(apply,250); setTimeout(apply,900);
 })();
 </script>
 
-<!-- Messenger loader (messages-only) -->
+<!-- Messenger overlay (messages-only) -->
 <script>
 (function(){
   function tryLoad(urls,done){(function next(i){if(i>=urls.length){done(false);return}var s=document.createElement('script');s.src=urls[i];s.async=true;s.onload=function(){done(true)};s.onerror=function(){s.remove();next(i+1)};(document.head||document.documentElement).appendChild(s)})(0)}
@@ -199,7 +205,8 @@
   var candidates=[base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'];
   tryLoad(candidates,function(ok){
     if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
-      window.ctOpen=function(){window.ChatternetMessenger.open(); onlyMessages();};
+      window.ctOpen=function(){ window.ChatternetMessenger.open(); onlyMessages(); };
+      window.ctMessage=function(n){ window.ChatternetMessenger.open(n||""); onlyMessages(); };
       function onlyMessages(){
         try{
           const root=document.querySelector('#ctMessengerRoot,.ct-messenger,[data-ct="messenger"]'); if(!root) return;
@@ -222,6 +229,7 @@ const nowISO=()=>new Date().toISOString();
 const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 const LS={ USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1', BLOGS:'ct_blogs_v1' };
 
+/* ===== avatar utilities ===== */
 const FALLBACK_AVA = "data:image/svg+xml;utf8,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect width='64' height='64' fill='#e5e7eb'/><circle cx='32' cy='24' r='12' fill='#cbd5e1'/><rect x='16' y='42' width='32' height='14' rx='7' fill='#cbd5e1'/></svg>`);
 function getMeDisplayName(){ const p=load(LS.PROFILE,{})['Me']; return p?.displayName?.trim()||'Me'; }
 function getAvatarFor(name){
@@ -234,24 +242,25 @@ function getAvatarFor(name){
 function ensureAva(img, name){
   if(!img) return;
   img.referrerPolicy='no-referrer'; img.loading='lazy'; img.decoding='async';
-  img.src=getAvatarFor(name||'Me'); img.onerror=()=>{img.onerror=null; img.src=FALLBACK_AVA;};
+  img.src=getAvatarFor(name||'Me'); img.onerror=()=>{ img.onerror=null; img.src=FALLBACK_AVA; };
 }
 
-/* header wiring */
+/* ===== header wiring ===== */
 (function header(){
   const img=$('#myProfile'); if(img){ ensureAva(img,'Me'); img.alt=getMeDisplayName(); img.onclick=()=>location.href='profile.html'; }
-  $('#btnMsgs')?.addEventListener('click',e=>{ e.preventDefault(); if(window.ctOpen) ctOpen(); });
+  $('#btnMsgs')?.addEventListener('click',e=>{ e.preventDefault(); if(window.ctOpen) ctOpen(); else if(window.ChatternetMessenger?.open) window.ChatternetMessenger.open(); else location.href='messages.html'; });
+
   const notifBg=$('#notifBg'), inboxBg=$('#inboxBg');
-  const rNotif=()=>{ const arr=load(LS.NOTIF,[]); $('#notifList').innerHTML=arr.length?arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; };
-  const rInbox=()=>{ const arr=load(LS.INBOX,[]); $('#inboxList').innerHTML=arr.length?arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; };
-  $('#btnNotif').onclick=()=>{ rNotif(); notifBg.style.display='flex'; };
-  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rNotif(); };
-  $('#closeNotif').onclick=()=>{ notifBg.style.display='none'; };
-  $('#btnInbox').onclick=()=>{ rInbox(); inboxBg.style.display='flex'; };
-  $('#closeInbox').onclick=()=>{ inboxBg.style.display='none'; };
+  const rNotif=()=>{ const arr=load(LS.NOTIF,[]); const box=document.getElementById('notifList'); if(box) box.innerHTML=arr.length?arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; };
+  const rInbox=()=>{ const arr=load(LS.INBOX,[]); const box=document.getElementById('inboxList'); if(box) box.innerHTML=arr.length?arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; };
+  document.getElementById('btnNotif').onclick=()=>{ rNotif(); notifBg.style.display='flex'; };
+  document.getElementById('clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rNotif(); };
+  document.getElementById('closeNotif').onclick=()=>{ notifBg.style.display='none'; };
+  document.getElementById('btnInbox').onclick=()=>{ rInbox(); inboxBg.style.display='flex'; };
+  document.getElementById('closeInbox').onclick=()=>{ inboxBg.style.display='none'; };
 })();
 
-/* seed users once */
+/* ===== seed users once ===== */
 (function seedUsers(){
   let users=load(LS.USERS,null);
   if(!users){ users=[{name:'Me',avatar:`https://i.pravatar.cc/100?u=me`}]; }
@@ -259,103 +268,120 @@ function ensureAva(img, name){
   save(LS.USERS,users);
 })();
 
-/* cover drag/drop + choose */
+/* ===== cover drag/drop + choose ===== */
 const drop=$('#dropZone'), fileInp=$('#fileInp'); let coverDataUrl='';
-$('#chooseFile').onclick=()=>fileInp.click();
+document.getElementById('chooseFile').onclick=()=>fileInp.click();
 fileInp.onchange=async e=>{ const f=e.target.files?.[0]; if(!f) return; const url=await fileToDataURL(f); coverDataUrl=url; visualizeDrop(true); };
 drop.addEventListener('click',()=>fileInp.click());
 drop.addEventListener('dragover',e=>{e.preventDefault(); drop.classList.add('drag');});
 drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
 drop.addEventListener('drop',async e=>{ e.preventDefault(); drop.classList.remove('drag'); const f=e.dataTransfer.files?.[0]; if(!f) return; const url=await fileToDataURL(f); coverDataUrl=url; visualizeDrop(true); });
-$('#removeCover').onclick=()=>{ coverDataUrl=''; $('#bCoverUrl').value=''; visualizeDrop(false); };
+document.getElementById('removeCover').onclick=()=>{ coverDataUrl=''; document.getElementById('bCoverUrl').value=''; visualizeDrop(false); };
 function visualizeDrop(has){ drop.textContent = has ? 'Image selected ✓ (will be used)' : 'Drop an image here or click Upload'; }
 function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsDataURL(file); }); }
 
-/* blogs state */
-let BLOGS=[];
-const API_BASE=(window.CT_API_BASE||localStorage.getItem('ct_api_base')||'/api').replace(/\/+$/,'');
-async function api(path,opts={}){ const r=await fetch(API_BASE+path,{credentials:'include',headers:{'Content-Type':'application/json'},...opts}); const t=await r.text(); try{const j=t?JSON.parse(t):{}; if(!r.ok) throw new Error(j.error||t||'Request failed'); return j;}catch{ if(!r.ok) throw new Error(t||'Request failed'); return {}; }}
-async function fetchBlogs(){ try{ BLOGS=await api('/blogs'); save(LS.BLOGS,BLOGS); }catch{ BLOGS=load(LS.BLOGS,[])||[]; } }
-async function createBlogRemote(p){ return api('/blogs',{method:'POST',body:JSON.stringify(p)}); }
+/* ===== blogs state ===== */
+let BLOGS=load(LS.BLOGS,[]);
+function saveBlogs(){ save(LS.BLOGS,BLOGS); }
 
-/* render list (with comments) */
+/* ===== render list (with comments) ===== */
 function render(){
-  const list=$('#list'), empty=$('#empty'); const q=($('#search').value||'').toLowerCase();
+  const list=document.getElementById('list'), empty=document.getElementById('empty'); const q=(document.getElementById('search').value||'').toLowerCase();
   const items=[...BLOGS].filter(b=>!q || (b.title||'').toLowerCase().includes(q) || (b.authorName||'').toLowerCase().includes(q))
     .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
-  list.innerHTML=''; if(!items.length){ empty.style.display='block'; return; } empty.style.display='none';
+  list.innerHTML='';
+  if(!items.length){ empty.style.display='block'; return; }
+  empty.style.display='none';
   items.forEach(b=>{
     const el=document.createElement('div'); el.className='post';
-    const cover=b.cover||b.coverUrl||'';
-    el.innerHTML=`
+    const cover = b.cover || b.coverUrl || '';
+    el.innerHTML = `
       <img class="cover" alt="" ${cover?`src="${esc(cover)}"`:''}>
       <div class="px">
-        <div class="clamp-1" style="font-weight:800">${esc(b.title||'(untitled)')}</div>
+        <div style="font-weight:800" class="clamp-1">${esc(b.title||'(untitled)')}</div>
         <div class="meta" style="margin:6px 0">
           <img class="b-ava" alt="${esc(b.authorName||'Me')}" referrerpolicy="no-referrer">
-          <div style="display:flex;flex-direction:column">
+          <div>
             <div class="clamp-1">${esc(b.authorName||'Me')}</div>
             <div class="line"><span>${new Date(b.createdAt||nowISO()).toLocaleString()}</span></div>
           </div>
         </div>
-        <div class="clamp-2" style="margin:6px 0 8px">${esc(b.content||'')}</div>
+        <div style="margin:6px 0 8px;color:#334155">${esc(b.content||'')}</div>
+
         <div class="heart">
           <button type="button" aria-label="like"><svg viewBox="0 0 24 24"><path d="M12 21s-6.716-4.27-9.167-7.38C.63 11.154 1.57 7.9 3.985 6.54c1.75-1.01 4.005-.63 5.348.89L12 9.2l2.667-1.77c1.343-1.52 3.598-1.9 5.348-.89 2.414 1.36 3.354 4.614 1.152 7.08C18.716 16.73 12 21 12 21z"/></svg></button>
           <span class="muted"><span class="cnt">${(b.likes||[]).length||0}</span></span>
         </div>
+
         <div class="comments">
           <div class="muted" style="margin-bottom:6px">${(b.comments||[]).length||0} comment${(b.comments||[]).length===1?'':'s'}</div>
           <div class="c-list"></div>
-          <div class="c-two">
-            <input class="c-name" placeholder="Your name (defaults to Me)">
+          <div class="c-two" style="margin-top:6px">
+            <input class="c-name" placeholder="Your name (blank = ${esc(getMeDisplayName())})">
             <input class="c-text" placeholder="Write a comment…">
           </div>
-          <div class="c-new">
-            <div class="muted">Tip: Leave name blank to post as <strong>${esc(getMeDisplayName())}</strong>.</div>
+          <div style="display:flex;justify-content:flex-end;margin-top:6px">
             <button class="btn primary c-add">Comment</button>
           </div>
         </div>
       </div>`;
+    // avatar
     ensureAva(el.querySelector('.b-ava'), b.authorName||'Me');
-    const btn=el.querySelector('button'); const cnt=el.querySelector('.cnt');
-    btn.classList.toggle('active',(b.likes||[]).includes('Me'));
-    btn.onclick=()=>{ const set=new Set(b.likes||[]); set.has('Me')?set.delete('Me'):set.add('Me'); b.likes=[...set]; cnt.textContent=String(set.size); save(LS.BLOGS,BLOGS); };
-    const cList=el.querySelector('.c-list');
-    function draw(){ cList.innerHTML=''; (b.comments||[]).forEach(c=>{ const row=document.createElement('div'); row.className='comment';
-      row.innerHTML=`<img class="b-ava sm" alt="${esc(c.userName||'Me')}"><div class="c-body"><div class="c-head"><span class="c-name">${esc(c.userName||'Me')}</span> • <span>${new Date(c.createdAt||nowISO()).toLocaleString()}</span></div><div>${esc(c.text||'')}</div></div>`;
-      ensureAva(row.querySelector('img'), c.userName||'Me'); cList.appendChild(row); }); }
-    draw();
-    const addBtn=el.querySelector('.c-add'), nameInp=el.querySelector('.c-name'), textInp=el.querySelector('.c-text');
-    addBtn.onclick=()=>{ const nm=(nameInp.value||'').trim()||getMeDisplayName(); const tx=(textInp.value||'').trim(); if(!tx){ alert('Write a comment.'); return; }
-      (b.comments ||= []).push({ id:uid('c'), userName:nm, text:tx, createdAt:nowISO(), likes:[] }); save(LS.BLOGS,BLOGS);
-      try{ const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text:`${nm} commented on “${b.title||'blog'}”.`,time:nowISO()}); save(LS.NOTIF,arr);}catch{}
-      textInp.value=''; nameInp.value=''; draw(); };
+
+    // like
+    const btn = el.querySelector('.heart button'); const cnt = el.querySelector('.cnt');
+    btn.classList.toggle('active', (b.likes||[]).includes('Me'));
+    btn.onclick=()=>{ const set=new Set(b.likes||[]); set.has('Me')?set.delete('Me'):set.add('Me'); b.likes=Array.from(set); cnt.textContent=String(set.size); saveBlogs(); };
+
+    // comments
+    const cList = el.querySelector('.c-list');
+    function renderComments(){
+      cList.innerHTML='';
+      (b.comments||[]).forEach(c=>{
+        const row=document.createElement('div'); row.className='comment';
+        row.innerHTML=`<img class="b-ava" style="width:26px;height:26px" alt="${esc(c.userName||'Me')}"><div class="c-body"><div class="c-head"><span class="c-name">${esc(c.userName||'Me')}</span> • <span>${new Date(c.createdAt||nowISO()).toLocaleString()}</span></div><div>${esc(c.text||'')}</div></div>`;
+        ensureAva(row.querySelector('img'), c.userName||'Me');
+        cList.appendChild(row);
+      });
+    }
+    renderComments();
+    const addBtn = el.querySelector('.c-add');
+    const nameInp = el.querySelector('.c-name');
+    const textInp = el.querySelector('.c-text');
+    addBtn.onclick=()=>{
+      const nm=(nameInp.value||'').trim()||getMeDisplayName();
+      const tx=(textInp.value||'').trim();
+      if(!tx){ alert('Write a comment.'); return; }
+      (b.comments ||= []).push({ id:uid('c'), userName:nm, text:tx, createdAt:nowISO(), likes:[] });
+      saveBlogs();
+      try{
+        const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text:`${nm} commented on “${b.title||'blog'}”.`,time:nowISO()}); save(LS.NOTIF,arr);
+      }catch{}
+      textInp.value=''; nameInp.value='';
+      renderComments();
+    };
+
     list.appendChild(el);
   });
 }
 
-/* publish */
-document.getElementById('postingAs').textContent=getMeDisplayName();
-document.getElementById('publishBtn').onclick=async()=>{
+/* Publish */
+document.getElementById('postingAs').textContent = getMeDisplayName();
+document.getElementById('publishBtn').onclick=()=>{
   const title=document.getElementById('bTitle').value.trim();
   const content=document.getElementById('bBody').value.trim();
   const url=(document.getElementById('bCoverUrl').value||'').trim();
   if(!title && !content){ document.getElementById('postState').textContent='Add a title or content.'; return; }
-  const draft={ title, content, cover: (window.coverDataUrl||'') || url, authorName:'Me', createdAt: nowISO(), likes:[], comments:[] };
-  document.getElementById('postState').textContent='Publishing…';
-  try{ const created=await createBlogRemote(draft); BLOGS.unshift(created); }
-  catch{ draft.id=uid('blog'); BLOGS.unshift(draft); }
-  save(LS.BLOGS,BLOGS); document.getElementById('postState').textContent='Published ✓';
-  document.getElementById('bTitle').value=''; document.getElementById('bBody').value=''; document.getElementById('bCoverUrl').value=''; window.coverDataUrl=''; visualizeDrop(false); render();
+  const draft={ id:uid('blog'), title, content, cover: coverDataUrl || url, authorName:'Me', createdAt: nowISO(), likes:[], comments:[] };
+  document.getElementById('postState').textContent='Published ✓';
+  BLOGS.unshift(draft); saveBlogs();
+  document.getElementById('bTitle').value=''; document.getElementById('bBody').value=''; document.getElementById('bCoverUrl').value=''; coverDataUrl=''; visualizeDrop(false);
+  render();
 };
 document.getElementById('search').addEventListener('input',render);
 
-/* boot */
-(async function(){ try{ await fetchBlogs(); }catch{} render(); })();
-
-/* keep header avatar fresh across tabs */
-window.addEventListener('storage',e=>{ if(e.key===LS.PROFILE){ const img=document.getElementById('myProfile'); if(img) ensureAva(img,'Me'); }});
+/* Boot */
+render();
 </script>
-
 </body>
 </html>
