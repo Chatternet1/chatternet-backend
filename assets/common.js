@@ -1,177 +1,563 @@
-/* Chatternet Common (header helpers + messenger boot)
-   File: public/assets/common.js
-   Default backend base: https://chatternet-backend-1.onrender.com
-*/
-(function(){
-  "use strict";
+/* --- Hard guard against blank page --- */
+(function () {
+  const show = (msg) => {
+    const o = document.getElementById('errOv');
+    const t = document.getElementById('errText');
+    if (!o || !t) return;
+    t.textContent = String(msg || 'Unknown');
+    o.style.display = 'flex';
+  };
+  window.addEventListener('error', (e) =>
+    show(e.error ? (e.error.stack || e.error.message || e.message) : e.message)
+  );
+  window.addEventListener('unhandledrejection', (e) =>
+    show(e.reason && (e.reason.stack || e.reason.message || String(e.reason)))
+  );
+})();
 
-  // ---------- tiny utils ----------
-  var DEFAULT_BASE = "https://chatternet-backend-1.onrender.com";
-  function endTrim(u){ return String(u||"").replace(/\/+$/,""); }
-  function lsGet(k,f){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch(_){ return f; } }
-  function lsSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(_){ } }
-  function esc(s){
-    s = String(s==null?"":s);
-    return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")
-            .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
-            .replace(/'/g,"&#39;");
+/* ===== Core keys & helpers (match your stack) ===== */
+const LS = {
+  USERS: 'ct_users_v3',
+  PROFILE: 'ct_profile_data_v1',
+  ROLES: 'ct_roles_v1',
+  BLOCK: 'ct_blocked_users_v1',
+  NOTIF: 'ct_notifications_v1',
+  INBOX: 'ct_inbox_v1',
+  PRIV: 'ct_privacy_prefs_v1',
+  NOTIFP: 'ct_notify_prefs_v1',
+  DATING: 'ct_dating_posts_v2',
+  GLOBAL: 'ct_global_feed_v1',
+  ARCHIVE: 'ct_removed_content_v1',
+};
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+const load = (k, f) => {
+  try {
+    const v = localStorage.getItem(k);
+    return v ? JSON.parse(v) : f;
+  } catch {
+    return f;
   }
-  function face(n){ return "https://i.pravatar.cc/120?u="+encodeURIComponent(n||"user"); }
+};
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+const nowISO = () => new Date().toISOString();
+const uid = (p = 'id') =>
+  p + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+const esc = (s) =>
+  String(s || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+const face = (n) => `https://i.pravatar.cc/100?u=${encodeURIComponent(n || 'me')}`;
+function addNotif(t) {
+  const a = load(LS.NOTIF, []);
+  a.unshift({ id: uid('n'), text: t, time: nowISO() });
+  save(LS.NOTIF, a);
+}
+function addInbox(t) {
+  const a = load(LS.INBOX, []);
+  a.unshift({ id: uid('m'), text: t, time: nowISO() });
+  save(LS.INBOX, a);
+}
 
-  // ---------- CT namespace ----------
-  var CT = window.CT || (window.CT = {});
-  CT.API_BASE = endTrim(localStorage.getItem("ct_api_base") || CT.API_BASE || DEFAULT_BASE);
+/* ===== Seed users if missing ===== */
+const DEMO = [
+  'Grace Lee',
+  'Liam Adams',
+  'Ava Morgan',
+  'Noah Walker',
+  'Sophia Turner',
+  'Mason Hill',
+  'Emma Davis',
+  'Ethan Brooks',
+  'Olivia Perez',
+  'Logan Price',
+  'Mia Carter',
+  'Lucas Reed',
+  'Chloe Evans',
+  'Henry Scott',
+  'Amelia Ross',
+  'Elijah Gray',
+  'Isabella Wood',
+  'James Hall',
+  'Luna Kelly',
+  'Benjamin Ward',
+  'Aria King',
+  'Michael Reed',
+  'Kate White',
+  'Bill Thomas',
+];
 
-  CT.getApiBase = function(){ return CT.API_BASE; };
-  CT.setApiBase = function(url){
-    var clean = endTrim(url||DEFAULT_BASE);
-    CT.API_BASE = clean;
-    try{ localStorage.setItem("ct_api_base", clean); }catch(_){}
-    return clean;
+(function seed() {
+  let users = load(LS.USERS, null);
+  if (!users || !Array.isArray(users) || users.length < 1) {
+    users = [{ name: 'Me', avatar: face('Me') }];
+    DEMO.forEach((n) => users.push({ name: n, avatar: face(n) }));
+    save(LS.USERS, users);
+  }
+  // Bootstrap admin if none
+  const roles = load(LS.ROLES, {});
+  if (!Object.values(roles).includes('admin')) {
+    roles['Me'] = 'admin';
+    save(LS.ROLES, roles);
+  }
+})();
+
+/* ===== Header & modals ===== */
+(function header() {
+  const meImg = $('#meAvatar');
+  if (meImg) {
+    meImg.src = (load(LS.PROFILE, {}))['Me']?.avatar || face('Me');
+    meImg.onclick = () => {
+      try {
+        localStorage.setItem('ct_profile_view_v1', JSON.stringify({ name: 'Me' }));
+      } catch {}
+      location.href = 'profile.html';
+    };
+  }
+
+  // Messages overlay bubble or fallback
+  $('#btnMsgs')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (window.ctOpen) ctOpen();
+    else location.href = 'messages.html';
+  });
+
+  // Notifications modal
+  const nbg = $('#notifBg'),
+    nlist = $('#notifList');
+  function rN() {
+    const arr = load(LS.NOTIF, []);
+    nlist.innerHTML = arr.length
+      ? arr
+          .map(
+            (n) =>
+              `<div class="item"><div class="title">${new Date(n.time).toLocaleString()}</div><div>${esc(
+                n.text
+              )}</div></div>`
+          )
+          .join('')
+      : '<div class="muted">No notifications.</div>';
+  }
+  $('#btnNotif')?.addEventListener('click', () => {
+    rN();
+    if (nbg) nbg.style.display = 'flex';
+  });
+  $('#clearNotif')?.addEventListener('click', () => {
+    save(LS.NOTIF, []);
+    rN();
+  });
+  $('#closeNotif')?.addEventListener('click', () => {
+    if (nbg) nbg.style.display = 'none';
+  });
+
+  // Inbox modal
+  const ibg = $('#inboxBg'),
+    ilist = $('#inboxList');
+  function rI() {
+    const arr = load(LS.INBOX, []);
+    ilist.innerHTML = arr.length
+      ? arr
+          .map(
+            (n) =>
+              `<div class="item"><div class="title">${new Date(n.time).toLocaleString()}</div><div>${esc(
+                n.text
+              )}</div></div>`
+          )
+          .join('')
+      : '<div class="muted">Inbox empty.</div>';
+  }
+  $('#btnInbox')?.addEventListener('click', () => {
+    rI();
+    if (ibg) ibg.style.display = 'flex';
+  });
+  $('#closeInbox')?.addEventListener('click', () => {
+    if (ibg) ibg.style.display = 'none';
+  });
+})();
+
+/* ===== Permission gate ===== */
+function myRole() {
+  return load(LS.ROLES, {})['Me'] || 'user';
+}
+function ensureAdmin() {
+  if (myRole() !== 'admin') {
+    const g = $('#guard'),
+      a = $('#app');
+    if (g) g.style.display = 'block';
+    if (a) a.style.display = 'none';
+    return false;
+  }
+  return true;
+}
+
+/* ===== Tabs ===== */
+$('#tabs')?.addEventListener('click', (e) => {
+  const t = e.target.closest('.tab');
+  if (!t) return;
+  $$('.tab').forEach((x) => x.classList.toggle('active', x === t));
+  $$('.panel').forEach((p) => p.classList.toggle('active', p.id === 'p-' + t.dataset.tab));
+});
+
+/* ===== Users tab ===== */
+function users() {
+  return load(LS.USERS, []);
+}
+function roles() {
+  return load(LS.ROLES, {});
+}
+function setRole(name, role) {
+  const r = roles();
+  r[name] = role;
+  save(LS.ROLES, r);
+}
+function blocked() {
+  return new Set(load(LS.BLOCK, []));
+}
+function toggleBlock(name) {
+  const s = blocked();
+  s.has(name) ? s.delete(name) : s.add(name);
+  save(LS.BLOCK, Array.from(s));
+}
+
+function renderUsers() {
+  const list = $('#uList');
+  if (!list) return;
+  list.innerHTML = '';
+  const q = ($('#uSearch')?.value || '').toLowerCase();
+  const rs = roles();
+  const bl = blocked();
+  const all = users().filter((u) => !q || String(u.name).toLowerCase().includes(q));
+  const uc = $('#uCount');
+  if (uc) uc.textContent = `${all.length} users`;
+
+  all.forEach((u) => {
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML = `
+      <img class="ava" src="${esc(u.avatar || face(u.name))}">
+      <div style="flex:1;min-width:0">
+        <div class="title">${esc(u.name)} ${u.name === 'Me' ? '<span class="pill">You</span>' : ''}</div>
+        <div class="meta">Role: 
+          <select data-role style="width:auto">
+            <option value="user">User</option>
+            <option value="mod">Moderator</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="flex:0 0 auto;gap:6px">
+        <button class="btn" data-profile>Profile</button>
+        <button class="btn" data-msg>Message</button>
+        <button class="btn" data-block>${bl.has(u.name) ? 'Unblock' : 'Block'}</button>
+      </div>`;
+    row.querySelector('[data-role]').value = rs[u.name] || 'user';
+    row.querySelector('[data-role]').onchange = (e) => {
+      setRole(u.name, e.target.value);
+      addNotif(`Role for ${u.name} set to ${e.target.value}`);
+    };
+    row.querySelector('[data-profile]').onclick = () => {
+      try {
+        localStorage.setItem('ct_profile_view_v1', JSON.stringify({ name: u.name }));
+      } catch {}
+      location.href = 'profile.html';
+    };
+    row.querySelector('[data-msg]').onclick = () => {
+      if (window.ctMessage) ctMessage(u.name);
+      else location.href = 'messages.html';
+    };
+    row.querySelector('[data-block]').onclick = () => {
+      toggleBlock(u.name);
+      renderUsers();
+    };
+    list.appendChild(row);
+  });
+}
+$('#uSearch')?.addEventListener('input', renderUsers);
+$('#uAdd')?.addEventListener('click', () => {
+  const bg = $('#addUserBg');
+  if (bg) bg.style.display = 'flex';
+});
+$('#addUserClose')?.addEventListener('click', () => {
+  const bg = $('#addUserBg');
+  if (bg) bg.style.display = 'none';
+});
+$('#addUserGo')?.addEventListener('click', () => {
+  const name = ($('#addUserName')?.value || '').trim();
+  if (!name) return alert('Enter a name');
+  const avatar = ($('#addUserAvatar')?.value || '').trim() || face(name);
+  const all = users();
+  if (all.find((u) => u.name === name)) return alert('User exists');
+  all.push({ name, avatar });
+  save(LS.USERS, all);
+  const bg = $('#addUserBg');
+  if ($('#addUserName')) $('#addUserName').value = '';
+  if ($('#addUserAvatar')) $('#addUserAvatar').value = '';
+  if (bg) bg.style.display = 'none';
+  addNotif(`Admin added user: ${name}`);
+  renderUsers();
+});
+
+/* ===== Content tab ===== */
+function ensureShape(p) {
+  return {
+    id: p.id || uid('post'),
+    title: p.title || '',
+    content: p.content || p.text || p.body || '',
+    authorName: p.authorName || p.author || p.name || 'Me',
+    createdAt: p.createdAt || p.time || p.date || nowISO(),
+    media: p.media || null,
+    _raw: p,
   };
+}
 
-  // expose a simple loader
-  CT.loadScript = function(urls, done){
-    urls = Array.isArray(urls) ? urls : [String(urls||"")];
-    (function next(i){
-      if(i>=urls.length){ done && done(false); return; }
-      var s=document.createElement("script");
-      s.src = urls[i]; s.async = true;
-      s.onload = function(){ done && done(true); };
-      s.onerror= function(){ s.remove(); next(i+1); };
-      (document.head || document.documentElement).appendChild(s);
-    })(0);
-  };
-
-  // ensure Messenger exists (if a page forgot to include assets/messenger.js)
-  CT.ensureMessenger = function(onReady){
-    if (window.ChatternetMessenger && typeof window.ChatternetMessenger.open==="function"){
-      onReady && onReady(); return;
-    }
-    var base = CT.getApiBase();
-    var paths = [
-      endTrim(base)+"/assets/messenger.js",
-      "/assets/messenger.js",
-      "assets/messenger.js",
-      "/messenger.js",
-      "messenger.js"
-    ];
-    CT.loadScript(paths, function(ok){
-      if (ok && window.ChatternetMessenger && window.ChatternetMessenger.open){
-        onReady && onReady();
-      } else {
-        // as a last resort, do nothing (page can still navigate to messages.html)
-        onReady && onReady();
+// Finds arrays in localStorage that look like posts
+function scanContent() {
+  const out = [];
+  // Dating posts (known)
+  const dating = (load(LS.DATING, []) || []).map((x) => ({
+    ...ensureShape(x),
+    _type: 'dating',
+    _key: LS.DATING,
+  }));
+  out.push(...dating);
+  // Global feed (known)
+  const global = (load(LS.GLOBAL, []) || []).map((x) => ({
+    ...ensureShape(x),
+    _type: 'global',
+    _key: LS.GLOBAL,
+  }));
+  out.push(...global);
+  // Unknown arrays: best-effort parse
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (
+      !k ||
+      [LS.DATING, LS.GLOBAL, LS.NOTIF, LS.INBOX, LS.PROFILE, LS.USERS, LS.ROLES, LS.BLOCK, LS.PRIV, LS.NOTIFP, LS.ARCHIVE].includes(
+        k
+      )
+    )
+      continue;
+    try {
+      const v = JSON.parse(localStorage.getItem(k));
+      if (Array.isArray(v) && v.length && typeof v[0] === 'object') {
+        const normalized = v.map((o) => ({
+          ...ensureShape(o),
+          _type: 'unknown',
+          _key: k,
+        }));
+        if (normalized.some((n) => n.title || n.content)) out.push(...normalized);
       }
+    } catch (e) {}
+  }
+  return out;
+}
+function archiveList() {
+  return load(LS.ARCHIVE, []);
+}
+function setArchive(arr) {
+  save(LS.ARCHIVE, arr);
+}
+function removeFromKey(key, id) {
+  const arr = load(key, []);
+  const idx = arr.findIndex((x) => (x.id || '') === id);
+  if (idx > -1) {
+    const [del] = arr.splice(idx, 1);
+    save(key, arr);
+    const ar = archiveList();
+    ar.unshift({ deletedAt: nowISO(), key, item: del });
+    setArchive(ar);
+  }
+}
+function hideInKey(key, id, setHidden) {
+  const arr = load(key, []);
+  const idx = arr.findIndex((x) => (x.id || '') === id);
+  if (idx > -1) {
+    arr[idx].hidden = setHidden;
+    save(key, arr);
+  }
+}
+function shareToGlobal(item) {
+  const g = load(LS.GLOBAL, []);
+  const id = item.id || uid('g');
+  if (!g.find((p) => p.id === id)) {
+    g.unshift({
+      id,
+      title: item.title || '',
+      content: item.content || '',
+      authorName: item.authorName || 'Me',
+      createdAt: item.createdAt || nowISO(),
+      media: item.media || null,
+      tags: [],
     });
-  };
+    save(LS.GLOBAL, g);
+  }
+}
 
-  // ---------- Header wiring (id-based) ----------
-  // Safe: won’t throw if elements don’t exist.
-  CT.wireHeader = CT.wireHeader || function(scope){
-    scope = scope || document;
+function renderContent() {
+  const type = $('#cType')?.value || 'all';
+  const q = ($('#cSearch')?.value || '').toLowerCase();
+  const arc = archiveList().map((a) => ({
+    ...ensureShape(a.item || {}),
+    _type: 'archive',
+    _key: a.key || 'unknown',
+    _deletedAt: a.deletedAt,
+  }));
+  let items = type === 'archive' ? arc : scanContent().filter((x) => type === 'all' || x._type === type);
+  items = items.filter(
+    (x) =>
+      !q ||
+      String(x.title).toLowerCase().includes(q) ||
+      String(x.content).toLowerCase().includes(q) ||
+      String(x.authorName).toLowerCase().includes(q)
+  );
 
-    // Avatar
-    var profile = (lsGet("ct_profile_data_v1", {})["Me"] || {});
-    var img = scope.querySelector("#myProfile");
-    if (img){
-      img.src = profile.avatar || profile.avatarUrl || face("Me");
-      img.alt = profile.displayName || "Me";
-      img.style.cursor = "pointer";
-      img.onclick = function(){ try{ location.href="profile.html"; }catch(_){} };
-    }
+  const cc = $('#cCount');
+  if (cc) cc.textContent = `${items.length} items`;
 
-    // Messages button -> overlay
-    var btn = scope.querySelector("#btnMsgs");
-    if (btn){
-      btn.addEventListener("click", function(e){
-        e.preventDefault(); e.stopPropagation();
-        if (window.ChatternetMessenger && window.ChatternetMessenger.open){
-          window.ChatternetMessenger.open("");
-        } else {
-          CT.ensureMessenger(function(){
-            if (window.ChatternetMessenger && window.ChatternetMessenger.open){
-              window.ChatternetMessenger.open("");
-            } else {
-              // fallback if messenger truly not available
-              location.href = "messages.html";
-            }
-          });
-        }
-      });
-    }
-  };
-
-  // Bind message-looking links/buttons globally (before messenger loads)
-  function looksLikeMessage(el){
-    if (!el) return false;
-    var txt = (el.textContent||"").trim().toLowerCase();
-    var href = (el.getAttribute && el.getAttribute("href")||"").toLowerCase();
-    return el.id==="btnMsgs" ||
-           txt==="messages" || txt==="message" || txt.indexOf("message")>-1 ||
-           href.endsWith("messages.html") || href.indexOf("messages.html")>-1 ||
-           el.hasAttribute("data-message") || el.getAttribute("data-action")==="message" ||
-           el.classList.contains("message") || el.classList.contains("btn-message");
+  const box = $('#cList');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!items.length) {
+    box.innerHTML = '<div class="muted">No content found.</div>';
+    return;
   }
 
-  document.addEventListener("click", function(e){
-    var btn = e.target && e.target.closest && e.target.closest("a,button");
-    if (!btn) return;
+  items
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .forEach((p) => {
+      const row = document.createElement('div');
+      row.className = 'item';
+      const prof = load(LS.PROFILE, {});
+      const ava = (prof[p.authorName] && prof[p.authorName].avatar) || face(p.authorName);
+      row.innerHTML = `
+        <img class="ava" src="${esc(ava)}">
+        <div style="flex:1;min-width:0">
+          <div class="title">${esc(p.title || '(no title)')}</div>
+          <div class="meta">${esc(p.authorName)} • ${new Date(p.createdAt).toLocaleString()} • <span class="${
+        p._type === 'archive' ? 'bad' : 'muted'
+      }">${p._type}</span> ${p._raw?.hidden ? '<span class="pill warn">hidden</span>' : ''}</div>
+          <div style="margin-top:6px">${esc((p.content || '').slice(0, 220))}${(p.content || '').length > 220 ? '…' : ''}</div>
+        </div>
+        <div class="row" style="flex:0 0 auto;gap:6px">
+          <button class="btn" data-profile="${esc(p.authorName)}">Profile</button>
+          ${
+            p._type !== 'archive'
+              ? `<button class="btn" data-hide="${p.id}" data-key="${p._key}">${p._raw?.hidden ? 'Unhide' : 'Hide'}</button>
+                 <button class="btn primary" data-share="${p.id}">Share → Feed</button>
+                 <button class="btn bad" data-del="${p.id}" data-key="${p._key}">Delete</button>`
+              : `<button class="btn" disabled title="Restore not implemented yet">Restore (coming)</button>`
+          }
+        </div>`;
 
-    // If messenger is already present, let messenger.js handle it.
-    if (window.ChatternetMessenger && window.ChatternetMessenger.open) return;
-
-    if (looksLikeMessage(btn)){
-      e.preventDefault(); e.stopPropagation();
-      CT.ensureMessenger(function(){
-        if (window.ChatternetMessenger && window.ChatternetMessenger.open){
-          window.ChatternetMessenger.open("");
-        } else {
-          location.href="messages.html";
-        }
+      row.querySelector('[data-profile]')?.addEventListener('click', (e) => {
+        const name = e.currentTarget.getAttribute('data-profile');
+        try {
+          localStorage.setItem('ct_profile_view_v1', JSON.stringify({ name }));
+        } catch {}
+        location.href = 'profile.html';
       });
+      row.querySelector('[data-share]')?.addEventListener('click', () => {
+        shareToGlobal(p);
+        addNotif(`Shared to Feed: ${p.title || '(untitled)'}`);
+        alert('Shared to Global Feed');
+      });
+      row.querySelector('[data-del]')?.addEventListener('click', (e) => {
+        const key = e.currentTarget.getAttribute('data-key');
+        if (!confirm('Delete this item? It will move to Archive.')) return;
+        removeFromKey(key, p.id);
+        renderContent();
+      });
+      row.querySelector('[data-hide]')?.addEventListener('click', (e) => {
+        const key = e.currentTarget.getAttribute('data-key');
+        hideInKey(key, p.id, !p._raw?.hidden);
+        renderContent();
+      });
+      box.appendChild(row);
+    });
+}
+$('#cType')?.addEventListener('change', renderContent);
+$('#cSearch')?.addEventListener('input', renderContent);
+
+/* ===== Broadcast ===== */
+$('#bSend')?.addEventListener('click', () => {
+  const title = ($('#bTitle')?.value || '').trim();
+  const body = ($('#bBody')?.value || '').trim();
+  if (!title && !body) return alert('Write something');
+  const msg = title ? `${title} — ${body}` : body;
+  addNotif(`[ADMIN] ${msg}`);
+  addInbox(`[ADMIN] ${msg}`);
+  const st = $('#bStatus');
+  if (st) st.textContent = 'Sent';
+});
+
+/* ===== Tools ===== */
+$('#tExport')?.addEventListener('click', () => {
+  const dump = {
+    users: load(LS.USERS, []),
+    roles: load(LS.ROLES, {}),
+    blocked: load(LS.BLOCK, []),
+    profile: load(LS.PROFILE, {}),
+    privacy: load(LS.PRIV, {}),
+    notifyPrefs: load(LS.NOTIFP, {}),
+    notifications: load(LS.NOTIF, []),
+    inbox: load(LS.INBOX, []),
+    dating: load(LS.DATING, []),
+    global: load(LS.GLOBAL, []),
+    archive: load(LS.ARCHIVE, []),
+  };
+  const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'chatternet-admin-export.json';
+  a.click();
+});
+
+$('#tRebuild')?.addEventListener('click', () => {
+  if (!confirm('Re-seed demo users?')) return;
+  const u = [{ name: 'Me', avatar: face('Me') }];
+  DEMO.forEach((n) => u.push({ name: n, avatar: face(n) }));
+  save(LS.USERS, u);
+  addNotif('Demo users re-seeded.');
+  renderUsers();
+});
+
+$('#tWipe')?.addEventListener('click', () => {
+  if (!confirm('This clears local data on THIS device (users, roles, posts, prefs). Continue?')) return;
+  Object.values(LS)
+    .concat(['ct_profile_view_v1'])
+    .forEach((k) => localStorage.removeItem(k));
+  alert('Cleared. Reloading…');
+  location.reload();
+});
+
+/* ===== Boot ===== */
+(function boot() {
+  if (!ensureAdmin()) return;
+  renderUsers();
+  renderContent();
+})();
+
+/* ===== Messages overlay bubble (footer safety) ===== */
+(function () {
+  function ensureBubble() {
+    if (!document.getElementById('btnMsgs')) {
+      const b = document.createElement('button');
+      b.id = 'btnMsgs';
+      b.textContent = 'Messages';
+      b.style.cssText =
+        'position:fixed;right:14px;bottom:14px;z-index:2999;padding:10px 12px;border-radius:12px;background:#3498db;color:#fff;border:0;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer';
+      b.onclick = () => {
+        if (window.ctOpen) ctOpen();
+        else location.href = 'messages.html';
+      };
+      document.body.appendChild(b);
     }
-  }, true);
-
-  // ---------- Notifications helpers (local demo) ----------
-  CT.addNotif = CT.addNotif || function(text){
-    var arr = lsGet("ct_notifications_v1", []);
-    arr.unshift({ id:"n_"+Date.now(), text:String(text||""), time:new Date().toISOString() });
-    lsSet("ct_notifications_v1", arr);
-  };
-  CT.addInbox = CT.addInbox || function(text){
-    var arr = lsGet("ct_inbox_v1", []);
-    arr.unshift({ id:"m_"+Date.now(), text:String(text||""), time:new Date().toISOString() });
-    lsSet("ct_inbox_v1", arr);
-  };
-
-  // ---------- Global shorthands that auto-load messenger ----------
-  window.ctOpen = window.ctOpen || function(){
-    if (window.ChatternetMessenger && window.ChatternetMessenger.open) return window.ChatternetMessenger.open("");
-    CT.ensureMessenger(function(){ window.ChatternetMessenger && window.ChatternetMessenger.open && window.ChatternetMessenger.open(""); });
-  };
-  window.ctMessage = window.ctMessage || function(name){
-    if (window.ChatternetMessenger && window.ChatternetMessenger.open) return window.ChatternetMessenger.open(name||"");
-    CT.ensureMessenger(function(){ window.ChatternetMessenger && window.ChatternetMessenger.open && window.ChatternetMessenger.open(name||""); });
-  };
-
-  // Auto-wire header on DOM ready
-  document.addEventListener("DOMContentLoaded", function(){
-    try{ CT.wireHeader(document); }catch(_){}
-  });
-
-  // Re-hydrate avatar/name if profile changes in another tab/iframe
-  window.addEventListener("storage", function(ev){
-    if (ev.key === "ct_profile_data_v1"){
-      try{ CT.wireHeader(document); }catch(_){}
-    }
-  });
-
-  // Export a few utilities (optional)
-  CT.util = CT.util || {
-    esc: esc,
-    face: face,
-    get: lsGet,
-    set: lsSet
-  };
+  }
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', ensureBubble);
+  else ensureBubble();
 })();
