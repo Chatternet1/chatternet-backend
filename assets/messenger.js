@@ -38,7 +38,7 @@
       u = [{name:"Me", avatar: face("Me")}, {name:"Echo Bot", avatar: face("Echo Bot")}];
     } else {
       if (!u.find(function(x){return x.name==="Me";})) u.unshift({name:"Me", avatar: face("Me")});
-      if (!u.find(function(x){return x.name==="Echo Bot";})) u.push({name:"Echo Bot", avatar: face("Echo Bot")});
+      if (!u.find(function(x){return x.name==="Echo Bot";})) u.push({name:"Echo Bot"});
     }
     save(K.USERS, u);
   })();
@@ -119,6 +119,19 @@
       "@media (max-width:720px){.ct-msg-left{width:260px}}"
     ].join("");
     document.head.appendChild(css);
+
+    // >>> minimal scroll/visibility reinforcement (no behavior change) <<<
+    var extra = document.createElement('style');
+    extra.id = 'ct-msg-scroll-fix';
+    extra.textContent = [
+      /* overlay above header/menu, in case theme sets massive z-index */
+      ".ct-msg-bg{z-index:2147483600!important}",
+      /* ensure internal panes always scroll */
+      ".ct-list{overflow:auto;overscroll-behavior:contain}",
+      ".ct-stream{overflow:auto;overscroll-behavior:contain}"
+    ].join('');
+    document.head.appendChild(extra);
+    // <<< /reinforcement >>>
   }
 
   function buildUI(){
