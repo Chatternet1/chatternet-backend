@@ -1,197 +1,202 @@
-// server.js — Chatternet backend with Postgres session auth
-// Works on Render. Env needed: DATABASE_URL, SESSION_SECRET, CT_FRONTEND_ORIGIN, PGSSLMODE=require
+// Chatternet backend (Express + Postgres sessions)
+// Drop-in replacement for server.js
 
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
-const cookieParser = require("cookie-parser");
 const session = require("express-session");
-const bcrypt = require("bcryptjs");
-const { Pool } = require("pg");
 const PgSession = require("connect-pg-simple")(session);
+const { Pool } = require("pg");
+const bcrypt = require("bcryptjs");
 
-const app = express();
+const {
+  PORT = 10000,
+  DATABASE_URL,
+  PGSSLMODE,
+  SESSION_SECRET = "change-me",
+  CT_FRONTEND_ORIGIN = ""
+} = process.env;
 
-// ----- ENV / DB -----
-const PORT = process.env.PORT || 10000;
-const FRONT = (process.env.CT_FRONTEND_ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
-const useSSL = (process.env.PGSSLMODE || "").toLowerCase() === "require";
+const isProd =
+  process.env.NODE_ENV === "production" || process.env.RENDER === "true";
+
+// --- Postgres pool ---
+const useSSL =
+  (PGSSLMODE && PGSSLMODE.toLowerCase() === "require") || isProd;
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: useSSL ? { rejectUnauthorized: false } : undefined,
+  connectionString: DATABASE_URL,
+  ssl: useSSL ? { rejectUnauthorized: false } : false
 });
 
-// Create users table + session table (auto) on boot
-async function initDB() {
+// Make sure core tables exist
+async function ensureTables() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      display_name TEXT NOT NULL,
-      avatar TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE INDEX IF NOT EXISTS users_email_idx ON users (LOWER(email));
+      passhash TEXT NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT now()
+    )
   `);
 }
-initDB().catch(err => console.error("DB init error:", err));
 
-// ----- CORS / MIDDLEWARE -----
-app.set("trust proxy", 1);
+// --- App ---
+const app = express();
+app.set("trust proxy", 1); // so secure cookies work behind Render proxy
 
-const corsOpt = {
-  origin: function (origin, cb) {
-    // allow same-origin (no origin header) and any origin listed in CT_FRONTEND_ORIGIN (comma-separated)
-    if (!origin) return cb(null, true);
-    if (FRONT.some(a => origin.startsWith(a))) return cb(null, true);
-    return cb(null, false);
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+// CORS (allow your site to call the API and send cookies)
+const allowed = new Set(
+  [CT_FRONTEND_ORIGIN, `https://${process.env.RENDER_EXTERNAL_HOSTNAME || ""}`]
+    .filter(Boolean)
+);
+app.use(
+  cors({
+    origin(origin, cb) {
+      // Allow exact origin in env, same-origin (no Origin), and localhost during dev
+      if (!origin) return cb(null, true);
+      if (allowed.has(origin)) return cb(null, true);
+      if (!isProd && /^https?:\/\/localhost(:\d+)?$/.test(origin)) return cb(null, true);
+      return cb(null, false);
+    },
+    credentials: true
+  })
+);
 
-app.use(cors(corsOpt));
-app.use(express.json({ limit: "1mb" }));
-app.use(cookieParser());
+app.use(express.json());
 
+// Sessions stored in Postgres (no MemoryStore warning)
 app.use(
   session({
     store: new PgSession({
       pool,
       tableName: "user_sessions",
-      createTableIfMissing: true,
+      createTableIfMissing: true
     }),
-    name: "ct.sid",
-    secret: process.env.SESSION_SECRET || "dev-secret",
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 30 * 24 * 3600 * 1000, // 30 days
-      sameSite: "none", // for cross-site cookies (frontend on another domain)
-      secure: true,     // Render uses HTTPS
-    },
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isProd // true on Render (https)
+    }
   })
 );
 
-// Static assets (messenger.js etc.)
-app.use("/assets", express.static(path.join(__dirname, "assets"), { maxAge: "1h" }));
+// --- Static files ---
+app.use("/assets", express.static(path.join(__dirname, "assets")));
+app.use(express.static(path.join(__dirname, "public")));
 
-// ----- HELPERS -----
-const pickUser = row => row && ({ id: row.id, email: row.email, displayName: row.display_name, avatar: row.avatar || null });
-
-function requireBody(fields, body) {
-  for (const f of fields) {
-    if (!body || !String(body[f] || "").trim()) {
-      const err = new Error(`Missing field: ${f}`);
-      err.status = 400;
-      throw err;
-    }
-  }
+// --- Helpers ---
+function userSafe(row) {
+  if (!row) return null;
+  return { id: row.id, name: row.name, email: row.email, created_at: row.created_at };
 }
 
-// ----- HEALTH -----
-app.get("/healthz", (req, res) => res.type("text").send("ok"));
-app.get("/api/health", (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
-app.get("/api/db/health", async (req, res) => {
+// --- Health & info ---
+app.get("/ping", (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.get("/healthz", (_req, res) => res.type("text").send("ok"));
+app.get("/api/health", (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
+app.get("/api/db/health", async (_req, res) => {
   try {
-    const { rows } = await pool.query("SELECT NOW() as now");
-    res.json({ ok: true, now: rows[0].now });
+    await pool.query("select 1");
+    res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
+    res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
 
-// ----- AUTH -----
-
-// Who am I
-app.get("/api/me", async (req, res) => {
-  if (!req.session.user) return res.json({ user: null });
-  res.json({ user: req.session.user });
-});
-
-// Create account
+// --- Auth API ---
 app.post("/api/signup", async (req, res) => {
   try {
-    requireBody(["displayName", "email", "password"], req.body);
-    const displayName = String(req.body.displayName).trim();
-    const email = String(req.body.email).trim().toLowerCase();
-    const password = String(req.body.password);
+    const { name, email, password } = req.body || {};
+    if (!name || !email || !password) {
+      return res.status(400).json({ ok: false, error: "name, email, password required" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ ok: false, error: "password must be at least 6 characters" });
+    }
 
-    if (displayName.length < 2) throw Object.assign(new Error("Display name too short"), { status: 400 });
-    if (!email.includes("@") || email.length < 5) throw Object.assign(new Error("Invalid email"), { status: 400 });
-    if (password.length < 6) throw Object.assign(new Error("Password too short (min 6)"), { status: 400 });
+    const exists = await pool.query("SELECT id FROM users WHERE email=$1", [email.toLowerCase()]);
+    if (exists.rowCount) {
+      return res.status(409).json({ ok: false, error: "email already registered" });
+    }
 
-    const { rows: exist } = await pool.query("SELECT id FROM users WHERE LOWER(email)=LOWER($1)", [email]);
-    if (exist.length) throw Object.assign(new Error("Email already in use"), { status: 409 });
-
-    const hash = await bcrypt.hash(password, 12);
-    const avatar = `https://i.pravatar.cc/150?u=${encodeURIComponent(email)}`;
-
-    const { rows } = await pool.query(
-      "INSERT INTO users (email, password_hash, display_name, avatar) VALUES ($1,$2,$3,$4) RETURNING *",
-      [email, hash, displayName, avatar]
+    const hash = await bcrypt.hash(password, 10);
+    const ins = await pool.query(
+      "INSERT INTO users(name,email,passhash) VALUES($1,$2,$3) RETURNING id,name,email,created_at",
+      [name, email.toLowerCase(), hash]
     );
 
-    const user = pickUser(rows[0]);
-    req.session.user = user;
-    res.json({ user });
+    req.session.userId = ins.rows[0].id;
+    res.json({ ok: true, user: userSafe(ins.rows[0]) });
   } catch (e) {
-    res.status(e.status || 500).json({ error: e.message || "signup_failed" });
+    res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
 
-// Login
 app.post("/api/login", async (req, res) => {
   try {
-    requireBody(["email", "password"], req.body);
-    const email = String(req.body.email).trim().toLowerCase();
-    const password = String(req.body.password);
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ ok: false, error: "email and password required" });
+    }
+    const q = await pool.query("SELECT * FROM users WHERE email=$1", [email.toLowerCase()]);
+    if (!q.rowCount) return res.status(401).json({ ok: false, error: "invalid credentials" });
 
-    const { rows } = await pool.query("SELECT * FROM users WHERE LOWER(email)=LOWER($1)", [email]);
-    if (!rows.length) throw Object.assign(new Error("Invalid credentials"), { status: 401 });
+    const u = q.rows[0];
+    const ok = await bcrypt.compare(password, u.passhash);
+    if (!ok) return res.status(401).json({ ok: false, error: "invalid credentials" });
 
-    const row = rows[0];
-    const ok = await bcrypt.compare(password, row.password_hash || "");
-    if (!ok) throw Object.assign(new Error("Invalid credentials"), { status: 401 });
-
-    const user = pickUser(row);
-    req.session.user = user;
-    res.json({ user });
+    req.session.userId = u.id;
+    res.json({ ok: true, user: userSafe(u) });
   } catch (e) {
-    res.status(e.status || 500).json({ error: e.message || "login_failed" });
+    res.status(500).json({ ok: false, error: String(e.message || e) });
   }
 });
 
-// Logout
 app.post("/api/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.json({ ok: true });
-  });
+  req.session.destroy(() => res.json({ ok: true }));
 });
 
-// ----- ROOT (small index page) -----
-app.get("/", (req, res) => {
+app.get("/api/me", async (req, res) => {
+  try {
+    const id = req.session.userId;
+    if (!id) return res.json({ ok: true, user: null });
+    const q = await pool.query("SELECT id,name,email,created_at FROM users WHERE id=$1", [id]);
+    res.json({ ok: true, user: userSafe(q.rows[0]) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
+});
+
+// --- Root page (simple index) ---
+app.get("/", (_req, res) => {
   res.type("html").send(`<!doctype html>
-<html><head><meta charset="utf-8" />
-<title>Chatternet backend ✓</title>
-<style>body{font:16px system-ui,Arial;padding:30px}</style></head>
-<body>
+<html><head><meta charset="utf-8"/><title>Chatternet backend ✓</title>
+<style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;padding:26px} a{display:block;margin:6px 0}</style>
+</head><body>
 <h1>Chatternet backend ✓</h1>
-<p>Running on <b>port ${PORT}</b>.</p>
 <ul>
   <li><a href="/healthz">/healthz</a></li>
   <li><a href="/api/health">/api/health</a></li>
   <li><a href="/api/db/health">/api/db/health</a></li>
+  <li><a href="/ping">/ping</a></li>
   <li><a href="/assets/messenger.js">/assets/messenger.js</a></li>
 </ul>
 </body></html>`);
 });
 
-// ----- START -----
-app.listen(PORT, () => {
-  console.log(`Chatternet backend on :${PORT}`);
-  console.log("Allowed CORS origins:", FRONT.length ? FRONT.join(", ") : "(none set)");
-});
+// --- Start ---
+ensureTables()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log("Chatternet backend listening on", PORT);
+    });
+  })
+  .catch((e) => {
+    console.error("Failed to init tables:", e);
+    process.exit(1);
+  });
