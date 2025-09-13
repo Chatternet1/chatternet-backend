@@ -1,306 +1,306 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Chatternet — Friends</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root{
-    --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff;
-    --ink:#0f172a; --muted:#667085;
-    --ct-bluebar-top:120px;       /* set dynamically under Weebly header */
-    --ct-bluebar-h:58px;          /* blue bar height */
-    --ct-nav-h:44px;              /* app nav height (computed) */
-    --ct-gap:8px;                 /* white gap below Weebly header */
-  }
-  *{box-sizing:border-box}
-  html,body{max-width:100%;overflow-x:hidden;overflow-y:auto!important;margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif}
-  /* fallback padding (we also add a spacer element) */
-  body{padding-top:calc(var(--ct-bluebar-h) + var(--ct-nav-h) + var(--ct-gap) + 10px)!important}
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Friends — Chatternet</title>
 
-  /* Blue header (fixed below Weebly) */
-  .top-bar{
-    position:fixed; left:0; right:0; top:var(--ct-bluebar-top); z-index:70;
-    display:flex; justify-content:space-between; align-items:center;
-    padding:10px 14px; height:var(--ct-bluebar-h);
-    background:linear-gradient(0deg,var(--brand),var(--brand-2)); color:#fff;
-    box-shadow:0 2px 10px rgba(0,0,0,.12)
-  }
-  .top-bar h2{margin:0;font-weight:800}
-  .top-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .top-actions .btn{
-    background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25); color:#fff;
-    padding:8px 10px; border-radius:10px; cursor:pointer; font-size:13px; font-weight:700; backdrop-filter:blur(6px)
-  }
-  .top-actions .btn:hover{ background:rgba(255,255,255,.22) }
-  .top-actions img{ width:36px; height:36px; border-radius:50%; border:1px solid rgba(255,255,255,.55); object-fit:cover; cursor:pointer }
+  <!-- Layout shim: keeps blue bar & nav tucked under Weebly header -->
+  <script>
+  // (inlined ct-layout.js so it works on Weebly too)
+  (function () {
+    "use strict";
+    var HEADER_SELS=['.wsite-header','.wsite-menus','.wsite-nav','.w-nav','.w-nav-header','.edison-header','header','.navbar','.nav-wrapper','.siteHeader','.desktop-nav','.top-nav','.wsite-theme-header'];
+    function headerBottomPx(){var b=0;for(var i=0;i<HEADER_SELS.length;i++){var el=document.querySelector(HEADER_SELS[i]);if(!el)continue;var r=el.getBoundingClientRect();var mb=parseFloat(getComputedStyle(el).marginBottom||0);var bottom=(r.bottom+mb)+window.scrollY;if(bottom>b)b=bottom;}return Math.round(b);}
+    function setVars(){var siteHeaderBottom=headerBottomPx();var viewportTop=siteHeaderBottom-window.scrollY;if(viewportTop<0)viewportTop=0;var root=document.documentElement;root.style.setProperty('--ct-header-bottom',viewportTop+'px');root.style.setProperty('--ct-scroll-pad',(viewportTop+10)+'px');root.style.scrollPaddingTop='var(--ct-scroll-pad)'; if(!root.classList.contains('ct-layout-ready')) root.classList.add('ct-layout-ready');}
+    setVars(); ['load','resize','orientationchange','scroll'].forEach(function(ev){window.addEventListener(ev,setVars,{passive:true});});
+    try{var mo=new MutationObserver(function(){setVars();}); mo.observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+  })();
+  </script>
 
-  /* App nav (fixed just under blue bar) */
-  .nav{
-    position:fixed; left:0; right:0;
-    top:calc(var(--ct-bluebar-top) + var(--ct-bluebar-h) + var(--ct-gap));
-    z-index:65; background:#e9f2ff; border-bottom:1px solid #d7e6ff;
-    padding:8px 12px; display:flex; gap:10px; flex-wrap:wrap
-  }
-  .nav a{color:#0b3a67; text-decoration:none; font-weight:600; border:1px solid #e6eaf2; background:#fff; padding:8px 12px; border-radius:999px}
-  .nav a[aria-current="page"]{ background:#e8f1ff; border-color:#cfe0ff }
-  .nav a:hover{ background:#eef4ff }
+  <style>
+    :root{
+      --brand:#2563eb;
+      --brand-2:#1d4ed8;
+      --bar-top: var(--ct-header-bottom, 120px);
+    }
+    html,body{overflow-y:auto !important}
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font: 14px/1.45 "Segoe UI", Arial, system-ui, -apple-system, sans-serif;
+      color:#0f172a;
+      background:#f5f7fb;
+      padding-top: calc(var(--bar-top) + 96px); /* blue bar + app nav */
+    }
+    a{color:var(--brand);text-decoration:none}
 
-  /* Spacer guarantees content sits below the fixed bars */
-  .ct-spacer{height:calc(var(--ct-bluebar-h) + var(--ct-nav-h) + var(--ct-gap));}
+    /* Top blue bar under site menu */
+    .top-bar{
+      position:sticky; top:var(--bar-top); z-index:1200;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; background:#0ea5e9; color:#fff;
+      border-bottom:1px solid rgba(255,255,255,.2);
+    }
+    .top-bar h2{margin:0;font-size:18px}
+    .top-actions{display:flex; gap:8px; align-items:center}
+    .top-actions button{height:36px; padding:0 12px; border-radius:10px; border:1px solid rgba(255,255,255,.65); background:rgba(255,255,255,.15); color:#fff; cursor:pointer}
+    .top-actions button:hover{background:rgba(255,255,255,.26)}
+    #meAvatar{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.7);object-fit:cover;cursor:pointer}
 
-  /* Page */
-  .wrap{max-width:1120px;margin:0 auto;padding:16px 12px 28px}
+    /* App nav (identical everywhere) */
+    nav.app-nav{
+      position:sticky; top:calc(var(--bar-top) + 48px); z-index:1100;
+      background:#fff; border-bottom:1px solid #e6eaf2;
+    }
+    nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+    nav.app-nav a{padding:8px 10px;border-radius:999px;color:#111;background:#f3f4f6}
+    nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
+    nav.app-nav a:hover{background:#e5e7eb}
 
-  /* Tabs */
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
-  .tab{background:#fff;border:1px solid #d7d7d7;color:#0f172a;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px}
-  .tab.active{background:#e9f2ff;border-color:#b9d6ff;color:#0b63c5}
+    /* Page layout */
+    .page{max-width:1100px;margin:14px auto;padding:0 12px}
+    .card{background:#fff;border:1px solid #e6eaf2;border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(15,23,42,.03)}
+    .row{display:flex;gap:8px;align-items:center}
+    .muted{color:#6b7280}
 
-  /* Cards / atoms */
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .muted{color:var(--muted)}
-  .pill{border:1px solid #d7d7d7;border-radius:999px;padding:6px 10px;background:#fff}
-  .btn{padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer;font-weight:700}
-  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  .btn.primary:hover{background:var(--brand-2)}
-  .btn.warn{background:#fee2e2;border-color:#fecaca;color:#991b1b}
-  input{width:100%;padding:10px 12px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px;background:#fff}
+    /* Tabs (Admin-style pills) */
+    .tabs{display:flex;gap:8px;margin:0 0 10px}
+    .tab{padding:8px 12px;border:1px solid #d7d7d7;border-radius:999px;background:#fff;cursor:pointer}
+    .tab.active{background:#0ea5e9;border-color:#0ea5e9;color:#fff}
+    .panels .panel{display:none}
+    .panels .panel.active{display:block}
 
-  /* Lists — single column */
-  .list{display:flex;flex-direction:column;gap:10px;margin-top:10px;max-width:820px;margin-left:auto;margin-right:auto}
-  .item{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;border:1px solid #e6eaf2;background:#fff;border-radius:12px;padding:10px}
-  .ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb}
-  .title{font-weight:800;margin:0 0 4px}
-  .handle{color:#64748b;font-size:12px}
+    /* Lists (single-column) */
+    .list{display:flex;flex-direction:column;gap:8px}
+    .item{display:flex;gap:10px;align-items:center;border:1px solid #e6eaf2;border-radius:12px;padding:10px}
+    .item .ava{width:44px;height:44px;border-radius:999px;object-fit:cover;border:1px solid #e4e4e7}
+    .title{font-weight:600}
+    .handle{font-size:12px;color:#6b7280}
+    .btn{padding:8px 12px;border:1px solid #d7d7d7;border-radius:999px;background:#fff;cursor:pointer}
+    .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+    .btn.warn{border-color:#ef4444;color:#b91c1c}
+    .search{flex:1 1 auto;padding:8px 12px;border:1px solid #d7d7d7;border-radius:12px}
 
-  /* Modals */
-  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500}
-  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
-</style>
+    /* Modals (Notifications/Inbox) */
+    .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000}
+    .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
+    .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #e6eaf2;background:#f8fafc;border-radius:999px;padding:4px 10px;font-size:12px}
+
+    /* Toast (optional for quick feedback) */
+    #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#0ea5e9;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.25);z-index:4500;display:none}
+  </style>
 </head>
 <body>
 
-<!-- Blue bar -->
-<div class="top-bar" id="topBar">
+<!-- Sticky blue bar (under Weebly header) -->
+<div class="top-bar" role="banner" aria-label="Page header">
   <h2>Friends</h2>
   <div class="top-actions">
-    <button class="btn" id="btnNotif">Notifications</button>
-    <button class="btn" id="btnInbox">Inbox</button>
-    <button class="btn" id="btnMsgs">Messages</button>
-    <img id="meAvatar" alt="Me" />
+    <button id="btnNotif">Notifications</button>
+    <button id="btnInbox">Inbox</button>
+    <button id="btnMsgs">Messages</button>
+    <img id="meAvatar" alt="My Profile" title="My Profile" />
   </div>
 </div>
 
-<!-- App nav -->
-<nav class="nav" id="appNav" aria-label="Chatternet navigation">
-  <a href="index.html">Home</a>
-  <a href="feed.html">Feed</a>
-  <a href="friends.html" aria-current="page">Friends</a>
-  <a href="chattermarket.html">Market</a>
-  <a href="groups.html">Groups</a>
-  <a href="events.html">Events</a>
-  <a href="media.html">Media</a>
-  <a href="dating.html">Dating</a>
-  <a href="blogs.html">Blogs</a>
-  <a href="polls.html">Polls</a>
-  <a href="music.html">Music</a>
-  <a href="messages.html">Messages</a>
-  <a href="profile.html">Profile</a>
-  <a href="settings.html">Settings</a>
+<!-- App Nav (identical everywhere) -->
+<nav class="app-nav" aria-label="Site">
+  <div class="inner">
+    <a href="index.html">Home</a>
+    <a href="feed.html">Feed</a>
+    <a class="active" href="friends.html" aria-current="page">Friends</a>
+    <a href="chattermarket.html">Market</a>
+    <a href="groups.html">Groups</a>
+    <a href="events.html">Events</a>
+    <a href="media.html">Media</a>
+    <a href="dating.html">Dating</a>
+    <a href="blogs.html">Blogs</a>
+    <a href="polls.html">Polls</a>
+    <a href="music.html">Music</a>
+    <a href="messages.html">Messages</a>
+    <a href="profile.html">Profile</a>
+    <a href="settings.html">Settings</a>
+  </div>
 </nav>
 
-<!-- Spacer keeps content below the fixed bars -->
-<div class="ct-spacer" id="ctSpacer"></div>
+<!-- Page -->
+<div class="page">
+  <section class="card">
+    <!-- Admin-style tabs -->
+    <div id="tabs" class="tabs">
+      <button class="tab active" data-tab="people">People</button>
+      <button class="tab" data-tab="requests">Requests</button>
+      <button class="tab" data-tab="friends">Friends</button>
+    </div>
 
-<div class="wrap">
-  <!-- Tabs -->
-  <div id="tabs" class="tabs" role="tablist" aria-label="Friends tabs">
-    <button class="tab active" data-tab="people" role="tab" aria-selected="true">People</button>
-    <button class="tab" data-tab="requests" role="tab" aria-selected="false">Requests</button>
-    <button class="tab" data-tab="friends" role="tab" aria-selected="false">Friends</button>
-  </div>
-
-  <div class="panels">
-    <!-- People -->
-    <section id="p-people" class="panel active card" role="tabpanel">
-      <div class="row" style="justify-content:space-between">
-        <div class="muted"><strong id="pCount">0</strong> people</div>
-        <div class="row" style="flex:1">
-          <input id="pSearch" placeholder="Search people…">
-          <button class="btn" id="pClear">Clear</button>
+    <div class="panels">
+      <!-- People -->
+      <section id="p-people" class="panel active">
+        <div class="row" style="margin-bottom:8px">
+          <input id="pSearch" class="search" placeholder="Search people…">
+          <button id="pClear" class="btn" type="button">Clear</button>
+          <div class="muted" style="margin-left:auto"><strong id="pCount">0</strong> people</div>
         </div>
-      </div>
-      <div id="pList" class="list"></div>
-    </section>
+        <div id="pList" class="list"></div>
+      </section>
 
-    <!-- Requests -->
-    <section id="p-requests" class="panel card" role="tabpanel" style="display:none">
-      <div class="row" style="justify-content:space-between">
-        <div class="muted"><strong id="inCount">0</strong> incoming</div>
-        <div class="muted"><strong id="outCount">0</strong> outgoing</div>
-      </div>
-      <h3 class="title" style="margin:8px 0 0">Incoming</h3>
-      <div id="reqIn" class="list"></div>
-      <h3 class="title" style="margin:14px 0 0">Outgoing</h3>
-      <div id="reqOut" class="list"></div>
-    </section>
+      <!-- Requests -->
+      <section id="p-requests" class="panel">
+        <h3 class="section-title" style="margin:0 0 8px">Incoming</h3>
+        <div id="rInList" class="list" style="margin-bottom:10px"></div>
+        <h3 class="section-title" style="margin:10px 0 8px">Outgoing</h3>
+        <div id="rOutList" class="list"></div>
+      </section>
 
-    <!-- Friends -->
-    <section id="p-friends" class="panel card" role="tabpanel" style="display:none">
-      <div class="row" style="justify-content:space-between">
-        <div class="muted"><strong id="fCount">0</strong> friends</div>
-      </div>
-      <div id="fList" class="list"></div>
-    </section>
+      <!-- Friends -->
+      <section id="p-friends" class="panel">
+        <div class="muted" style="margin:0 0 8px"><strong id="fCount">0</strong> friends</div>
+        <div id="fList" class="list"></div>
+      </section>
+    </div>
+  </section>
+</div>
+
+<!-- Notifications / Inbox Modals -->
+<div class="modalbg" id="notifBg">
+  <div class="sheet">
+    <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
+    <div id="notifList"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="clearNotif" class="btn primary">Clear</button>
+      <button id="closeNotif" class="btn">Close</button>
+    </div>
   </div>
 </div>
 
-<!-- Notifications / Inbox -->
-<div class="modalbg" id="notifBg"><div class="sheet">
-  <h3 style="margin:0 0 10px">Notifications</h3>
-  <div id="notifList"></div>
-  <div class="row" style="margin-top:8px">
-    <button id="clearNotif" class="btn primary">Clear</button>
-    <button id="closeNotif" class="btn">Close</button>
+<div class="modalbg" id="inboxBg">
+  <div class="sheet">
+    <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
+    <div id="inboxList"></div>
+    <div class="row" style="margin-top:8px">
+      <button id="closeInbox" class="btn">Close</button>
+    </div>
   </div>
-</div></div>
-<div class="modalbg" id="inboxBg"><div class="sheet">
-  <h3 style="margin:0 0 10px">Inbox</h3>
-  <div id="inboxList"></div>
-  <div class="row" style="margin-top:8px">
-    <button id="closeInbox" class="btn">Close</button>
-  </div>
-</div></div>
+</div>
 
-<!-- === Header height detection (keeps bars under Weebly header) === -->
+<div id="toast"></div>
+
 <script>
-(function(){
-  const EXCLUDE_IDS=new Set(['topBar','appNav','ctNav','ctSpacer']); // ignore our own UI
-  const GAP=8, LIFT_UP=22;
-
-  function headerBottom(){
-    const sels=['header','.wsite-header','#wsite-header','.site-banner','.wsite-menus','.w-nav','.navbar','.weebly-header','.weebly-nav'];
-    let maxB=0;
-    document.querySelectorAll(sels.join(',')).forEach(el=>{
-      if(EXCLUDE_IDS.has(el.id)) return;
-      const r=el.getBoundingClientRect(); const b=r.bottom+window.scrollY;
-      maxB=Math.max(maxB,b);
-    });
-    return Math.max(maxB,80);
-  }
-  function apply(){
-    const top=Math.max(0, Math.round(headerBottom()+GAP-LIFT_UP));
-    document.documentElement.style.setProperty('--ct-bluebar-top', top+'px');
-
-    const nav=document.getElementById('appNav');
-    const navH=nav?Math.round(nav.getBoundingClientRect().height):44;
-    document.documentElement.style.setProperty('--ct-nav-h', navH+'px');
-
-    // spacer as a belt-and-braces fallback
-    const sp=document.getElementById('ctSpacer');
-    if(sp){ sp.style.height = `calc(var(--ct-bluebar-h) + ${navH}px + var(--ct-gap))`; }
-  }
-  apply();
-  window.addEventListener('load',apply,{once:true});
-  window.addEventListener('resize',()=>{ clearTimeout(window.__ct_rz_f); window.__ct_rz_f=setTimeout(apply,120); });
-  setTimeout(apply,250); setTimeout(apply,900);
-})();
-</script>
-
-<!-- ===== Friends logic (same keys as Admin/Base) ===== -->
-<script>
-const LS={USERS:'ct_users_v3',PROFILE:'ct_profile_data_v1',NOTIF:'ct_notifications_v1',INBOX:'ct_inbox_v1',FRIENDS:'ct_friend_list_v2',IN_REQ:'ct_friend_requests_in_v2',OUT_REQ:'ct_friend_requests_out_v2'};
+/* ===== Keys & helpers (shared shape with Admin) ===== */
+const LS = {
+  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1',
+  NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
+  FRIENDS:'ct_friend_list_v2', IN_REQ:'ct_friend_requests_in_v2', OUT_REQ:'ct_friend_requests_out_v2'
+};
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const load=(k,f)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;} };
-const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const save=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
 const nowISO=()=>new Date().toISOString();
 const uid=(p='id')=>p+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
 const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
 const face=n=>`https://i.pravatar.cc/100?u=${encodeURIComponent(n||'me')}`;
 
-/* Header wiring */
-(function(){
+/* ===== Header wiring (avatar, messages, notif/inbox) ===== */
+(function header(){
   const prof=(load(LS.PROFILE,{}))['Me']||{};
-  const img=$('#meAvatar'); if(img){ img.referrerPolicy='no-referrer'; img.src=prof.avatar||prof.avatarUrl||face('Me'); img.onclick=()=>location.href='profile.html'; }
-  const nbg=$('#notifBg'), ibg=$('#inboxBg');
-  function rN(){ const arr=load(LS.NOTIF,[]); $('#notifList').innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; }
-  function rI(){ const arr=load(LS.INBOX,[]); $('#inboxList').innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; }
-  $('#btnNotif').onclick=()=>{ rN(); nbg.style.display='flex'; };
-  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); };
-  $('#closeNotif').onclick=()=>{ nbg.style.display='none'; };
-  $('#btnInbox').onclick=()=>{ rI(); ibg.style.display='flex'; };
-  $('#closeInbox').onclick=()=>{ ibg.style.display='none'; };
+  const img=$('#meAvatar'); if(img){ img.referrerPolicy='no-referrer'; img.loading='lazy';
+    img.src=prof.avatar||prof.avatarUrl||prof.photo||face('Me');
+    img.alt=prof.displayName||'Me';
+    img.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{} location.href='profile.html'; };
+  }
   $('#btnMsgs')?.addEventListener('click',e=>{
     e.preventDefault();
     if(window.ctOpen) return ctOpen();
     if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
     location.href='messages.html';
   });
+
+  const nbg=$('#notifBg'), ibg=$('#inboxBg');
+  function rN(){ const arr=load(LS.NOTIF,[]); const box=$('#notifList');
+    box.innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; }
+  function rI(){ const arr=load(LS.INBOX,[]); const box=$('#inboxList');
+    box.innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; }
+  $('#btnNotif').onclick=()=>{ rN(); nbg.style.display='flex'; };
+  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); };
+  $('#closeNotif').onclick=()=>{ nbg.style.display='none'; };
+  $('#btnInbox').onclick=()=>{ rI(); ibg.style.display='flex'; };
+  $('#closeInbox').onclick=()=>{ ibg.style.display='none'; };
 })();
 
-/* Data accessors/mutators */
-const users = ()=>load(LS.USERS, []);
+/* ===== Data accessors ===== */
+const users   = ()=>load(LS.USERS, []);
 const friends = ()=>load(LS.FRIENDS, []);
-const reqIn = ()=>load(LS.IN_REQ, []);
-const reqOut = ()=>load(LS.OUT_REQ, []);
-function addOutgoing(n){ const a=reqOut(); if(!a.includes(n)) a.unshift(n); save(LS.OUT_REQ,a); }
-function addIncoming(n){ const a=reqIn(); if(!a.includes(n)) a.unshift(n); save(LS.IN_REQ,a); }
-function removeOutgoing(n){ save(LS.OUT_REQ, reqOut().filter(x=>x!==n)); }
-function removeIncoming(n){ save(LS.IN_REQ, reqIn().filter(x=>x!==n)); }
-function addFriend(n){ const a=friends(); if(!a.includes(n)) a.unshift(n); save(LS.FRIENDS,a); }
-function removeFriend(n){ save(LS.FRIENDS, friends().filter(x=>x!==n)); }
+const reqIn   = ()=>load(LS.IN_REQ, []);
+const reqOut  = ()=>load(LS.OUT_REQ, []);
+
+/* ===== Mutators ===== */
+function addOutgoing(name){ const a=reqOut(); if(!a.includes(name)) a.unshift(name); save(LS.OUT_REQ,a); }
+function addIncoming(name){ const a=reqIn();  if(!a.includes(name)) a.unshift(name); save(LS.IN_REQ,a); }
+function removeOutgoing(name){ save(LS.OUT_REQ, reqOut().filter(n=>n!==name)); }
+function removeIncoming(name){ save(LS.IN_REQ, reqIn().filter(n=>n!==name)); }
+function addFriend(name){ const a=friends(); if(!a.includes(name)) a.unshift(name); save(LS.FRIENDS,a); }
+function removeFriend(name){ save(LS.FRIENDS, friends().filter(n=>n!==name)); }
 function addNotif(t){ const a=load(LS.NOTIF,[]); a.unshift({id:uid('n'),text:t,time:nowISO()}); save(LS.NOTIF,a); }
 
-/* UI builders */
+/* ===== UI builders ===== */
 function personRow(name, actions){
   const prof=load(LS.PROFILE,{})[name];
   const ava=(prof && (prof.avatar||prof.avatarUrl||prof.photo)) || (users().find(u=>u.name===name)?.avatar) || face(name);
   const el=document.createElement('div'); el.className='item'; el.setAttribute('data-name',name);
-  el.innerHTML=`<img class="ava" src="${esc(ava)}" alt="">
-    <div style="flex:1;min-width:220px">
+  el.innerHTML=`
+    <img class="ava" src="${esc(ava)}" alt="">
+    <div style="flex:1;min-width:0">
       <div class="title">${esc(name)} ${name==='Me'?'<span class="pill">You</span>':''}</div>
       <div class="handle">@${esc(String(name).toLowerCase().replace(/\s+/g,'.'))}</div>
     </div>
     <div class="row" style="flex:0 0 auto;gap:6px"></div>`;
-  const slot=el.querySelector('.row:last-child'); (actions||[]).forEach(a=>slot.appendChild(a)); return el;
+  const slot=el.querySelector('.row:last-child');
+  (actions||[]).forEach(a=>slot.appendChild(a));
+  return el;
 }
-const pillBtn=(t,k,fn)=>{ const b=document.createElement('button'); b.className='btn'+(k?(' '+k):''); b.textContent=t; if(fn) b.onclick=fn; return b; };
+const pillBtn=(text,klass,fn)=>{ const b=document.createElement('button'); b.className='btn'+(klass?(' '+klass):''); b.textContent=text; if(fn) b.onclick=fn; return b; };
 
-/* Renders */
+/* ===== Renders ===== */
 function renderPeople(){
   const q=($('#pSearch').value||'').trim().toLowerCase();
   const fset=new Set(friends()), inset=new Set(reqIn()), outset=new Set(reqOut());
-  let names=users().map(u=>u.name).filter(Boolean);
-  names=names.filter(n=>n!=='Me' && !fset.has(n) && !inset.has(n) && !outset.has(n));
-  if(q) names=names.filter(n=>n.toLowerCase().includes(q));
-  $('#pCount').textContent=names.length;
+  const avail=users().map(u=>u.name)
+    .filter(n=>n && n!=='Me' && !fset.has(n) && !inset.has(n) && !outset.has(n))
+    .filter(n=>!q || n.toLowerCase().includes(q));
+
+  $('#pCount').textContent=avail.length;
   const box=$('#pList'); box.innerHTML='';
-  if(!names.length){ box.innerHTML='<div class="muted">No people to show.</div>'; return; }
-  names.forEach(n=>{
-    const add=pillBtn('Add friend','primary',()=>{ addOutgoing(n); addNotif(`Friend request sent to ${esc(n)}.`); renderAll(); });
-    const msg=pillBtn('Message','',()=>{ if(window.ctMessage) ctMessage(n); else location.href='messages.html'; });
-    box.appendChild(personRow(n,[add,msg]));
+  if(!avail.length){ box.innerHTML='<div class="muted">No people to show.</div>'; return; }
+
+  avail.forEach(n=>{
+    const add=pillBtn('Add friend','primary',()=>{ addOutgoing(n); addNotif(`Friend request sent to ${n}.`); renderAll(); });
+    const view=pillBtn('Message','',()=>{ if(window.ctMessage) ctMessage(n); else location.href='messages.html'; });
+    box.appendChild(personRow(n,[add,view]));
   });
 }
+
 function renderRequests(){
-  const inL=reqIn(), outL=reqOut();
-  $('#inCount').textContent=inL.length; $('#outCount').textContent=outL.length;
-  const iBox=$('#reqIn'), oBox=$('#reqOut'); iBox.innerHTML=''; oBox.innerHTML='';
-  if(!inL.length) iBox.innerHTML='<div class="muted">No incoming requests.</div>';
-  if(!outL.length) oBox.innerHTML='<div class="muted">No outgoing requests.</div>';
-  inL.forEach(n=>{
-    const accept=pillBtn('Accept','primary',()=>{ removeIncoming(n); removeOutgoing(n); addFriend(n); addNotif(`You are now friends with ${esc(n)}.`); renderAll(); });
+  const inBox = $('#rInList'); const outBox = $('#rOutList');
+  inBox.innerHTML=''; outBox.innerHTML='';
+  const inArr=reqIn(); const outArr=reqOut();
+
+  if(!inArr.length) inBox.innerHTML='<div class="muted">No incoming requests.</div>';
+  inArr.forEach(n=>{
+    const accept=pillBtn('Accept','primary',()=>{ removeIncoming(n); addFriend(n); addNotif(`You are now friends with ${n}.`); renderAll(); });
     const decline=pillBtn('Decline','warn',()=>{ removeIncoming(n); renderAll(); });
-    const msg=pillBtn('Message','',()=>{ if(window.ctMessage) ctMessage(n); else location.href='messages.html'; });
-    iBox.appendChild(personRow(n,[accept,decline,msg]));
+    inBox.appendChild(personRow(n,[accept,decline]));
   });
-  outL.forEach(n=>{ const cancel=pillBtn('Cancel','',()=>{ removeOutgoing(n); renderAll(); }); oBox.appendChild(personRow(n,[cancel])); });
+
+  if(!outArr.length) outBox.innerHTML='<div class="muted">No outgoing requests.</div>';
+  outArr.forEach(n=>{
+    const cancel=pillBtn('Cancel','warn',()=>{ removeOutgoing(n); renderAll(); });
+    outBox.appendChild(personRow(n,[cancel]));
+  });
 }
+
 function renderFriends(){
-  const arr=friends(); $('#fCount').textContent=arr.length;
-  const box=$('#fList'); box.innerHTML='';
+  const box=$('#fList'); const arr=friends(); $('#fCount').textContent=arr.length; box.innerHTML='';
   if(!arr.length){ box.innerHTML='<div class="muted">No friends yet.</div>'; return; }
   arr.forEach(n=>{
     const msg=pillBtn('Message','',()=>{ if(window.ctMessage) ctMessage(n); else location.href='messages.html'; });
@@ -308,18 +308,21 @@ function renderFriends(){
     box.appendChild(personRow(n,[msg,un]));
   });
 }
+
 function renderAll(){ renderPeople(); renderRequests(); renderFriends(); }
 
-/* Tabs + events */
+/* ===== Tabs ===== */
 $('#tabs').addEventListener('click',e=>{
   const t=e.target.closest('.tab'); if(!t) return;
   $$('.tab').forEach(x=>x.classList.toggle('active',x===t));
-  $$('.panel').forEach(p=>p.style.display = (p.id==='p-'+t.dataset.tab) ? 'block' : 'none');
+  $$('.panel').forEach(p=>p.classList.toggle('active', p.id==='p-'+t.dataset.tab));
 });
+
+/* Search */
 $('#pSearch').addEventListener('input', renderPeople);
 $('#pClear').addEventListener('click', ()=>{ $('#pSearch').value=''; renderPeople(); });
 
-/* Seed demo data if empty */
+/* Seed demo if USERS empty (non-invasive) */
 (function seed(){
   let u=load(LS.USERS,null);
   if(!u || !Array.isArray(u) || !u.length){
@@ -330,57 +333,47 @@ $('#pClear').addEventListener('click', ()=>{ $('#pSearch').value=''; renderPeopl
     const bots=(u||[]).map(x=>x.name).filter(n=>n && n!=='Me'); if(bots.length){ addIncoming(bots[0]); localStorage.setItem('ct_demo_friendreq','1'); }
   }
 })();
+
+/* Boot */
 renderAll();
 </script>
 
-<!-- === Universal messenger loader (base stack) + messages-only shim === -->
+<!-- ===== Universal Footer-style loader (common + messenger, with Render as default) ===== -->
 <script>
-(function loader(){
+(function(){
   "use strict";
-  window.CT_API_BASE = window.CT_API_BASE || localStorage.getItem('ct_api_base') || '';
-  function tryLoad(urls,done){
+  var BASE=(window.CT_API_BASE || localStorage.getItem('ct_api_base') || 'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+  window.CT_API_BASE = BASE; try{ localStorage.setItem('ct_api_base', BASE); }catch{}
+
+  function tryLoad(list, done){
     (function next(i){
-      if(i>=urls.length){ done(false); return; }
-      var s=document.createElement('script');
-      s.src=urls[i]; s.async=true;
-      s.onload=function(){ done(true); };
-      s.onerror=function(){ s.remove(); next(i+1); };
+      if(i>=list.length){ done(false); return; }
+      var s=document.createElement('script'); s.src=list[i]; s.async=true;
+      s.onload=function(){ done(true); }; s.onerror=function(){ s.remove(); next(i+1); };
       (document.head||document.documentElement).appendChild(s);
     })(0);
   }
-  var base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
-  var candidates=[ base+'/assets/messenger.js', '/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
-  tryLoad(candidates,function(ok){
-    if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
-      // standard hooks
-      window.ctOpen    = function(){ window.ChatternetMessenger.open(); onlyMessages(); };
-      window.ctMessage = function(name){ window.ChatternetMessenger.open(name||""); onlyMessages(); };
-      // trim to Messages-only view
-      function onlyMessages(){
-        try{
-          const root=document.querySelector('#ctMessengerRoot,.ct-messenger,[data-ct="messenger"]');
-          if(!root) return;
-          // click "Messages" tab if present
-          const t=[...root.querySelectorAll('button,[role="tab"],a')].find(el=>/messages?/i.test(el.textContent||''));
-          t && t.click();
-          // hide non-message tabs/sections by label
-          const killWords=['feed','posts','broadcast','tools','recent','profile'];
-          [...root.querySelectorAll('*')].forEach(el=>{
-            const txt=(el.textContent||'').trim().toLowerCase();
-            if(!txt) return;
-            if(killWords.some(w=>txt===w || txt.includes(w))){
-              if(/tab|nav|menu|toolbar/i.test(el.className)||el.getAttribute('role')==='tab'){ el.style.display='none'; }
-            }
-          });
-        }catch{}
-      }
-      window.__ct_onlyMessages = onlyMessages;
-      setTimeout(onlyMessages,200);
-      // also trigger when DOM changes inside overlay
-      const mo=new MutationObserver(()=>setTimeout(onlyMessages,60));
-      try{ mo.observe(document.documentElement,{subtree:true,childList:true}); }catch{}
+
+  var commonPaths=[ BASE+'/assets/common.js','/assets/common.js','assets/common.js' ];
+  var msgPaths   =[ BASE+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
+
+  tryLoad(commonPaths, function(){ tryLoad(msgPaths, function(){
+    if(!window.ctOpen){
+      window.ctOpen = function(){
+        if(window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function') return window.ChatternetMessenger.open();
+        location.href='messages.html';
+      };
     }
-  });
+    if(!window.ctMessage) window.ctMessage = window.ctOpen;
+
+    // Intercept legacy links to messages.html
+    document.addEventListener('click', function(e){
+      var a=e.target.closest && e.target.closest('a[href*="messages.html"]'); if(!a) return;
+      if(window.ctOpen || (window.ChatternetMessenger && window.ChatternetMessenger.open)){
+        e.preventDefault(); (window.ctOpen || window.ChatternetMessenger.open)();
+      }
+    }, true);
+  }); });
 })();
 </script>
 
