@@ -1,81 +1,179 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Chatternet — Feed</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root{
-    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
-    --like:#ef4444;--ok:#0f766e
-  }
-  *{box-sizing:border-box}
-  body,html{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
-  a{color:inherit;text-decoration:none}
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Feed — Chatternet</title>
 
-  /* Header */
-  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
-  .top-actions{display:flex;gap:8px;align-items:center}
-  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
-  .top-actions button:hover{background:#eef4ff}
-  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;object-fit:cover}
+  <!-- Layout shim: keeps blue bar under your Weebly menu -->
+  <script src="assets/ct-layout.js" defer></script>
 
-  /* Page layout */
-  .page{max-width:900px;margin:18px auto;padding:0 12px 28px}
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:14px 0}
-  .section-title{font-size:20px;font-weight:800;margin:0 0 10px}
-  .muted{color:var(--muted)}
-  input,textarea,button,select{font-family:'Segoe UI',Arial,sans-serif}
-  .row{display:flex;gap:10px;align-items:center}
+  <style>
+    :root{
+      --brand:#2563eb;
+      --bar-top: var(--ct-header-bottom, 120px);
+    }
+    html,body{overflow-y:auto !important}
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font:14px/1.45 "Segoe UI", Arial, system-ui, -apple-system, sans-serif;
+      color:#0f172a; background:#f5f7fb;
+      /* Blue bar (48) + app-nav (≈48) */
+      padding-top: calc(var(--bar-top) + 96px);
+    }
+    a{color:var(--brand);text-decoration:none}
 
-  /* Composer */
-  #composer{display:flex;gap:10px}
-  #mePic{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #fff}
-  #postText{flex:1;padding:10px;border:1px solid #d7d7d7;border-radius:10px;min-height:60px}
-  .c-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
-  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  .btn.primary:hover{background:var(--brand-2)}
-  .pill{padding:6px 10px;border:1px solid #d7d7d7;border-radius:999px;background:#fff}
+    /* Top blue bar */
+    .top-bar{
+      position:sticky; top:var(--bar-top); z-index:1200;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:10px 14px; background:#0ea5e9; color:#fff;
+      border-bottom:1px solid rgba(255,255,255,.2);
+    }
+    .top-bar h2{margin:0;font-size:18px}
+    .top-actions{display:flex; gap:10px; align-items:center}
+    .top-actions button{
+      height:36px; padding:0 12px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.7);
+      background:rgba(255,255,255,.15); color:#fff; cursor:pointer
+    }
+    .top-actions button:hover{background:rgba(255,255,255,.26)}
+    #meAvatar{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.7);object-fit:cover;cursor:pointer}
 
-  /* Post */
-  .post{display:flex;gap:12px;padding:12px;border:1px solid #ececec;background:#fafafa;border-radius:12px;margin:12px 0}
-  .ava{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid #fff}
-  .p-head{display:flex;justify-content:space-between;align-items:center}
-  .p-name{font-weight:800}
-  .p-time{font-size:12px;color:#6b7280}
-  .p-body{margin:6px 0 0;white-space:pre-wrap;word-break:break-word}
-  .p-img{margin-top:8px;max-width:100%;border-radius:12px;border:1px solid #e5e7eb}
-  .p-actions{display:flex;gap:10px;margin-top:8px}
-  .link{cursor:pointer;color:#2563eb}
-  .danger{color:#b91c1c;cursor:pointer}
+    /* App nav (identical everywhere) */
+    nav.app-nav{
+      position:sticky; top:calc(var(--bar-top) + 48px); z-index:1100;
+      background:#fff; border-bottom:1px solid #e6eaf2;
+    }
+    nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+    nav.app-nav a{padding:8px 10px;border-radius:999px;color:#111;background:#f3f4f6}
+    nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
+    nav.app-nav a:hover{background:#e5e7eb}
 
-  /* Modals */
-  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:3500}
-  .sheet{background:#fff;border-radius:14px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
-  .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+    /* Page */
+    .page{max-width:1100px;margin:14px auto;padding:0 12px;display:grid;grid-template-columns:1fr 320px;gap:14px}
+    @media (max-width:1020px){ .page{grid-template-columns:1fr} }
 
-  /* Toast */
-  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
-  #toast.show{opacity:1}
-</style>
+    .card{background:#fff;border:1px solid #e6eaf2;border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(15,23,42,.03)}
+    .row{display:flex;gap:8px;align-items:center}
+    .muted{color:#6b7280}
+
+    /* Composer */
+    .composer .who{display:flex;gap:10px; align-items:center; margin-bottom:10px}
+    .composer .ava{width:42px;height:42px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
+    .composer textarea{
+      width:100%; min-height:130px; resize:vertical; padding:12px;
+      border:1px solid #d7d7d7; border-radius:12px; outline:none;
+    }
+    .composer .tools{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px}
+    .btn{padding:8px 12px;border:1px solid #d7d7d7;border-radius:999px;background:#fff;cursor:pointer}
+    .btn.primary{background:#3b82f6;border-color:#3b82f6;color:#fff}
+    .btn.warn{border-color:#ef4444;color:#b91c1c}
+    .input{padding:8px 10px;border:1px solid #d7d7d7;border-radius:10px;min-width:0}
+    .input.url{flex:1 1 220px}
+
+    /* Feed list */
+    .feed{display:flex;flex-direction:column;gap:10px}
+    .post{border:1px solid #e6eaf2;border-radius:14px;padding:12px}
+    .post .head{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+    .post .ava{width:40px;height:40px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
+    .post .author{font-weight:600}
+    .post .time{font-size:12px;color:#6b7280}
+    .post .txt{white-space:pre-wrap;margin:6px 0 8px}
+    .post .img{width:100%;border-radius:12px;border:1px solid #eee;margin:8px 0;display:block}
+    .post .actions{display:flex;gap:8px;align-items:center}
+    .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #e6eaf2;background:#f8fafc;border-radius:999px;padding:4px 10px;font-size:12px}
+
+    /* Right column */
+    .side .section{margin-bottom:12px}
+    .people{display:flex;flex-direction:column;gap:8px}
+    .person{display:flex;gap:8px;align-items:center}
+    .person .ava{width:34px;height:34px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
+  </style>
 </head>
 <body>
 
-<!-- Header -->
-<div class="top-bar">
+<!-- Sticky blue bar -->
+<div class="top-bar" role="banner" aria-label="Page header">
   <h2>Feed</h2>
   <div class="top-actions">
     <button id="btnNotif">Notifications</button>
     <button id="btnInbox">Inbox</button>
     <button id="btnMsgs">Messages</button>
-    <img id="myProfile" title="My Profile" />
+    <img id="meAvatar" alt="My Profile" title="My Profile" />
   </div>
 </div>
 
+<!-- App Nav -->
+<nav class="app-nav" aria-label="Site">
+  <div class="inner">
+    <a href="index.html">Home</a>
+    <a class="active" href="feed.html" aria-current="page">Feed</a>
+    <a href="friends.html">Friends</a>
+    <a href="chattermarket.html">Market</a>
+    <a href="groups.html">Groups</a>
+    <a href="events.html">Events</a>
+    <a href="media.html">Media</a>
+    <a href="dating.html">Dating</a>
+    <a href="blogs.html">Blogs</a>
+    <a href="polls.html">Polls</a>
+    <a href="music.html">Music</a>
+    <a href="messages.html">Messages</a>
+    <a href="profile.html">Profile</a>
+    <a href="settings.html">Settings</a>
+  </div>
+</nav>
+
+<!-- Page -->
+<div class="page">
+
+  <!-- Main column -->
+  <main>
+    <!-- Composer -->
+    <section class="card composer">
+      <div class="who">
+        <img id="meAvatar2" class="ava" alt="">
+        <div>
+          <div><strong id="meName">Me</strong></div>
+          <div class="muted" style="font-size:12px">What’s on your mind?</div>
+        </div>
+      </div>
+      <textarea id="composerText" placeholder="Write something to your friends…"></textarea>
+      <div class="tools">
+        <input id="imgUrl" class="input url" placeholder="Optional image URL (paste and Post)"/>
+        <button id="btnPost" class="btn primary">Post</button>
+        <button id="btnClear" class="btn">Clear</button>
+      </div>
+    </section>
+
+    <!-- Feed list -->
+    <section id="feedList" class="feed"></section>
+  </main>
+
+  <!-- Right column -->
+  <aside class="side">
+    <div class="card section">
+      <div class="row" style="justify-content:space-between">
+        <strong>People you may know</strong>
+        <a href="friends.html">See all</a>
+      </div>
+      <div id="suggestions" class="people"></div>
+    </div>
+
+    <div class="card section">
+      <strong>Quick actions</strong>
+      <div class="row" style="margin-top:8px;flex-wrap:wrap">
+        <button class="btn" id="qaToFriends">Open Friends</button>
+        <button class="btn" id="qaToMessages">New Message</button>
+        <button class="btn" id="qaClearFeed">Clear Feed</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
 <!-- Notifications / Inbox Modals -->
-<div class="modalbg" id="notifModal">
+<div class="modalbg" id="notifBg">
   <div class="sheet">
     <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
     <div id="notifList"></div>
@@ -85,8 +183,7 @@
     </div>
   </div>
 </div>
-
-<div class="modalbg" id="inboxModal">
+<div class="modalbg" id="inboxBg">
   <div class="sheet">
     <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
     <div id="inboxList"></div>
@@ -96,231 +193,202 @@
   </div>
 </div>
 
-<div class="page">
-  <!-- Composer -->
-  <section class="card">
-    <h3 class="section-title">Create post</h3>
-    <div id="composer">
-      <img id="mePic" alt="Me" />
-      <div style="flex:1">
-        <textarea id="postText" placeholder="What's happening?"></textarea>
-        <div class="c-actions">
-          <label class="pill" style="cursor:pointer">
-            <input id="imgFile" type="file" accept="image/*" style="display:none">
-            Add image
-          </label>
-          <select id="vis" class="pill">
-            <option value="public">Public</option>
-            <option value="friends">Friends</option>
-            <option value="private">Only me</option>
-          </select>
-          <button class="btn primary" id="btnPost">Post</button>
-        </div>
-        <img id="imgPreview" class="p-img" style="display:none" />
-      </div>
-    </div>
-  </section>
-
-  <!-- Feed -->
-  <section class="card">
-    <h3 class="section-title">Latest</h3>
-    <div id="feedList"></div>
-  </section>
-</div>
-
-<div id="toast"></div>
-
-<!-- Keep only your app scripts here; common.js & messenger.js load in your universal footer -->
-<script src="auth.js"></script>
-<script src="api.js"></script>
-
 <script>
-/* ===== tiny helpers ===== */
-const $ = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
+/* ===== Keys & helpers ===== */
 const LS = {
-  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', SETTINGS:'ct_settings_v1',
-  POSTS:'ct_feed_posts_v7', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'
+  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1',
+  NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
+  FEED:'ct_feed_posts_v1'
 };
-const face = n => `https://i.pravatar.cc/120?u=${encodeURIComponent(n||'me')}`;
-const toast = (m)=>{ const t=$("#toast"); t.textContent=m; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); };
-function load(k,f){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{return f;} }
-function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const load=(k,f)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;} };
+const save=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
+const nowISO=()=>new Date().toISOString();
+const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+const face=n=>`https://i.pravatar.cc/200?u=${encodeURIComponent(n||'me')}`;
+const timeAgo = (iso)=>{ const d=(Date.now()-new Date(iso).getTime())/1000;
+  if(d<60) return `${Math.floor(d)}s`; if(d<3600) return `${Math.floor(d/60)}m`;
+  if(d<86400) return `${Math.floor(d/3600)}h`; return `${Math.floor(d/86400)}d`; };
 
-/* ===== seed minimum data ===== */
-(function seed(){
-  let u = load(LS.USERS, null);
-  if (!u || !Array.isArray(u) || !u.length){
-    u = [{name:'Me', avatar:face('Me')}, {name:'Grace Lee', avatar:face('Grace')}];
-    save(LS.USERS, u);
-  } else if (!u.find(x=>x.name==='Me')) { u.unshift({name:'Me', avatar:face('Me')}); save(LS.USERS, u); }
-  if (!Array.isArray(load(LS.POSTS,null))) save(LS.POSTS, []);
-})();
+/* ===== Header wiring ===== */
+(function header(){
+  const prof=(load(LS.PROFILE,{}))['Me']||{};
+  const meA=$('#meAvatar'); if(meA){ meA.referrerPolicy='no-referrer'; meA.loading='lazy'; meA.src=prof.avatar||face('Me'); meA.alt='Me';
+    meA.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{} location.href='profile.html'; }; }
+  const meA2=$('#meAvatar2'); if(meA2){ meA2.referrerPolicy='no-referrer'; meA2.loading='lazy'; meA2.src=prof.avatar||face('Me'); }
+  $('#meName').textContent = prof.displayName || 'Me';
 
-/* ===== header wiring (avatar + buttons) ===== */
-(function wireHeader(){
-  const prof = (load(LS.PROFILE, {})['Me']||{});
-  const img  = $("#myProfile");
-  if (img){
-    img.src = (prof.avatar || prof.avatarUrl || face('Me'));
-    img.alt = (prof.displayName || 'Me');
-    img.onclick = ()=>location.href='profile.html';
-  }
-  // Notifications modal
-  const nModal=$("#notifModal"), nList=$("#notifList");
-  function rNotif(){
-    const arr=load(LS.NOTIF,[]);
-    nList.innerHTML = arr.length
-      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
-      : '<div class="notifitem">No notifications yet.</div>';
-  }
-  $("#btnNotif").addEventListener('click',()=>{ rNotif(); nModal.style.display='flex'; });
-  $("#clearNotif").addEventListener('click',()=>{ save(LS.NOTIF,[]); rNotif(); });
-  $("#closeNotif").addEventListener('click',()=> nModal.style.display='none');
-
-  // Inbox modal
-  const iModal=$("#inboxModal"), iList=$("#inboxList");
-  function rInbox(){
-    const arr=load(LS.INBOX,[]);
-    iList.innerHTML = arr.length
-      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
-      : '<div class="notifitem">Inbox is empty.</div>';
-  }
-  $("#btnInbox").addEventListener('click',()=>{ rInbox(); iModal.style.display='flex'; });
-  $("#closeInbox").addEventListener('click',()=> iModal.style.display='none');
-
-  // Messages -> overlay if available
-  $("#btnMsgs").addEventListener('click',(e)=>{
-    e.preventDefault(); e.stopPropagation();
-    if (window.ctOpen) return window.ctOpen();
-    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+  $('#btnMsgs')?.addEventListener('click',e=>{
+    e.preventDefault();
+    if(window.ctOpen) return ctOpen();
+    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
     location.href='messages.html';
   });
+
+  const nbg=$('#notifBg'), ibg=$('#inboxBg');
+  function rN(){ const arr=load(LS.NOTIF,[]); const box=$('#notifList');
+    box.innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; }
+  function rI(){ const arr=load(LS.INBOX,[]); const box=$('#inboxList');
+    box.innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; }
+  $('#btnNotif').onclick=()=>{ rN(); nbg.style.display='flex'; };
+  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); };
+  $('#closeNotif').onclick=()=>{ nbg.style.display='none'; };
+  $('#btnInbox').onclick=()=>{ rI(); ibg.style.display='flex'; };
+  $('#closeInbox').onclick=()=>{ ibg.style.display='none'; };
 })();
 
-/* ===== composer ===== */
-(function compose(){
-  const prof = (load(LS.PROFILE,{})['Me']||{});
-  $("#mePic").src = (prof.avatar || prof.avatarUrl || face('Me'));
-
-  let imgData = '';
-  $("#imgFile").addEventListener('change', (e)=>{
-    const f=e.target.files && e.target.files[0]; if(!f) return;
-    const r=new FileReader();
-    r.onload = ev => {
-      imgData = ev.target.result || '';
-      const prev = $("#imgPreview");
-      if (imgData){ prev.src = imgData; prev.style.display='block'; }
-    };
-    r.readAsDataURL(f);
-  });
-
-  $("#btnPost").addEventListener('click', ()=>{
-    const text = ($("#postText").value||'').trim();
-    const vis  = $("#vis").value||'public';
-    if (!text && !imgData) { toast('Type something or add an image'); return; }
-    const s = load(LS.SETTINGS, {profile:{actor:'Me'}});
-    const actor = (s.profile && s.profile.actor) || 'Me';
-    const posts = load(LS.POSTS, []);
-    const post = {
-      id: 'p_'+Date.now(),
-      by: actor,
-      avatar: (prof.avatar || prof.avatarUrl || face(actor)),
-      time: new Date().toISOString(),
-      text, img: imgData||'', vis, likes:0, comments:[]
-    };
-    posts.unshift(post);
-    save(LS.POSTS, posts);
-    // in-app notification (demo)
-    const ns = load(LS.NOTIF,[]);
-    ns.unshift({time:Date.now(), text:'Your post was published to the feed.'});
-    save(LS.NOTIF, ns);
-
-    $("#postText").value=''; imgData=''; $("#imgPreview").style.display='none';
-    renderFeed();
-    toast('Posted');
-  });
+/* ===== Seed users (so feed/suggestions have people) ===== */
+(function seedUsers(){
+  let u = load(LS.USERS, []);
+  const WANT = ['Emma Davis','Ethan Brooks','Olivia Perez','Logan Price','Mia Carter','Lucas Reed','Chloe Evans','Henry Scott','Amelia Ross','Elijah Gray','Isabella Wood','James Hall','Luna Kelly','Benjamin Ward','Aria King','Michael Reed','Jason Brooks','Daniel Foster','Echo Bot'];
+  const names = new Set(u.map(x=>x && x.name).filter(Boolean));
+  if(!names.has('Me')) u.unshift({name:'Me',avatar:face('Me')});
+  if(u.filter(x=>x.name!=='Me').length < 8){
+    WANT.forEach(n=>{ if(!names.has(n)){ u.push({name:n, avatar:face(n)}); names.add(n); } });
+  }
+  save(LS.USERS, u);
 })();
 
-/* ===== feed render ===== */
-function timeAgo(ts){
-  try{
-    const t = new Date(ts).getTime();
-    const d = Math.max(1, Math.floor((Date.now()-t)/1000));
-    if (d<60) return d+'s';
-    if (d<3600) return Math.floor(d/60)+'m';
-    if (d<86400) return Math.floor(d/3600)+'h';
-    return Math.floor(d/86400)+'d';
-  }catch{return '';}
-}
+/* ===== Feed store ===== */
+const posts   = ()=>load(LS.FEED, []);
+const setPosts= (arr)=>save(LS.FEED, arr);
 
-function renderFeed(){
-  const meName = ((load(LS.SETTINGS,{profile:{actor:'Me'}})).profile||{}).actor || 'Me';
-  const posts = (load(LS.POSTS,[])).slice(); // copy
-  const box = $("#feedList");
-  if (!posts.length){ box.innerHTML = '<div class="muted">No posts yet. Create one above!</div>'; return; }
-  box.innerHTML = '';
-  posts.forEach(p=>{
-    const row = document.createElement('div');
-    row.className = 'post';
-    row.innerHTML = `
-      <img class="ava" src="${p.avatar||face(p.by)}" alt="">
-      <div style="flex:1">
-        <div class="p-head">
-          <div>
-            <div class="p-name">${p.by}</div>
-            <div class="p-time">${timeAgo(p.time)} · ${p.vis||'public'}</div>
-          </div>
-          <div class="p-actions">
-            <span class="link" data-act="like">Like (${p.likes||0})</span>
-            ${ p.by===meName ? `<span class="link" data-act="edit">Edit</span>
-            <span class="danger" data-act="del">Delete</span>` : '' }
-          </div>
-        </div>
-        <div class="p-body">${(p.text||'').replaceAll('&','&amp;').replaceAll('<','&lt;')}</div>
-        ${ p.img ? `<img class="p-img" src="${p.img}" alt="">` : '' }
+/* Seed posts if empty */
+(function seedFeed(){
+  let p = posts();
+  if(Array.isArray(p) && p.length) return;
+  const take = load(LS.USERS,[]).filter(x=>x.name!=='Me').slice(0,5).map(x=>x.name);
+  const demo = [
+    {a: take[0]||'Emma Davis', t:"What a sunny day in Horsham ☀️ Walking the dog later!"},
+    {a: take[1]||'Ethan Brooks', t:"Cooking pasta tonight. Any favorite sauces?"},
+    {a: 'Me', t:"Hello, world! First post on Chatternet 🎉"},
+    {a: take[2]||'Olivia Perez', t:"Finished a great documentary—recommendations welcome."},
+    {a: take[3]||'Logan Price', t:"Gym done ✅ Coffee time."}
+  ];
+  p = demo.map(d=>({
+    id: 'p_'+Math.random().toString(36).slice(2),
+    author: d.a, avatar: face(d.a), text: d.t, time: nowISO(),
+    likes: Math.floor(Math.random()*15), comments: Math.floor(Math.random()*6),
+    img: null
+  }));
+  setPosts(p);
+})();
+
+/* ===== Composer ===== */
+$('#btnPost').addEventListener('click', ()=>{
+  const txt = ($('#composerText').value||'').trim();
+  const img = ($('#imgUrl').value||'').trim();
+  if(!txt && !img) return;
+  const me = 'Me';
+  const p = posts();
+  p.unshift({
+    id:'p_'+Math.random().toString(36).slice(2),
+    author: me, avatar: face(me), text: txt, time: nowISO(),
+    likes:0, comments:0, img: img||null
+  });
+  setPosts(p);
+  $('#composerText').value=''; $('#imgUrl').value='';
+  renderFeed();
+});
+$('#btnClear').addEventListener('click', ()=>{ $('#composerText').value=''; $('#imgUrl').value=''; });
+
+/* ===== Render feed ===== */
+function postHtml(p){
+  return `
+  <article class="post" data-id="${esc(p.id)}">
+    <div class="head">
+      <img class="ava" src="${esc(p.avatar||face(p.author))}" alt="">
+      <div style="min-width:0;flex:1">
+        <div class="author">${esc(p.author)}</div>
+        <div class="time">${esc(timeAgo(p.time))} ago</div>
       </div>
-    `;
-    // actions
-    row.querySelectorAll('[data-act]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const act = btn.getAttribute('data-act');
-        const all = load(LS.POSTS,[]);
-        const idx = all.findIndex(x=>x.id===p.id);
-        if (idx<0) return;
-        if (act==='like'){ all[idx].likes = (all[idx].likes||0)+1; save(LS.POSTS,all); renderFeed(); }
-        if (act==='del'){
-          if (!confirm('Delete this post?')) return;
-          all.splice(idx,1); save(LS.POSTS,all); renderFeed();
-        }
-        if (act==='edit'){
-          const txt = prompt('Edit your post text:', all[idx].text||'');
-          if (txt==null) return;
-          all[idx].text = txt;
-          all[idx].time = new Date().toISOString(); // bump
-          save(LS.POSTS,all); renderFeed();
-        }
-      });
-    });
-    $("#feedList").appendChild(row);
-  });
+      <button class="btn" data-act="message" data-name="${esc(p.author)}">Message</button>
+    </div>
+    <div class="txt">${esc(p.text||'')}</div>
+    ${p.img ? `<img class="img" src="${esc(p.img)}" alt="">` : ``}
+    <div class="actions">
+      <button class="btn" data-act="like">👍 Like</button>
+      <span class="pill" data-role="counts">${p.likes} likes • ${p.comments} comments</span>
+      <button class="btn" data-act="comment">💬 Comment</button>
+      <button class="btn warn" data-act="delete">Delete</button>
+    </div>
+  </article>`;
 }
-
-/* initial render + keep avatar reactive */
+function renderFeed(){
+  const box = $('#feedList'); const p = posts();
+  box.innerHTML = p.length ? p.map(postHtml).join('') : '<div class="card muted">No posts yet. Say hello using the composer above.</div>';
+}
 renderFeed();
-window.addEventListener('storage', (e)=>{
-  if (e.key===LS.POSTS) renderFeed();
+
+/* Post actions */
+$('#feedList').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-act]'); if(!btn) return;
+  const act = btn.getAttribute('data-act');
+  const art = btn.closest('.post'); if(!art) return;
+  const id  = art.getAttribute('data-id');
+  let p = posts(); const i = p.findIndex(x=>x.id===id); if(i<0) return;
+
+  if(act==='like'){ p[i].likes += 1; setPosts(p); renderFeed(); }
+  else if(act==='comment'){ p[i].comments += 1; setPosts(p); renderFeed(); }
+  else if(act==='delete'){ p.splice(i,1); setPosts(p); renderFeed(); }
+  else if(act==='message'){ const name = btn.getAttribute('data-name') || p[i].author; if(window.ctMessage) ctMessage(name); else location.href='messages.html'; }
 });
 
-/* Small safety net: if someone clicks a messages.html link, open overlay */
-document.addEventListener('click', (e)=>{
-  const a = e.target.closest && e.target.closest('a[href*="messages.html"]');
-  if(!a) return;
-  if (window.ctOpen || (window.ChatternetMessenger&&window.ChatternetMessenger.open)){
-    e.preventDefault();
-    (window.ctOpen || window.ChatternetMessenger.open)();
-  }
-}, true);
+/* Suggestions (right column) */
+(function suggestions(){
+  const box = $('#suggestions'); const u = load(LS.USERS, []).filter(x=>x.name!=='Me').slice(0,6);
+  box.innerHTML = u.map(x=>`
+    <div class="person">
+      <img class="ava" src="${esc(x.avatar||face(x.name))}" alt="">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600">${esc(x.name)}</div>
+        <div class="muted" style="font-size:12px">@${esc(x.name.toLowerCase().replace(/\s+/g,'.'))}</div>
+      </div>
+      <button class="btn" data-add="${esc(x.name)}">Add</button>
+    </div>`).join('');
+  box.addEventListener('click',(e)=>{
+    const b=e.target.closest('button[data-add]'); if(!b) return;
+    const name=b.getAttribute('data-add'); try{
+      const k='ct_friend_requests_out_v2'; const out=load(k,[]); if(!out.includes(name)) out.unshift(name); save(k,out);
+      const n=load(LS.NOTIF,[]); n.unshift({text:`Friend request sent to ${name}.`,time:nowISO()}); save(LS.NOTIF,n);
+      b.textContent='Sent'; b.disabled=true;
+    }catch{}
+  });
+})();
+
+/* Quick actions */
+$('#qaToFriends').onclick = ()=>location.href='friends.html';
+$('#qaToMessages').onclick = ()=>{ if(window.ctOpen) ctOpen(); else location.href='messages.html'; };
+$('#qaClearFeed').onclick  = ()=>{ save(LS.FEED,[]); renderFeed(); };
 </script>
+
+<!-- Base loader: shared helpers + messenger overlay -->
+<script src="assets/common.js" defer></script>
+<script>
+(function(){
+  "use strict";
+  var BASE=(window.CT_API_BASE || localStorage.getItem('ct_api_base') || 'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+  window.CT_API_BASE = BASE; try{ localStorage.setItem('ct_api_base', BASE); }catch{}
+
+  function tryLoad(list, done){
+    (function next(i){ if(i>=list.length){ done(false); return; }
+      var s=document.createElement('script'); s.src=list[i]; s.async=true;
+      s.onload=function(){ done(true); }; s.onerror=function(){ s.remove(); next(i+1); };
+      (document.head||document.documentElement).appendChild(s);
+    })(0);
+  }
+  var msgPaths=[ BASE+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
+  tryLoad(msgPaths, function(){
+    if(!window.ctOpen){
+      window.ctOpen = function(){
+        if(window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function') return window.ChatternetMessenger.open();
+        location.href='messages.html';
+      };
+    }
+    if(!window.ctMessage) window.ctMessage = window.ctOpen;
+  });
+})();
+</script>
+
 </body>
 </html>
