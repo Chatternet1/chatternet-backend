@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Feed — Chatternet</title>
 
-  <!-- Layout shim: keeps blue bar under your Weebly menu -->
+  <!-- Layout shim: places blue bar just under Weebly menu -->
   <script src="assets/ct-layout.js" defer></script>
 
   <style>
     :root{
       --brand:#2563eb;
-      --bar-top: var(--ct-header-bottom, 120px);
+      --blue-top: var(--ct-bluebar-top, 132px);
     }
     html,body{overflow-y:auto !important}
     *{box-sizing:border-box}
@@ -20,13 +20,13 @@
       font:14px/1.45 "Segoe UI", Arial, system-ui, -apple-system, sans-serif;
       color:#0f172a; background:#f5f7fb;
       /* Blue bar (48) + app-nav (≈48) */
-      padding-top: calc(var(--bar-top) + 96px);
+      padding-top: calc(var(--blue-top) + 96px);
     }
     a{color:var(--brand);text-decoration:none}
 
     /* Top blue bar */
     .top-bar{
-      position:sticky; top:var(--bar-top); z-index:1200;
+      position:sticky; top:var(--blue-top); z-index:1200;
       display:flex; align-items:center; justify-content:space-between;
       padding:10px 14px; background:#0ea5e9; color:#fff;
       border-bottom:1px solid rgba(255,255,255,.2);
@@ -41,9 +41,9 @@
     .top-actions button:hover{background:rgba(255,255,255,.26)}
     #meAvatar{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.7);object-fit:cover;cursor:pointer}
 
-    /* App nav (identical everywhere) */
+    /* App nav (IDENTICAL to Friends) */
     nav.app-nav{
-      position:sticky; top:calc(var(--bar-top) + 48px); z-index:1100;
+      position:sticky; top:calc(var(--blue-top) + 48px); z-index:1100;
       background:#fff; border-bottom:1px solid #e6eaf2;
     }
     nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<!-- App Nav -->
+<!-- App Nav (identical to Friends) -->
 <nav class="app-nav" aria-label="Site">
   <div class="inner">
     <a href="index.html">Home</a>
