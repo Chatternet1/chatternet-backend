@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Settings — Chatternet</title>
+<title>Admin — Chatternet</title>
 
-<!-- Force API base (no visible UI needed) -->
+<!-- Force API base for loaders that use localStorage keys -->
 <script>
 (function () {
   var HARD = "https://chatternet-backend-1.onrender.com";
   try{
-    localStorage.setItem("CT_API_BASE", HARD);
-    localStorage.setItem("ct_api_base", HARD);
+    if(!localStorage.getItem("CT_API_BASE")) localStorage.setItem("CT_API_BASE", HARD);
+    if(!localStorage.getItem("ct_api_base")) localStorage.setItem("ct_api_base", HARD);
   }catch(e){}
   window.CT_API_BASE = HARD;
 })();
@@ -19,23 +19,20 @@
 
 <style>
   :root{
-    /* dynamic layout vars (set by script below) */
-    --blueTop: 132px;   /* distance from top to blue bar (under Weebly menu) */
-    --barH: 52px;       /* measured height of blue bar */
-    --navH: 48px;       /* measured height of app nav */
+    --blueTop: 132px;   /* set by script below */
+    --barH: 52px;       /* blue bar height */
+    --navH: 48px;       /* app nav height */
     --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
 
-    /* theme */
     --brand:#3498db; --brand-2:#2980b9;
-    --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2;
-    --bad:#b91c1c; --ok:#0f766e; --warn:#b45309;
+    --bg:#f5f7fb; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; --card:#fff;
   }
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
-    font:15px/1.45 "Segoe UI", Arial, system-ui, -apple-system, sans-serif}
+    font:14px/1.45 "Segoe UI", Arial, system-ui, -apple-system, sans-serif}
   a{color:#2563eb;text-decoration:none}
   *{box-sizing:border-box}
 
-  /* ===== Fixed blue bar (under site menu) ===== */
+  /* Fixed blue bar */
   .top-bar{
     position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
     display:flex; align-items:center; justify-content:space-between;
@@ -50,9 +47,9 @@
     border:1px solid rgba(255,255,255,.7);background:#fff;color:#0b3a67;font-weight:600
   }
   .pillbtn:hover{background:#eef4ff}
-  #myProfile{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
+  #meAvatar{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
 
-  /* ===== App nav — fixed under blue bar ===== */
+  /* Fixed App nav (under blue bar) */
   nav.app-nav{
     position:fixed; left:0; right:0;
     top:calc(var(--blueTop) + var(--barH));
@@ -68,59 +65,48 @@
   nav.app-nav a.active{background:#dbeafe !important; color:#1e3a8a !important}
   nav.app-nav a:hover{background:#e5e7eb !important}
 
-  /* ===== Page content (pushed below fixed bars) ===== */
+  /* Page (padding equals blue gap + blue bar + nav) */
   .page{
     max-width:1100px;margin:14px auto;padding:0 12px;
+    display:block;
     padding-top: var(--pagePad);
   }
 
-  /* ===== Settings UI (your original styling, tidied) ===== */
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
-  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:700;user-select:none}
-  .tab.active{background:#e9f2ff;border-color:#cfe1ff}
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px;margin:14px 0}
-  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
+  /* Admin UI */
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 10px}
+  .tab{
+    background:#fff; border:1px solid #d7d7d7; color:#0f172a;
+    padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px
+  }
+  .tab.active{ background:#e9f2ff; border-color:#b9d6ff; color:#0b63c5 }
+  .panels .panel{display:none}
+  .panels .panel.active{display:block}
+
+  .card{background:#fff;border:1px solid #e6eaf2;border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(15,23,42,.06)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .muted{color:var(--muted)}
-  .row{display:flex;gap:10px;align-items:center}
-  .row>*{flex:1}
-  input,select,textarea,button{font-family:'Segoe UI',Arial,sans-serif}
-  input,select,textarea{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px;background:#fff}
-  select{cursor:pointer}
-  textarea{resize:vertical;min-height:90px}
-  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn{padding:8px 10px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .btn.primary:hover{background:var(--brand-2)}
-  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
-  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
-  .pill{display:inline-block;padding:4px 8px;border:1px solid #d7d7d7;border-radius:999px;background:#f8fafc;font-size:12px;margin-right:6px}
-  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  @media (max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
-  .small{font-size:12px}
-  .kbd{font-family:ui-monospace, Menlo, Consolas, monospace;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:2px 6px}
-  .flex-col{display:flex;flex-direction:column;gap:8px}
-  .list{display:flex;flex-direction:column;gap:6px}
-  .codebox{background:#f8fafc;border:1px dashed #d7d7d7;border-radius:10px;padding:10px;word-break:break-all}
-  .hint{font-size:12px;color:#475569}
+  .btn.bad{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
+  textarea{min-height:120px;resize:vertical}
 
-  /* Toast */
-  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
-  #toast.show{opacity:1}
-
-  /* Error overlay */
-  #errOverlay{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.55);z-index:3000}
-  #errPanel{margin-top:24px;background:#fff;color:#111;border-radius:12px;max-width:900px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
-  #errPanel pre{white-space:pre-wrap;overflow:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;max-height:50vh}
+  .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .item{display:flex;gap:10px;align-items:flex-start;border:1px solid #e6eaf2;background:#fff;border-radius:12px;padding:10px}
+  .ava{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb}
+  .title{font-weight:800;margin:0 0 4px}
+  .meta{color:#6b7280;font-size:12px}
+  .pill{border:1px solid #d7d7d7;border-radius:999px;padding:6px 10px;background:#fff}
+  .pill.warn{background:#fff7ed;border-color:#ffedd5;color:#b45309}
 
   /* Modals */
   .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000}
-  .sheet{background:#fff;border-radius:14px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
-  .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
 </style>
 
-<!-- Positioner: measure Weebly menu -> set --blueTop/--barH/--navH -->
 <script>
+/* ==== Positioner (same as Feed/Friends) ==== */
 (function(){
   var GAP = 12;
   var MENU_SELS = [
@@ -161,18 +147,18 @@
 </head>
 <body>
 
-<!-- Blue header -->
+<!-- Fixed blue bar -->
 <div class="top-bar" role="banner" aria-label="Page header">
-  <h2>Settings</h2>
+  <h2>Admin</h2>
   <div class="top-actions">
     <button id="btnNotif" class="pillbtn">Notifications</button>
     <button id="btnInbox" class="pillbtn">Inbox</button>
     <button id="btnMsgs" class="pillbtn">Messages</button>
-    <img id="myProfile" title="My Profile" />
+    <img id="meAvatar" alt="My Profile" title="My Profile" />
   </div>
 </div>
 
-<!-- Fixed App Nav (identical to Feed/Friends) -->
+<!-- Fixed App Nav (under blue bar) -->
 <nav class="app-nav" aria-label="Site">
   <div class="inner">
     <a href="index.html">Home</a>
@@ -188,14 +174,81 @@
     <a href="music.html">Music</a>
     <a href="messages.html">Messages</a>
     <a href="profile.html">Profile</a>
-    <a class="active" href="settings.html" aria-current="page">Settings</a>
+    <a href="settings.html">Settings</a>
   </div>
 </nav>
 
-<!-- Notifications / Inbox Modals -->
-<div class="modalbg" id="notifModal">
+<!-- Page -->
+<div class="page">
+  <!-- Tabs -->
+  <div id="tabs" class="tabs">
+    <button class="tab active" data-tab="users">Users</button>
+    <button class="tab" data-tab="content">Content</button>
+    <button class="tab" data-tab="broadcast">Broadcast</button>
+    <button class="tab" data-tab="tools">Tools</button>
+  </div>
+
+  <div class="panels">
+
+    <!-- Users -->
+    <section id="p-users" class="panel active card">
+      <div class="row" style="justify-content:space-between">
+        <div class="muted"><strong id="uCount">0</strong> users</div>
+        <div class="row" style="flex:1">
+          <input id="uSearch" placeholder="Search users…">
+          <button class="btn" id="uAdd">Add user</button>
+        </div>
+      </div>
+      <div id="uList" class="list"></div>
+    </section>
+
+    <!-- Content -->
+    <section id="p-content" class="panel card">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <label class="muted">Type</label>
+          <select id="cType" style="width:200px">
+            <option value="all">All</option>
+            <option value="global">Global feed</option>
+            <option value="dating">Dating</option>
+            <option value="unknown">Other buckets</option>
+            <option value="archive">Archive</option>
+          </select>
+        </div>
+        <div class="row" style="flex:1 1 auto">
+          <input id="cSearch" placeholder="Search title/content/author…">
+          <div class="muted"><strong id="cCount">0</strong> items</div>
+        </div>
+      </div>
+      <div id="cList" class="list"></div>
+    </section>
+
+    <!-- Broadcast -->
+    <section id="p-broadcast" class="panel card">
+      <h3 class="title" style="margin:0 0 8px">Send site-wide notice</h3>
+      <div class="row"><input id="bTitle" placeholder="Title (optional)"></div>
+      <div class="row"><textarea id="bBody" placeholder="Write the announcement…"></textarea></div>
+      <div class="row" style="justify-content:flex-end"><button id="bSend" class="btn primary">Send</button></div>
+      <div class="muted" id="bStatus" style="margin-top:6px"></div>
+    </section>
+
+    <!-- Tools -->
+    <section id="p-tools" class="panel card">
+      <div class="row" style="flex-wrap:wrap">
+        <button id="tExport" class="btn">Export data</button>
+        <button id="tRebuild" class="btn">Re-seed demo users</button>
+        <button id="tWipe" class="btn bad">Wipe local data (this device)</button>
+      </div>
+      <div class="muted" style="margin-top:8px">Tip: Wipe affects only this browser/device. Export first.</div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Notifications / Inbox -->
+<div class="modalbg" id="notifBg">
   <div class="sheet">
-    <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
+    <h3 style="margin:0 0 10px">Notifications</h3>
     <div id="notifList"></div>
     <div class="row" style="margin-top:8px">
       <button id="clearNotif" class="btn primary">Clear</button>
@@ -203,9 +256,9 @@
     </div>
   </div>
 </div>
-<div class="modalbg" id="inboxModal">
+<div class="modalbg" id="inboxBg">
   <div class="sheet">
-    <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
+    <h3 style="margin:0 0 10px">Inbox</h3>
     <div id="inboxList"></div>
     <div class="row" style="margin-top:8px">
       <button id="closeInbox" class="btn">Close</button>
@@ -213,511 +266,292 @@
   </div>
 </div>
 
-<!-- Page -->
-<div class="page">
-  <div class="tabs" id="tabsBar">
-    <div class="tab active" data-tab="account">Account</div>
-    <div class="tab" data-tab="security">Security</div>
-    <div class="tab" data-tab="notifications">Notifications</div>
-    <div class="tab" data-tab="privacy">Privacy</div>
-    <div class="tab" data-tab="monetization">Monetization</div>
-    <div class="tab" data-tab="tools">Data Tools</div>
-  </div>
-
-  <!-- ACCOUNT -->
-  <section class="card panel" id="panel-account">
-    <h3 class="section-title">Account</h3>
-    <div class="grid2">
-      <div>
-        <label class="small muted">Display name</label>
-        <input id="dName" placeholder="Your name">
-      </div>
-      <div>
-        <label class="small muted">Default actor (who you post as)</label>
-        <select id="actorSel"></select>
-      </div>
-    </div>
-    <div style="margin-top:8px">
-      <label class="small muted">Bio</label>
-      <textarea id="dBio" placeholder="Tell people about you…"></textarea>
-    </div>
-    <div class="grid2" style="margin-top:8px">
-      <div>
-        <label class="small muted">Avatar URL</label>
-        <input id="dAvatarUrl" placeholder="https://">
-        <div class="row" style="margin-top:6px">
-          <input type="file" id="dAvatarFile" accept="image/*">
-          <button class="btn" id="btnUseAvatar">Use uploaded</button>
-        </div>
-      </div>
-      <div>
-        <label class="small muted">Cover URL</label>
-        <input id="dCoverUrl" placeholder="https://">
-        <div class="row" style="margin-top:6px">
-          <input type="file" id="dCoverFile" accept="image/*">
-          <button class="btn" id="btnUseCover">Use uploaded</button>
-        </div>
-      </div>
-    </div>
-    <div class="row" style="margin-top:10px;flex-wrap:wrap">
-      <button class="btn primary" id="btnSaveProfile">Save profile</button>
-      <button class="btn" id="btnViewProfile">Open Profile</button>
-      <span class="pill" id="statPosts">0 Posts</span>
-      <span class="pill" id="statMedia">0 Media</span>
-      <span class="pill" id="statFriends">0 Friends</span>
-    </div>
-  </section>
-
-  <!-- SECURITY -->
-  <section class="card panel" id="panel-security" style="display:none">
-    <h3 class="section-title">Security</h3>
-    <div class="card" style="margin:8px 0">
-      <div class="grid2">
-        <div>
-          <label class="small muted">Primary email</label>
-          <input id="secEmail" type="email" placeholder="you@example.com">
-          <div class="hint">Used for recovery + notifications (if enabled).</div>
-        </div>
-        <div class="flex-col">
-          <div><span id="emailStatus" class="pill muted">Not set</span></div>
-          <div class="row" style="flex-wrap:wrap">
-            <button class="btn" id="btnSaveEmail">Save</button>
-            <button class="btn ghost" id="btnSendCode">Send verify code</button>
-            <input id="codeInput" placeholder="Enter 6-digit code">
-            <button class="btn primary" id="btnVerifyCode">Verify</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="grid2" style="margin-top:10px">
-        <div>
-          <label class="small muted">Phone number (E.164)</label>
-          <input id="secPhone" placeholder="+447700900123">
-          <div class="hint">Optional, used for password resets and login alerts.</div>
-        </div>
-        <div class="flex-col">
-          <div><span id="phoneStatus" class="pill muted">Not set</span></div>
-          <div class="row" style="flex-wrap:wrap">
-            <button class="btn" id="btnSavePhone">Save</button>
-            <button class="btn ghost" id="btnSendPhoneCode">Send SMS code</button>
-            <input id="phoneCodeInput" placeholder="6-digit">
-            <button class="btn primary" id="btnVerifyPhone">Verify</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card" style="margin:8px 0">
-      <strong>Password</strong>
-      <div class="grid3" style="margin-top:6px">
-        <input id="pwCurrent" type="password" placeholder="Current password">
-        <input id="pwNew" type="password" placeholder="New password (8+ chars)">
-        <input id="pwNew2" type="password" placeholder="Confirm new password">
-      </div>
-      <div class="row" style="margin-top:8px;flex-wrap:wrap">
-        <button class="btn primary" id="btnChangePw">Change password</button>
-        <button class="btn" id="btnSendReset">Send reset code</button>
-        <input id="pwResetCode" placeholder="Reset code">
-        <button class="btn ghost" id="btnApplyReset">Apply reset</button>
-      </div>
-      <div id="pwHint" class="hint" style="margin-top:6px">If your site has <span class="kbd">auth.js</span>, we use it. Otherwise this protects your local device only.</div>
-    </div>
-
-    <div class="card" style="margin:8px 0">
-      <div class="row" style="align-items:center;justify-content:space-between">
-        <div>
-          <strong>Two-Step Verification (email codes)</strong>
-          <div class="hint">On login, require a code sent to your email or one of your backup codes.</div>
-        </div>
-        <label style="display:flex;align-items:center;gap:8px">
-          <input type="checkbox" id="twoFA" style="width:auto"> Enable
-        </label>
-      </div>
-      <div class="row" style="margin-top:8px;flex-wrap:wrap">
-        <button class="btn" id="btnGenBackups">Generate backup codes</button>
-        <button class="btn ghost" id="btnShowBackups">Show backup codes</button>
-        <button class="btn danger" id="btnRevokeBackups">Revoke backup codes</button>
-      </div>
-      <div id="backupBox" class="codebox small" style="display:none;margin-top:8px"></div>
-    </div>
-  </section>
-
-  <!-- NOTIFICATIONS -->
-  <section class="card panel" id="panel-notifications" style="display:none">
-    <h3 class="section-title">Notifications</h3>
-    <div class="grid3">
-      <label style="display:flex;align-items:center;gap:8px"><input id="nDM" type="checkbox" style="width:auto"> Direct messages</label>
-      <label style="display:flex;align-items:center;gap:8px"><input id="nComments" type="checkbox" style="width:auto"> Comments & replies</label>
-      <label style="display:flex;align-items:center;gap:8px"><input id="nLikes" type="checkbox" style="width:auto"> Likes</label>
-      <label style="display:flex;align-items:center;gap:8px"><input id="nFollows" type="checkbox" style="width:auto"> New followers</label>
-      <label style="display:flex;align-items:center;gap:8px"><input id="nBlogs" type="checkbox" style="width:auto"> Blog activity</label>
-      <label style="display:flex;align-items:center;gap:8px"><input id="nPolls" type="checkbox" style="width:auto"> Poll activity</label>
-    </div>
-    <div class="grid2" style="margin-top:10px">
-      <div>
-        <strong>Channels</strong>
-        <div class="flex-col" style="margin-top:6px">
-          <label style="display:flex;align-items:center;gap:8px"><input id="chInapp" type="checkbox" style="width:auto"> In-app</label>
-          <label style="display:flex;align-items:center;gap:8px"><input id="chEmail" type="checkbox" style="width:auto"> Email (requires verified email)</label>
-          <label style="display:flex;align-items:center;gap:8px"><input id="nSound" type="checkbox" style="width:auto"> Play sound</label>
-        </div>
-      </div>
-      <div>
-        <strong>Delivery</strong>
-        <div class="flex-col" style="margin-top:6px">
-          <label>Frequency
-            <select id="nFreq">
-              <option value="instant">Instant</option>
-              <option value="daily">Daily Digest</option>
-              <option value="weekly">Weekly Digest</option>
-            </select>
-          </label>
-          <label style="margin-top:6px">Do Not Disturb</label>
-          <div class="row">
-            <label class="small muted" style="flex:1;display:flex;align-items:center;gap:6px"><input id="dndEn" type="checkbox" style="width:auto"> Enable</label>
-            <input id="dndStart" type="time" value="22:00">
-            <input id="dndEnd" type="time" value="08:00">
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <button class="btn primary" id="btnSaveNotify">Save notification settings</button>
-      <button class="btn" id="btnTestNotify">Send test alert</button>
-    </div>
-    <div id="nStatus" class="hint" style="margin-top:6px"></div>
-  </section>
-
-  <!-- PRIVACY -->
-  <section class="card panel" id="panel-privacy" style="display:none">
-    <h3 class="section-title">Privacy</h3>
-    <div class="grid3">
-      <label>Profile visibility
-        <select id="pvProfile"><option value="public">Public</option><option value="friends">Friends</option><option value="private">Only me</option></select>
-      </label>
-      <label>Default post visibility
-        <select id="pvPost"><option value="public">Public</option><option value="friends">Friends</option><option value="paid">Paid</option><option value="private">Only me</option></select>
-      </label>
-      <label>Allow DMs from
-        <select id="pvDM"><option value="everyone">Everyone</option><option value="friends">Friends</option><option value="none">No one</option></select>
-      </label>
-      <label style="display:flex;align-items:center;gap:8px"><input id="pvOnline" type="checkbox" style="width:auto"> Show “online” status</label>
-      <label style="display:flex;align-items:center;gap:8px"><input id="pvShowLikes" type="checkbox" style="width:auto"> Show likes</label>
-      <label style="display:flex;align-items:center;gap:8px"><input id="pvShowComments" type="checkbox" style="width:auto"> Show comments</label>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <button class="btn primary" id="btnSavePrivacy">Save privacy</button>
-    </div>
-  </section>
-
-  <!-- MONETIZATION -->
-  <section class="card panel" id="panel-monetization" style="display:none">
-    <h3 class="section-title">Monetization</h3>
-    <div class="grid2">
-      <div>
-        <label class="small muted">Paywall link (Stripe/PayPal/Patreon/custom)</label>
-        <input id="mPaywall" placeholder="https://">
-        <div class="hint">If set, your Profile can show a “Support/Unlock” button.</div>
-      </div>
-      <div>
-        <label class="small muted">Access code (optional)</label>
-        <input id="mCode" placeholder="e.g., GOLD2025">
-      </div>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <button class="btn primary" id="btnSaveMon">Save monetization</button>
-    </div>
-  </section>
-
-  <!-- DATA TOOLS -->
-  <section class="card panel" id="panel-tools" style="display:none">
-    <h3 class="section-title">Data Tools</h3>
-    <div class="row" style="flex-wrap:wrap">
-      <button class="btn" id="btnExport">Export data.json</button>
-      <input type="file" id="importFile" accept="application/json" />
-      <button class="btn" id="btnImport">Import</button>
-      <button class="btn danger" id="btnResetLocal">Factory reset (local)</button>
-    </div>
-    <div class="hint" style="margin-top:6px">Export/import affects local data. Backend sync (if any) is separate.</div>
-  </section>
-</div>
-
-<div id="toast"></div>
-
-<!-- Error overlay -->
-<div id="errOverlay"><div id="errPanel">
-  <h3 style="margin:4px 0 10px">Error details</h3>
-  <pre id="errText"></pre>
-  <div class="row" style="justify-content:flex-end"><button class="btn" onclick="document.getElementById('errOverlay').style.display='none'">Close</button></div>
-</div></div>
-
 <script>
-/* Error catcher */
-(function(){ const show=(msg)=>{ const o=document.getElementById('errOverlay'); const t=document.getElementById('errText'); if(!o||!t) return; t.textContent=String(msg||'Unknown error'); o.style.display='flex'; }; window.addEventListener('error',e=>show(e.error? (e.error.stack||e.error.message||e.message) : e.message)); window.addEventListener('unhandledrejection',e=>show(e.reason && (e.reason.stack||e.reason.message||String(e.reason)))); })();
-</script>
+/* ===== Keys & helpers ===== */
+const LS = {
+  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', ROLES:'ct_roles_v1',
+  BLOCK:'ct_blocked_users_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
+  PRIV:'ct_privacy_prefs_v1', NOTIFP:'ct_notify_prefs_v1',
+  DATING:'ct_dating_posts_v2', GLOBAL:'ct_global_feed_v1', ARCHIVE:'ct_removed_content_v1'
+};
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const load=(k,f)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;} };
+const save=(k,v)=>{ try{localStorage.setItem(k,JSON.stringify(v));}catch{} };
+const nowISO=()=>new Date().toISOString();
+const uid=(p='id')=>p+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
+const face=n=>`https://i.pravatar.cc/100?u=${encodeURIComponent(n||'me')}`;
 
-<script>
-(function(){
-  "use strict";
+/* ===== API helper (kept for future) ===== */
+function getApiBase(){ return (window.CT_API_BASE || localStorage.getItem('CT_API_BASE') || 'https://chatternet-backend-1.onrender.com'); }
+async function api(path, method='GET', body){
+  const url = (getApiBase()+path);
+  const res = await fetch(url, {
+    method, headers:{"Content-Type":"application/json"}, credentials:"include",
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const t = await res.text();
+  try{ return JSON.parse(t); }catch{ return {error:t||'Bad response'}; }
+}
+function addNotif(t){ const a=load(LS.NOTIF,[]); a.unshift({id:uid('n'),text:t,time:nowISO()}); save(LS.NOTIF,a); }
+function addInbox(t){ const a=load(LS.INBOX,[]); a.unshift({id:uid('m'),text:t,time:nowISO()}); save(LS.INBOX,a); }
 
-  /* ===== Storage (with cookie fallback) ===== */
-  const Storage = (()=>{ function lsOk(){ try{ const k="__ct_probe__"; localStorage.setItem(k,"1"); localStorage.removeItem(k); return true; }catch{ return false; } }
-    const HAS_LS = lsOk();
-    function getCookie(name){ const m=document.cookie.match(new RegExp("(?:^|; )"+encodeURIComponent(name)+"=([^;]*)")); return m?decodeURIComponent(m[1]):null; }
-    function setCookie(name,val){ try{ document.cookie=encodeURIComponent(name)+"="+encodeURIComponent(val)+"; path=/; max-age=31536000"; }catch{} }
-    function get(k,f){ if(HAS_LS){ try{ const v=localStorage.getItem(k); if(v!=null) return JSON.parse(v); }catch{} } const c=getCookie(k); if(c){ try{ return JSON.parse(c); }catch{} } return f; }
-    function set(k,v){ const s=JSON.stringify(v); if(HAS_LS){ try{ localStorage.setItem(k,s); }catch{} } setCookie(k,s); }
-    return { get,set,hasLS:HAS_LS };
-  })();
-
-  /* ===== Helpers / keys ===== */
-  const $  = (s)=>document.querySelector(s);
-  const $$ = (s)=>Array.from(document.querySelectorAll(s));
-  const LS = {
-    USERS:"ct_users_v3", PROFILE:"ct_profile_data_v1",
-    SETTINGS:"ct_settings_v1", SETTINGS_GLOBAL:"ct_settings_global",
-    FRIENDS:"ct_friend_list_v2", POSTS:"ct_feed_posts_v7", MEDIA:"ct_media_v1",
-    NOTIF:"ct_notifications_v1", INBOX:"ct_inbox_v1"
-  };
-  const DEFAULT = {
-    profile:{ displayName:"", bio:"", avatarUrl:"", coverUrl:"", actor:"Me" },
-    notifications:{ dm:true, comments:true, likes:true, follows:true, blogs:true, polls:true,
-      channels:{ inapp:true, email:false, sound:false }, freq:"instant",
-      dnd:{ enabled:false, start:"22:00", end:"08:00" } },
-    privacy:{ profile:"public", post:"public", dm:"everyone", online:true, showLikes:true, showComments:true },
-    monetization:{ paywall:"", code:"" },
-    security:{ email:"", emailVerified:false, phone:"", phoneVerified:false, twoFA:false, backups:[] },
-    sessions:[]
-  };
-  const toast=(m)=>{ const t=$("#toast"); t.textContent=m; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); };
-
-  const load=(k,f)=>Storage.get(k,f);
-  const save=(k,v)=>Storage.set(k,v);
-  const settings=()=>Storage.get(LS.SETTINGS, DEFAULT);
-  function saveSettings(obj){
-    Storage.set(LS.SETTINGS, obj);
-    Storage.set(LS.SETTINGS_GLOBAL, obj);
-    try{ window.dispatchEvent(new CustomEvent("chatternet:settings-updated", { detail: obj })); }catch{}
-    try{ localStorage.setItem("ct_settings_poke", String(Date.now())); }catch{}
+/* ===== Header wiring ===== */
+(function header(){
+  const prof=(load(LS.PROFILE,{}))['Me']||{};
+  const img=$('#meAvatar'); if(img){ img.referrerPolicy='no-referrer'; img.loading='lazy';
+    img.src=prof.avatar||prof.avatarUrl||prof.photo||face('Me');
+    img.alt='Me';
+    img.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{}; location.href='profile.html'; };
   }
 
-  /* ===== Header wiring (avatar + modals + messages) ===== */
-  (function header(){
-    const prof=(load(LS.PROFILE,{}))["Me"]||{};
-    const img=$("#myProfile");
-    if(img){
-      img.src=prof.avatar||prof.avatarUrl||"https://i.pravatar.cc/100?u=me";
-      img.alt=prof.displayName||"Me";
-      img.onclick=()=>location.href="profile.html";
-    }
-    const notifModal=$("#notifModal"), inboxModal=$("#inboxModal");
-    function rN(){ const arr=load(LS.NOTIF,[]); $("#notifList").innerHTML = arr.length?arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||"")}</div>`).join(""):'<div class="notifitem">No notifications yet.</div>'; }
-    function rI(){ const arr=load(LS.INBOX,[]); $("#inboxList").innerHTML = arr.length?arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||"")}</div>`).join(""):'<div class="notifitem">Inbox is empty.</div>'; }
-    $("#btnNotif")?.addEventListener("click",()=>{ rN(); notifModal.style.display="flex"; });
-    $("#clearNotif")?.addEventListener("click",()=>{ save(LS.NOTIF,[]); rN(); });
-    $("#closeNotif")?.addEventListener("click",()=>{ notifModal.style.display="none"; });
-    $("#btnInbox")?.addEventListener("click",()=>{ rI(); inboxModal.style.display="flex"; });
-    $("#closeInbox")?.addEventListener("click",()=>{ inboxModal.style.display="none"; });
-
-    $("#btnMsgs")?.addEventListener("click",(e)=>{ e.preventDefault();
-      if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-      if(window.ctOpen) return window.ctOpen();
-      location.href="messages.html";
-    });
-  })();
-
-  /* ===== Tabs ===== */
-  function activateTab(id){
-    $$("#tabsBar .tab").forEach(x=>x.classList.toggle("active", x.getAttribute("data-tab")===id));
-    $$(".panel").forEach(p=>p.style.display = (p.id === "panel-"+id) ? "block" : "none");
-    save("ct_last_settings_tab", id);
-  }
-  $("#tabsBar").addEventListener("click",(e)=>{ const t=e.target.closest(".tab"); if(!t) return; activateTab(t.getAttribute("data-tab")); });
-  activateTab(load("ct_last_settings_tab","account")||"account");
-
-  /* ===== Ensure 'Me' exists (for actor select) ===== */
-  (function seedUsers(){
-    let u = load(LS.USERS, null);
-    if(!u){
-      u = [{name:"Me", avatar:`https://i.pravatar.cc/100?u=me`},
-           {name:"Grace Lee", avatar:`https://i.pravatar.cc/100?u=grace.lee`}];
-      save(LS.USERS, u);
-    } else {
-      if(!u.find(x=>x.name==="Me")) u.unshift({name:"Me", avatar:`https://i.pravatar.cc/100?u=me`});
-      save(LS.USERS, u);
-    }
-  })();
-
-  /* ===== Hydrate form ===== */
-  function fillStats(){
-    $("#statFriends").textContent = (load(LS.FRIENDS,[]).length||0) + " Friends";
-    $("#statPosts").textContent   = (load(LS.POSTS,[]).length||0) + " Posts";
-    $("#statMedia").textContent   = (load(LS.MEDIA,[]).length||0) + " Media";
-  }
-  function hydrate(){
-    const s = settings();
-    const sel = $("#actorSel"); sel.innerHTML = "";
-    (load(LS.USERS, [])).forEach(u=>{ const o=document.createElement("option"); o.value=u.name; o.textContent=u.name; sel.appendChild(o); });
-    sel.value = s.profile.actor || "Me";
-    $("#dName").value      = s.profile.displayName || "Me";
-    $("#dBio").value       = s.profile.bio || "";
-    $("#dAvatarUrl").value = s.profile.avatarUrl || "";
-    $("#dCoverUrl").value  = s.profile.coverUrl || "";
-    fillStats();
-
-    const prof=(load(LS.PROFILE,{}))["Me"]||{};
-    const img=$("#myProfile"); if(img){ img.src=prof.avatar||prof.avatarUrl||"https://i.pravatar.cc/100?u=me"; img.alt=prof.displayName||"Me"; }
-  }
-
-  function bindFileUse(btnId, inputId, outId){
-    document.querySelector(btnId).addEventListener("click", ()=>{
-      const f=document.querySelector(inputId).files && document.querySelector(inputId).files[0]; if(!f) return;
-      const r=new FileReader(); r.onload = e => { document.querySelector(outId).value = e.target.result || ""; }; r.readAsDataURL(f);
-    });
-  }
-  bindFileUse("#btnUseAvatar", "#dAvatarFile", "#dAvatarUrl");
-  bindFileUse("#btnUseCover",  "#dCoverFile",  "#dCoverUrl");
-
-  function writeVerify(key, obj){
-    save(key, obj);
-    const back = load(key, null);
-    return JSON.stringify(back) === JSON.stringify(obj);
-  }
-
-  // Profile save
-  document.getElementById("btnSaveProfile").onclick = ()=>{
-    const s = settings();
-    s.profile.displayName = (document.getElementById("dName").value||"").trim() || "Me";
-    s.profile.bio        = (document.getElementById("dBio").value||"").trim();
-    s.profile.avatarUrl  = (document.getElementById("dAvatarUrl").value||"").trim();
-    s.profile.coverUrl   = (document.getElementById("dCoverUrl").value||"").trim();
-    s.profile.actor      = document.getElementById("actorSel").value || "Me";
-
-    const profiles = load(LS.PROFILE, {});
-    profiles["Me"] = profiles["Me"] || {};
-    profiles["Me"].displayName = s.profile.displayName;
-    if (s.profile.avatarUrl) profiles["Me"].avatar = s.profile.avatarUrl;
-    if (s.profile.coverUrl)  profiles["Me"].cover  = s.profile.coverUrl;
-    profiles["Me"].bio = s.profile.bio;
-
-    const ok1 = writeVerify(LS.PROFILE, profiles);
-    saveSettings(s);
-    const ok2 = (JSON.stringify(settings()) === JSON.stringify(s));
-    toast(ok1 && ok2 ? "Profile saved" : "Saved (fallback)");
-    fillStats();
-  };
-  document.getElementById("btnViewProfile").onclick = ()=> location.href="profile.html";
-
-  // Security demo flows (local)
-  const status = (el, ok, label)=>{ el.textContent = label || (ok?"Verified":"Not set"); el.className = "pill " + (ok?"ok":"bad"); };
-  document.getElementById("btnSaveEmail").onclick = ()=>{ const s=settings(); s.security.email = (document.getElementById("secEmail").value||"").trim(); s.security.emailVerified=false; saveSettings(s); status(document.getElementById("emailStatus"), false, "Saved (unverified)"); toast("Email saved"); };
-  document.getElementById("btnSendCode").onclick  = ()=>{ const s=settings(); if(!s.security.email) return alert("Set email first."); s.security._emailCode=(""+Math.floor(100000+Math.random()*900000)); saveSettings(s); toast("Verification code sent (demo)"); };
-  document.getElementById("btnVerifyCode").onclick= ()=>{ const s=settings(); const code=(document.getElementById("codeInput").value||"").trim(); if(code && code===s.security._emailCode){ s.security.emailVerified=true; delete s.security._emailCode; saveSettings(s); status(document.getElementById("emailStatus"), true, "Verified"); toast("Email verified"); } else alert("Wrong code."); };
-
-  document.getElementById("btnSavePhone").onclick = ()=>{ const s=settings(); s.security.phone = (document.getElementById("secPhone").value||"").trim(); s.security.phoneVerified=false; saveSettings(s); status(document.getElementById("phoneStatus"), false, "Saved (unverified)"); toast("Phone saved"); };
-  document.getElementById("btnSendPhoneCode").onclick = ()=>{ const s=settings(); if(!s.security.phone) return alert("Set phone first."); s.security._smsCode=(""+Math.floor(100000+Math.random()*900000)); saveSettings(s); toast("SMS code sent (demo)"); };
-  document.getElementById("btnVerifyPhone").onclick   = ()=>{ const s=settings(); const code=(document.getElementById("phoneCodeInput").value||"").trim(); if(code && code===s.security._smsCode){ s.security.phoneVerified=true; delete s.security._smsCode; saveSettings(s); status(document.getElementById("phoneStatus"), true, "Verified"); toast("Phone verified"); } else alert("Wrong code."); };
-
-  document.getElementById("twoFA").addEventListener("change",(e)=>{ const s=settings(); s.security.twoFA=!!e.target.checked; saveSettings(s); toast("Two-step verification updated"); });
-
-  // Notifications
-  document.getElementById("btnSaveNotify").onclick = ()=>{
-    const s=settings();
-    s.notifications.dm       = document.getElementById("nDM").checked;
-    s.notifications.comments = document.getElementById("nComments").checked;
-    s.notifications.likes    = document.getElementById("nLikes").checked;
-    s.notifications.follows  = document.getElementById("nFollows").checked;
-    s.notifications.blogs    = document.getElementById("nBlogs").checked;
-    s.notifications.polls    = document.getElementById("nPolls").checked;
-    s.notifications.channels.inapp = document.getElementById("chInapp").checked;
-    s.notifications.channels.email = document.getElementById("chEmail").checked;
-    s.notifications.channels.sound = document.getElementById("nSound").checked;
-    s.notifications.freq = document.getElementById("nFreq").value;
-    s.notifications.dnd.enabled = document.getElementById("dndEn").checked;
-    s.notifications.dnd.start   = document.getElementById("dndStart").value || "22:00";
-    s.notifications.dnd.end     = document.getElementById("dndEnd").value || "08:00";
-    saveSettings(s);
-    document.getElementById("nStatus").textContent = "Notification preferences saved.";
-    toast("Notification preferences saved");
-  };
-  document.getElementById("btnTestNotify").onclick = ()=>{ try{
-      const arr=load(LS.NOTIF,[]); arr.unshift({text:"This is a test notification from Settings.", time:new Date().toISOString()}); save(LS.NOTIF,arr);
-    }catch{} toast("Test notification sent"); };
-
-  // Privacy
-  document.getElementById("btnSavePrivacy").onclick = ()=>{
-    const s=settings();
-    s.privacy.profile      = document.getElementById("pvProfile").value;
-    s.privacy.post         = document.getElementById("pvPost").value;
-    s.privacy.dm           = document.getElementById("pvDM").value;
-    s.privacy.online       = document.getElementById("pvOnline").checked;
-    s.privacy.showLikes    = document.getElementById("pvShowLikes").checked;
-    s.privacy.showComments = document.getElementById("pvShowComments").checked;
-    saveSettings(s);
-    toast("Privacy saved");
-  };
-
-  // Monetization
-  document.getElementById("btnSaveMon").onclick = ()=>{
-    const s=settings();
-    s.monetization.paywall = (document.getElementById("mPaywall").value||"").trim();
-    s.monetization.code    = (document.getElementById("mCode").value||"").trim();
-    saveSettings(s);
-    toast("Monetization saved");
-  };
-
-  // Data tools
-  document.getElementById("btnExport").onclick = ()=>{
-    const blob = new Blob([ JSON.stringify({
-      users: load(LS.USERS,[]),
-      profile: load(LS.PROFILE,{}),
-      settings: settings(),
-      friends: load(LS.FRIENDS,[]),
-      posts: load(LS.POSTS,[]),
-      media: load(LS.MEDIA,[])
-    }, null, 2)], {type:"application/json"});
-    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="chatternet-data.json"; a.click(); URL.revokeObjectURL(a.href);
-  };
-  document.getElementById("btnImport").onclick = ()=>{
-    const f=document.getElementById("importFile").files && document.getElementById("importFile").files[0]; if(!f) return alert("Choose a JSON file first.");
-    const r=new FileReader();
-    r.onload = e=>{
-      try{
-        const data=JSON.parse(e.target.result||"{}");
-        if (data.users)    save(LS.USERS,data.users);
-        if (data.profile)  save(LS.PROFILE,data.profile);
-        if (data.settings) saveSettings(data.settings);
-        if (data.friends)  save(LS.FRIENDS,data.friends);
-        if (data.posts)    save(LS.POSTS,data.posts);
-        if (data.media)    save(LS.MEDIA,data.media);
-        toast("Import complete"); hydrate();
-      }catch(err){ alert("Import error: "+(err.message||err)); }
-    };
-    r.readAsText(f);
-  };
-  document.getElementById("btnResetLocal").onclick = ()=>{
-    if (!confirm("Factory reset local data?")) return;
-    try{ localStorage.clear(); }catch{}
-    try{
-      ["ct_users_v3","ct_profile_data_v1","ct_settings_v1","ct_settings_global",
-       "ct_friend_list_v2","ct_feed_posts_v7","ct_media_v1","ct_last_settings_tab"]
-       .forEach(k=>document.cookie=encodeURIComponent(k)+"=; path=/; max-age=0");
-    }catch{}
-    location.reload();
-  };
-
-  // Sync if other tabs change settings/profile
-  window.addEventListener("storage",(ev)=>{
-    if ([LS.SETTINGS,LS.SETTINGS_GLOBAL,LS.PROFILE,"ct_settings_poke"].includes(ev.key)){ hydrate(); }
+  $('#btnMsgs')?.addEventListener('click',e=>{
+    e.preventDefault();
+    if(window.ctOpen) return ctOpen();
+    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+    location.href='messages.html';
   });
 
-  if (!Storage.get(LS.SETTINGS, null)){ Storage.set(LS.SETTINGS, DEFAULT); Storage.set(LS.SETTINGS_GLOBAL, DEFAULT); }
-  if (!Storage.hasLS){ setTimeout(()=>toast("Saving with cookie fallback"), 400); }
-  hydrate();
+  const nbg=$('#notifBg'), ibg=$('#inboxBg');
+  function rN(){ const arr=load(LS.NOTIF,[]); const box=$('#notifList');
+    box.innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; }
+  function rI(){ const arr=load(LS.INBOX,[]); const box=$('#inboxList');
+    box.innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; }
+  $('#btnNotif').onclick=()=>{ rN(); nbg.style.display='flex'; };
+  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); };
+  $('#closeNotif').onclick=()=>{ nbg.style.display='none'; };
+  $('#btnInbox').onclick=()=>{ rI(); ibg.style.display='flex'; };
+  $('#closeInbox').onclick=()=>{ ibg.style.display='none'; };
+})();
+
+/* ===== Tabs ===== */
+$('#tabs')?.addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t) return;
+  $$('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  $$('.panel').forEach(p=>p.classList.toggle('active', p.id==='p-'+t.dataset.tab));
+});
+
+/* ===== Users ===== */
+function users(){ return load(LS.USERS,[]); }
+function roles(){ return load(LS.ROLES,{}); }
+function setRole(name, role){ const r=roles(); r[name]=role; save(LS.ROLES,r); }
+function blocked(){ return new Set(load(LS.BLOCK,[])); }
+function toggleBlock(name){ const s=blocked(); s.has(name)?s.delete(name):s.add(name); save(LS.BLOCK,Array.from(s)); }
+function banUser(name){
+  const s=blocked(); s.add(name); save(LS.BLOCK,Array.from(s));
+  if(name!=='Me'){
+    const arr=users().filter(u=>u.name!==name);
+    save(LS.USERS, arr);
+  }
+  addNotif(`Banned ${name}`);
+}
+function removeUser(name){
+  if(name==='Me') return alert('Cannot remove yourself.');
+  const arr=users().filter(u=>u.name!==name);
+  save(LS.USERS, arr);
+  addNotif(`Removed ${name}`);
+}
+function getAva(name){
+  const prof=load(LS.PROFILE,{})[name];
+  if(prof && (prof.avatar||prof.avatarUrl||prof.photo)) return prof.avatar||prof.avatarUrl||prof.photo;
+  const u=users().find(x=>x.name===name); if(u?.avatar) return u.avatar;
+  return face(name);
+}
+function renderUsers(){
+  const list=$('#uList'); if(!list) return;
+  list.innerHTML='';
+  const q=($('#uSearch')?.value||'').toLowerCase();
+  const rs=roles(); const bl=blocked();
+  const all=users().filter(u=>!q || String(u.name).toLowerCase().includes(q));
+  $('#uCount').textContent=String(all.length);
+
+  all.forEach(u=>{
+    const row=document.createElement('div'); row.className='item';
+    row.innerHTML=`
+      <img class="ava" src="${esc(getAva(u.name))}" alt="">
+      <div style="flex:1;min-width:0">
+        <div class="title">${esc(u.name)} ${u.name==='Me'?'<span class="pill">You</span>':''}</div>
+        <div class="meta">Role:
+          <select data-role style="width:auto;margin-left:6px">
+            <option value="user">User</option>
+            <option value="mod">Moderator</option>
+            <option value="admin">Admin</option>
+          </select>
+          ${bl.has(u.name)?'<span class="pill warn" style="margin-left:6px">blocked</span>':''}
+        </div>
+      </div>
+      <div class="row" style="flex:0 0 auto;gap:6px">
+        <button class="btn" data-profile>Profile</button>
+        <button class="btn" data-msg>Message</button>
+        <button class="btn" data-block>${bl.has(u.name)?'Unblock':'Block'}</button>
+        <button class="btn bad" data-ban>Ban</button>
+        <button class="btn bad" data-remove>Remove</button>
+      </div>`;
+    row.querySelector('[data-role]').value = rs[u.name] || 'user';
+    row.querySelector('[data-role]').onchange = (e)=>{ setRole(u.name,e.target.value); addNotif(`Role for ${u.name} → ${e.target.value}`); };
+
+    row.querySelector('[data-profile]').onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:u.name}));}catch{} location.href='profile.html'; };
+    row.querySelector('[data-msg]').onclick=()=>{ if(window.ctMessage) ctMessage(u.name); else location.href='messages.html'; };
+    row.querySelector('[data-block]').onclick=()=>{ toggleBlock(u.name); renderUsers(); };
+    row.querySelector('[data-ban]').onclick=()=>{ if(confirm(`Ban ${u.name}?`)){ banUser(u.name); renderUsers(); } };
+    row.querySelector('[data-remove]').onclick=()=>{ if(confirm(`Remove ${u.name}?`)){ removeUser(u.name); renderUsers(); } };
+
+    list.appendChild(row);
+  });
+}
+$('#uSearch')?.addEventListener('input', renderUsers);
+$('#uAdd')?.addEventListener('click', ()=>{ $('#addUserBg').style.display='flex'; });
+$('#addUserClose')?.addEventListener('click', ()=>{ $('#addUserBg').style.display='none'; });
+$('#addUserGo')?.addEventListener('click', ()=>{
+  const name=($('#addUserName')?.value||'').trim(); if(!name) return alert('Enter a name');
+  const avatar=($('#addUserAvatar')?.value||'').trim()||face(name);
+  const all=users(); if(all.find(u=>u.name===name)) return alert('User exists');
+  all.push({name,avatar}); save(LS.USERS,all);
+  $('#addUserName').value=''; $('#addUserAvatar').value=''; $('#addUserBg').style.display='none';
+  addNotif(`Added user: ${name}`); renderUsers();
+});
+
+/* ===== Content ===== */
+function ensureShape(p){
+  return {
+    id:p.id||uid('post'),
+    title:p.title||'',
+    content:p.content||p.text||p.body||'',
+    authorName:p.authorName||p.author||p.name||'Me',
+    createdAt:p.createdAt||p.time||p.date||nowISO(),
+    media:p.media||null, _raw:p
+  };
+}
+function scanContent(){
+  const out=[];
+  const dating=(load(LS.DATING,[])||[]).map(x=>({...ensureShape(x),_type:'dating',_key:LS.DATING}));
+  const global=(load(LS.GLOBAL,[])||[]).map(x=>({...ensureShape(x),_type:'global',_key:LS.GLOBAL}));
+  out.push(...dating,...global);
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!k || [LS.DATING,LS.GLOBAL,LS.NOTIF,LS.INBOX,LS.PROFILE,LS.USERS,LS.ROLES,LS.BLOCK,LS.PRIV,LS.NOTIFP,LS.ARCHIVE].includes(k)) continue;
+    try{
+      const v=JSON.parse(localStorage.getItem(k));
+      if(Array.isArray(v) && v.length && typeof v[0]==='object'){
+        const normalized=v.map(o=>({...ensureShape(o),_type:'unknown',_key:k}));
+        if(normalized.some(n=>n.title||n.content)) out.push(...normalized);
+      }
+    }catch{}
+  }
+  return out;
+}
+function archiveList(){ return load(LS.ARCHIVE,[]); }
+function setArchive(arr){ save(LS.ARCHIVE,arr); }
+function removeFromKey(key,id){
+  const arr=load(key,[]); const idx=arr.findIndex(x=>(x.id||'')===id);
+  if(idx>-1){ const [del]=arr.splice(idx,1); save(key,arr);
+    const ar=archiveList(); ar.unshift({deletedAt:nowISO(),key,item:del}); setArchive(ar);
+  }
+}
+function hideInKey(key,id,setHidden){
+  const arr=load(key,[]); const idx=arr.findIndex(x=>(x.id||'')===id);
+  if(idx>-1){ arr[idx].hidden=setHidden; save(key,arr); }
+}
+function shareToGlobal(item){
+  const g=load(LS.GLOBAL,[]); const id=item.id||uid('g');
+  if(!g.find(p=>p.id===id)){
+    g.unshift({id,title:item.title||'',content:item.content||'',authorName:item.authorName||'Me',
+      createdAt:item.createdAt||nowISO(),media:item.media||null,tags:[]});
+    save(LS.GLOBAL,g);
+  }
+}
+function renderContent(){
+  const type=$('#cType')?.value||'all';
+  const q=($('#cSearch')?.value||'').toLowerCase();
+  const arc=archiveList().map(a=>({...ensureShape(a.item||{}),_type:'archive',_key:a.key||'unknown',_deletedAt:a.deletedAt}));
+  let items= (type==='archive' ? arc : scanContent().filter(x=>type==='all'||x._type===type));
+  items=items.filter(x=>!q || String(x.title).toLowerCase().includes(q) || String(x.content).toLowerCase().includes(q) || String(x.authorName).toLowerCase().includes(q));
+  $('#cCount').textContent=String(items.length);
+  const box=$('#cList'); box.innerHTML='';
+  if(!items.length){ box.innerHTML='<div class="muted">No content found.</div>'; return; }
+
+  items.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).forEach(p=>{
+    const row=document.createElement('div'); row.className='item';
+    const ava=(load(LS.PROFILE,{})[p.authorName]?.avatar)||face(p.authorName);
+    row.innerHTML=`
+      <img class="ava" src="${esc(ava)}" alt="">
+      <div style="flex:1;min-width:0">
+        <div class="title">${esc(p.title||'(no title)')}</div>
+        <div class="meta">${esc(p.authorName)} • ${new Date(p.createdAt).toLocaleString()} •
+          <span class="${p._type==='archive'?'bad':'muted'}">${p._type}</span>
+          ${p._raw?.hidden?'<span class="pill warn">hidden</span>':''}
+        </div>
+        <div style="margin-top:6px">${esc((p.content||'').slice(0,220))}${(p.content||'').length>220?'…':''}</div>
+      </div>
+      <div class="row" style="flex:0 0 auto;gap:6px">
+        <button class="btn" data-profile="${esc(p.authorName)}">Profile</button>
+        ${p._type!=='archive'
+          ? `<button class="btn" data-hide data-id="${p.id}" data-key="${p._key}">${p._raw?.hidden?'Unhide':'Hide'}</button>
+             <button class="btn primary" data-share data-id="${p.id}">Share → Feed</button>
+             <button class="btn bad" data-del data-id="${p.id}" data-key="${p._key}">Delete</button>`
+          : `<button class="btn" disabled title="Restore not implemented yet">Restore (coming)</button>`}
+      </div>`;
+    row.querySelector('[data-profile]')?.addEventListener('click',e=>{
+      const name=e.currentTarget.getAttribute('data-profile');
+      try{ localStorage.setItem('ct_profile_view_v1',JSON.stringify({name})); }catch{} location.href='profile.html';
+    });
+    row.querySelector('[data-share]')?.addEventListener('click',()=>{ shareToGlobal(p); addNotif(`Shared to Feed: ${p.title||'(untitled)'}`); alert('Shared to Global Feed'); });
+    row.querySelector('[data-del]')?.addEventListener('click',e=>{
+      const key=e.currentTarget.getAttribute('data-key'); if(!confirm('Delete this item? It will move to Archive.')) return;
+      removeFromKey(key,p.id); renderContent();
+    });
+    row.querySelector('[data-hide]')?.addEventListener('click',e=>{
+      const key=e.currentTarget.getAttribute('data-key'); hideInKey(key,p.id,!p._raw?.hidden); renderContent();
+    });
+    box.appendChild(row);
+  });
+}
+$('#cType')?.addEventListener('change', renderContent);
+$('#cSearch')?.addEventListener('input', renderContent);
+
+/* ===== Broadcast ===== */
+$('#bSend')?.addEventListener('click',()=>{
+  const title=$('#bTitle')?.value.trim()||'';
+  const body=$('#bBody')?.value.trim()||'';
+  if(!title && !body){ $('#bStatus').textContent='Add a title or content.'; return; }
+  const msg = title? `${title} — ${body}` : body;
+  addNotif(`[NOTICE] ${msg}`); addInbox(`[NOTICE] ${msg}`);
+  $('#bStatus').textContent='Sent';
+});
+
+/* ===== Tools ===== */
+$('#tExport')?.addEventListener('click',()=>{
+  const dump={
+    users:load(LS.USERS,[]), roles:load(LS.ROLES,{}), blocked:load(LS.BLOCK,[]),
+    profile:load(LS.PROFILE,{}), privacy:load(LS.PRIV,{}), notifyPrefs:load(LS.NOTIFP,{}),
+    notifications:load(LS.NOTIF,[]), inbox:load(LS.INBOX,[]),
+    dating:load(LS.DATING,[]), global:load(LS.GLOBAL,[]), archive:load(LS.ARCHIVE,[])
+  };
+  const blob=new Blob([JSON.stringify(dump,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='chatternet-admin-export.json'; a.click();
+});
+$('#tRebuild')?.addEventListener('click',()=>{
+  if(!confirm('Re-seed demo users?')) return;
+  const u=[{name:'Me',avatar:face('Me')}];
+  ['Grace Lee','Liam Adams','Ava Morgan','Noah Walker','Sophia Turner','Mason Hill','Emma Davis','Ethan Brooks',
+   'Olivia Perez','Logan Price','Mia Carter','Lucas Reed','Chloe Evans','Henry Scott','Amelia Ross','Elijah Gray',
+   'Isabella Wood','James Hall','Luna Kelly','Benjamin Ward','Aria King','Michael Reed','Kate White','Bill Thomas']
+   .forEach(n=>u.push({name:n,avatar:face(n)}));
+  save(LS.USERS,u); addNotif('Demo users re-seeded.'); renderUsers();
+});
+$('#tWipe')?.addEventListener('click',()=>{
+  if(!confirm('This clears local data on THIS device. Continue?')) return;
+  Object.values(LS).concat(['ct_profile_view_v1']).forEach(k=>localStorage.removeItem(k));
+  alert('Cleared. Reloading…'); location.reload();
+});
+
+/* ===== boot ===== */
+(function boot(){
+  renderUsers(); renderContent();
 })();
 </script>
 
-<!-- Messenger loader (keeps your real server overlay) -->
+<!-- Messenger loader -->
 <script>
 (function(){
   "use strict";
