@@ -4,371 +4,737 @@
 <meta charset="UTF-8" />
 <title>Chatternet — Groups</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+
 <style>
   :root{
-    --brand:#3498db;--brand-2:#2980b9;--bg:#f5f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--line:#e6eaf2;
-    --danger:#b91c1c
+    --brand:#0ea5e9; --brand-2:#0989c3;
+    --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2;
+    --blueTop:132px; --barH:52px; --navH:48px;
+    --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Segoe UI',Arial,sans-serif}
-  a{color:inherit;text-decoration:none}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{margin:0;font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--bg)}
+  a{color:#2563eb;text-decoration:none}
 
-  /* Header */
-  .top-bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
-  .top-actions{display:flex;gap:8px;align-items:center}
-  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
-  .top-actions button:hover{background:#eef4ff}
-  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);cursor:pointer;object-fit:cover}
+  /* Text clarity */
+  .page, .page *{
+    letter-spacing:normal!important; word-spacing:normal!important;
+    font-variant-ligatures:none!important; font-kerning:normal!important;
+    text-rendering:optimizeLegibility!important;
+    -webkit-font-smoothing:antialiased!important; -moz-osx-font-smoothing:grayscale!important;
+    line-height:1.45;
+  }
 
-  /* Page layout */
-  .page{max-width:1100px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
-  @media (max-width:980px){ .page{grid-template-columns:1fr} }
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
-  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
-  .muted{color:var(--muted)}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  /* Top blue bar */
+  .top-bar{
+    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px; background:var(--brand); color:#fff;
+    border-bottom:1px solid rgba(255,255,255,.2)
+  }
+  .top-bar h2{margin:0;font-weight:800;font-size:18px}
+  .top-actions{display:flex;gap:10px;align-items:center}
+  .pillbtn{height:36px;padding:0 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff}
+  .pillbtn:hover{background:rgba(255,255,255,.26)}
+  #myProfile{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
 
-  input,textarea,select,button{font:inherit}
-  input,textarea,select{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px;background:#fff}
+  /* App nav */
+  nav.app-nav{position:fixed;left:0;right:0;top:calc(var(--blueTop) + var(--barH));z-index:1190;background:#fff;border-bottom:1px solid var(--line)}
+  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+  nav.app-nav a{display:inline-block;padding:8px 10px;border-radius:999px;background:#f3f4f6;color:#111;font-weight:600}
+  nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
+  nav.app-nav a:hover{background:#e5e7eb}
+
+  /* Page */
+  .page{max-width:1100px;margin:14px auto;padding:0 12px;padding-top:var(--pagePad)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);padding:14px;margin:14px 0}
+  .section-title{font-size:22px;font-weight:800;margin:4px 0 10px}
+  .subhead{display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px}
+  .row{display:flex;gap:10px;flex-wrap:wrap} .row>*{flex:1}
+  input,select,textarea,button{font:inherit}
+  input,select,textarea{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
   textarea{resize:vertical;min-height:80px}
-
-  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer;white-space:nowrap}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .btn.primary:hover{background:var(--brand-2)}
   .btn.ghost{background:#f6f9ff;border-color:#e5edff}
   .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+  .btn.sm{padding:6px 10px;font-size:12px;border-radius:8px}
+  .muted{color:#6b7280} .empty{color:#6b7280;text-align:center;padding:16px}
 
-  /* Group list cards */
-  .gitem{display:grid;grid-template-columns:84px 1fr auto;gap:12px;align-items:center;border:1px solid #ececec;background:#fafafa;border-radius:12px;padding:10px;margin:8px 0}
-  .gcover{width:84px;height:64px;border-radius:10px;object-fit:cover;border:1px solid #e5e7eb;background:#f3f4f6}
-  .gname{font-weight:800}
-  .gsub{font-size:12px;color:#6b7280}
-  .gact{display:flex;gap:8px;flex-wrap:wrap}
+  /* List items */
+  .g-item{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #ececec;border-radius:14px;background:#fafafa;cursor:pointer}
+  .g-item .btn{cursor:pointer}
+  .g-cover-sm{width:180px;height:112px;border-radius:10px;object-fit:cover;background:#e9eef6;border:1px solid #e5e7eb}
+  .g-info{flex:1;min-width:0}
+  .g-name{font-size:20px;font-weight:800;margin:0 0 4px}
+  .meta-line{color:#475569;margin:0 0 6px;font-size:13px}
+  .g-desc{color:#111827}
 
-  /* Modals (Notif/Inbox/Group) */
-  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:3500}
-  .sheet{background:#fff;border-radius:14px;max-width:640px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
-  .notifitem{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
+  /* Detail hero */
+  .hero{position:relative;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.12);margin-bottom:12px}
+  .hero-bg{aspect-ratio:16/6;min-height:260px;background:#dfe7f5;background-size:cover;background-position:center}
+  .hero-bar{position:absolute;left:16px;right:16px;bottom:16px;display:flex;gap:16px;align-items:center;padding:12px 14px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.8);border-radius:14px}
+  .avatar-lg{width:96px;height:96px;border-radius:12px;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .hero-title h2{font-size:28px;margin:0}
 
-  /* Toast */
-  #toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5000}
-  #toast.show{opacity:1}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+  .tab{padding:8px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#f8fafc;cursor:pointer}
+  .tab.active{background:#e9f2ff;border-color:#cfe1ff}
+
+  /* Feed */
+  .composer{padding:12px;border:1px dashed #d7d7d7;border-radius:12px;background:#fafafa;margin-bottom:10px}
+  .feed-item{padding:12px;margin:10px 0;background:#fff;border:1px solid #ececec;border-radius:12px}
+  .f-head{display:flex;gap:10px;align-items:center}
+  .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;cursor:pointer;border:1px solid #e5e7eb;background:#fff}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#f6f7fb;border:1px solid #e6e8f2;padding:5px 10px;border-radius:999px;font-size:12px;margin:0 6px 6px 0}
+  .comment{padding:8px;border:1px solid #eee;border-radius:10px;background:#f8fafc;margin:8px 0;display:flex;gap:8px;align-items:flex-start}
+  .comment .c-avatar{width:28px;height:28px;border-radius:50%;flex:0 0 auto;cursor:pointer;border:1px solid #e5e7eb}
+
+  /* Simple lists */
+  .simple-list > div{padding:10px;border:1px solid #ececec;border-radius:10px;background:#fafafa;margin:8px 0}
 </style>
+
+<!-- Header positioner -->
+<script>
+(function(){
+  var GAP=12, MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
+  function pickMenuBottom(){var bottoms=[];for(var i=0;i<MENU_SELS.length;i++){var el=document.querySelector(MENU_SELS[i]);if(!el)continue;var r=el.getBoundingClientRect(),h=r.height,w=r.width;var ok=h>=32&&h<=120&&r.top>-20&&r.top<180&&w>300;if(ok)bottoms.push(Math.round(r.bottom));}var best=bottoms.length?Math.min.apply(null,bottoms):120;if(best>200)best=120;try{var force=localStorage.getItem('ct_force_header_px');if(force)best=parseInt(force,10)||best;}catch{}return best;}
+  function measure(el,fb){if(!el)return fb;var r=el.getBoundingClientRect();return Math.max(fb,Math.round(r.height));}
+  function apply(){var blueTop=pickMenuBottom()+GAP;var barH=measure(document.querySelector('.top-bar'),52);var navH=measure(document.querySelector('nav.app-nav'),48);
+    document.documentElement.style.setProperty('--blueTop',blueTop+'px');
+    document.documentElement.style.setProperty('--barH',barH+'px');
+    document.documentElement.style.setProperty('--navH',navH+'px');
+    document.documentElement.style.setProperty('--pagePad',(blueTop+barH+navH)+'px');}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}
+  addEventListener('resize',apply,{passive:true}); addEventListener('orientationchange',apply,{passive:true});
+})();
+</script>
 </head>
 <body>
 
-<!-- Header -->
+<!-- Blue bar -->
 <div class="top-bar">
   <h2>Groups</h2>
   <div class="top-actions">
-    <button id="btnNotif">Notifications</button>
-    <button id="btnInbox">Inbox</button>
-    <button id="btnMsgs">Messages</button>
-    <img id="myProfile" title="My Profile" />
+    <button id="btnNotif" class="pillbtn">Notifications</button>
+    <button id="btnInbox" class="pillbtn">Inbox</button>
+    <button id="btnMsgs" class="pillbtn">Messages</button>
+    <img id="myProfile" title="My Profile" referrerpolicy="no-referrer" />
   </div>
+</div>
+
+<!-- App nav -->
+<nav class="app-nav" aria-label="Site">
+  <div class="inner">
+    <a href="index.html">Home</a>
+    <a href="feed.html">Feed</a>
+    <a href="friends.html">Friends</a>
+    <a href="chattermarket.html">Market</a>
+    <a class="active" href="groups.html" aria-current="page">Groups</a>
+    <a href="events.html">Events</a>
+    <a href="media.html">Media</a>
+    <a href="dating.html">Dating</a>
+    <a href="blogs.html">Blogs</a>
+    <a href="polls.html">Polls</a>
+    <a href="music.html">Music</a>
+    <a href="messages.html">Messages</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html">Admin</a>
+    <a href="settings.html">Settings</a>
+  </div>
+</nav>
+
+<!-- Page -->
+<div class="page">
+
+  <!-- Create -->
+  <section class="card">
+    <div class="subhead">
+      <h3 class="section-title">Create a Group</h3>
+    </div>
+    <div class="row"><input id="gName" placeholder="Group name" /><select id="gPrivacy"><option>Public</option><option>Private</option></select></div>
+    <div class="row">
+      <select id="gCategory"><option value="">Category</option><option>General</option><option>Hobbies</option><option>Music</option><option>Gaming</option><option>Sports</option><option>Education</option><option>Business</option><option>Travel</option></select>
+      <input id="gLocation" placeholder="Location (optional)">
+    </div>
+    <div class="row"><input id="gTags" placeholder="Tags (comma-separated)"></div>
+    <div class="row"><textarea id="gRules" placeholder="Group rules (optional)"></textarea></div>
+    <div class="row">
+      <div><label class="muted">Group Avatar</label><input type="file" id="gAvatar" accept="image/*" /></div>
+      <div><label class="muted">Group Cover</label><input type="file" id="gCover" accept="image/*" /></div>
+      <div style="display:flex;align-items:flex-end"><button class="btn primary" id="createBtn">Create Group</button></div>
+    </div>
+  </section>
+
+  <!-- Mine -->
+  <section class="card">
+    <div class="subhead"><h3 class="section-title">Your Groups</h3><div class="row" style="max-width:360px;margin:0"><input id="searchMine" placeholder="Search your groups..." /></div></div>
+    <div id="mineWrap"></div><div id="mineEmpty" class="empty" style="display:none">You haven’t joined any groups yet.</div>
+  </section>
+
+  <!-- Discover -->
+  <section class="card">
+    <div class="subhead"><h3 class="section-title">Discover</h3><div class="row" style="max-width:360px;margin:0"><input id="searchAll" placeholder="Search groups to discover..." /></div></div>
+    <div id="allWrap"></div><div id="allEmpty" class="empty" style="display:none">No groups to discover.</div>
+  </section>
+
+  <!-- Moderator invites -->
+  <section class="card">
+    <h3 class="section-title">Moderator Invites (for you)</h3>
+    <div id="inviteWrap"></div><div id="inviteEmpty" class="empty" style="display:none">No moderator invites.</div>
+  </section>
+
+  <!-- Detail -->
+  <section class="card" id="detail" style="display:none">
+    <div class="hero">
+      <div class="hero-bg" id="dCover"></div>
+      <div class="hero-bar">
+        <img id="dAvatar" class="avatar-lg" alt="Group">
+        <div class="hero-title"><h2 id="dName">Group</h2><div class="muted" id="dMeta"></div></div>
+        <div id="dActions" style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div class="row" style="gap:14px;align-items:flex-start">
+      <div style="flex:2">
+        <h3 class="section-title">About</h3>
+        <p class="g-desc" id="dDesc" style="margin:6px 0 10px"></p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+          <span class="chip" id="dPrivacyPill">Public</span>
+          <span class="chip" id="dCreatedBy">Creator: —</span>
+          <span class="chip" id="dCategory" style="display:none"></span>
+          <span class="chip" id="dLocation" style="display:none"></span>
+        </div>
+        <div id="dTags" style="display:flex;flex-wrap:wrap;margin:4px 0"></div>
+        <div id="dRules" class="muted" style="margin-top:6px;white-space:pre-wrap"></div>
+
+        <div class="tabs" id="gTabs">
+          <div class="tab active" data-tab="posts">Posts</div>
+          <div class="tab" data-tab="pinned">Pinned</div>
+          <div class="tab" data-tab="photos">Photos</div>
+          <div class="tab" data-tab="videos">Videos</div>
+          <div class="tab" data-tab="events">Events</div>
+          <div class="tab" data-tab="polls">Polls</div>
+          <div class="tab" data-tab="files">Files</div>
+          <div class="tab" data-tab="members">Members</div>
+        </div>
+
+        <!-- Composer -->
+        <div class="composer" id="composer">
+          <div class="row"><input id="gpTitle" placeholder="Title (optional)"><select id="gpAuthor"></select></div>
+          <div class="row" style="margin-top:8px"><textarea id="gpBody" placeholder="Write something…"></textarea></div>
+          <div class="row" style="margin-top:8px"><input id="gpURL" placeholder="Media URL (image / video / YouTube)"><input type="file" id="gpFile" accept="image/*,video/*"></div>
+          <div class="row" style="margin-top:8px"><button class="btn primary" id="gpPost">Post to Group</button></div>
+        </div>
+
+        <div id="pinnedList" style="display:none"></div>
+        <div id="gFeedList"></div>
+        <div id="gFeedEmpty" class="empty" style="display:none">No posts yet.</div>
+
+        <div id="eventsWrap" style="display:none">
+          <div class="composer" id="eventComposer" style="display:none">
+            <div class="row"><input id="evTitle" placeholder="Event title"><input id="evWhen" type="datetime-local"></div>
+            <div class="row"><input id="evWhere" placeholder="Location / Link"><input id="evCover" type="file" accept="image/*"></div>
+            <div class="row"><textarea id="evDesc" placeholder="Description"></textarea></div>
+            <button class="btn primary" id="evCreate">Create Event</button>
+          </div>
+          <div class="simple-list" id="eventsList"></div>
+          <div class="empty" id="eventsEmpty" style="display:none">No events yet.</div>
+        </div>
+
+        <div id="pollsWrap" style="display:none">
+          <div class="composer" id="pollComposer" style="display:none">
+            <div class="row"><input id="plQuestion" placeholder="Ask a question…"></div>
+            <div class="row"><input class="plOpt" placeholder="Option 1"><input class="plOpt" placeholder="Option 2"></div>
+            <button class="btn sm" id="plAddOpt">Add option</button>
+            <button class="btn primary" id="plCreate" style="margin-left:10px">Create Poll</button>
+          </div>
+          <div id="pollsList"></div>
+          <div class="empty" id="pollsEmpty" style="display:none">No polls yet.</div>
+        </div>
+
+        <div id="filesWrap" style="display:none">
+          <div class="composer" id="fileComposer" style="display:none">
+            <div class="row"><input id="flTitle" placeholder="File title (shows in list)"><input id="flInput" type="file"></div>
+            <button class="btn primary" id="flAdd">Add File</button>
+          </div>
+          <div class="simple-list" id="filesList"></div>
+          <div class="empty" id="filesEmpty" style="display:none">No files yet.</div>
+        </div>
+
+        <div id="memberList" style="display:none"></div>
+        <div id="membersEmpty" class="empty" style="display:none">No members yet.</div>
+      </div>
+
+      <!-- Edit -->
+      <div style="flex:1" id="editPanel" hidden>
+        <h3 class="section-title" style="margin-bottom:4px">Edit Group</h3>
+        <div class="row"><input id="eName" placeholder="Group name"><select id="ePrivacy"><option>Public</option><option>Private</option></select></div>
+        <div class="row" style="margin-top:8px"><select id="eCategory"><option value="">Category</option><option>General</option><option>Hobbies</option><option>Music</option><option>Gaming</option><option>Sports</option><option>Education</option><option>Business</option><option>Travel</option></select><input id="eLocation" placeholder="Location"></div>
+        <div class="row" style="margin-top:8px"><input id="eTags" placeholder="Tags (comma-separated)"></div>
+        <div style="margin-top:8px"><textarea id="eDesc" placeholder="Description"></textarea></div>
+        <div style="margin-top:8px"><textarea id="eRules" placeholder="Group rules"></textarea></div>
+        <div class="row" style="margin-top:8px"><div><label class="muted">Replace Avatar</label><input type="file" id="eAvatar" accept="image/*"></div><div><label class="muted">Replace Cover</label><input type="file" id="eCover" accept="image/*"></div></div>
+        <div class="row" style="margin-top:10px;flex-wrap:wrap"><button class="btn primary" id="saveEdit">Save</button><button class="btn" id="cancelEdit">Cancel</button><button class="btn sm ghost" id="editAddToFeed">Add to Feed</button><button class="btn sm danger" id="deleteGroup">Delete Group</button></div>
+
+        <hr style="margin:14px 0;border:none;border-top:1px solid #eee">
+        <h3 class="section-title" style="margin-bottom:6px">Moderators</h3>
+        <div id="modsList" class="muted" style="margin-bottom:8px"></div>
+        <div class="row"><input id="inviteUser" placeholder="Invite moderator by username"><button class="btn ghost" id="sendInvite">Invite</button></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- Notifications / Inbox -->
-<div class="modalbg" id="notifModal">
-  <div class="sheet">
-    <h3 style="margin:0 0 10px;font-weight:800">Notifications</h3>
+<div id="notifModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000">
+  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+    <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
     <div id="notifList"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-      <button class="btn primary" id="clearNotif">Clear</button>
-      <button class="btn" id="closeNotif">Close</button>
-    </div>
+    <div class="row" style="margin-top:8px"><button id="clearNotif" class="btn primary">Clear</button><button id="closeNotif" class="btn">Close</button></div>
   </div>
 </div>
-<div class="modalbg" id="inboxModal">
-  <div class="sheet">
-    <h3 style="margin:0 0 10px;font-weight:800">Inbox</h3>
+<div id="inboxModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000">
+  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+    <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
     <div id="inboxList"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-      <button class="btn" id="closeInbox">Close</button>
-    </div>
+    <div class="row" style="margin-top:8px"><button id="closeInbox" class="btn">Close</button></div>
   </div>
 </div>
 
-<!-- Group details modal -->
-<div class="modalbg" id="groupModal">
-  <div class="sheet" id="groupSheet">
-    <!-- filled by JS -->
-  </div>
-</div>
-
-<div class="page">
-  <!-- My Groups -->
-  <section class="card">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <h3 class="section-title" style="margin:0">My Groups</h3>
-      <span class="muted" id="myCount">0</span>
-    </div>
-    <div id="myGroups"></div>
-    <div id="myEmpty" class="muted">You haven't joined any groups yet.</div>
-  </section>
-
-  <!-- Create / Discover -->
-  <aside class="card">
-    <h3 class="section-title" style="margin:0 0 10px">Create Group</h3>
-    <div class="row">
-      <input id="gName" placeholder="Group name">
-    </div>
-    <div class="row" style="margin-top:6px">
-      <textarea id="gDesc" placeholder="Short description…"></textarea>
-    </div>
-    <div class="row" style="margin-top:6px">
-      <input id="gCover" placeholder="Cover image URL (optional)">
-    </div>
-    <div class="row" style="margin-top:8px">
-      <button class="btn primary" id="btnCreate">Create</button>
-      <button class="btn ghost" id="btnClearForm">Clear</button>
-    </div>
-
-    <h3 class="section-title" style="margin:14px 0 10px">Discover</h3>
-    <div class="row" style="margin-bottom:8px">
-      <input id="q" placeholder="Search groups by name">
-      <button class="btn" id="btnSearch" style="flex:0 0 auto">Search</button>
-      <button class="btn ghost" id="btnClearSearch" style="flex:0 0 auto">Clear</button>
-    </div>
-    <div id="discoverList"></div>
-    <div id="discoverEmpty" class="muted">No groups found.</div>
-  </aside>
-</div>
-
-<div id="toast"></div>
-
-<!-- App scripts -->
-<script src="auth.js"></script>
-<script src="api.js"></script>
+<!-- Messenger loader -->
+<script>
+(function () {
+  var FALLBACK='https://chatternet-backend-1.onrender.com';
+  var ls=localStorage.getItem('ct_api_base')||''; var base=(window.CT_API_BASE||ls||FALLBACK).replace(/\/+$/,'');
+  window.CT_API_BASE=base; if(!ls){try{localStorage.setItem('ct_api_base',base);}catch{}}
+  function chain(arr,cb){(function n(i){if(i>=arr.length){cb(false);return;}var s=document.createElement('script');s.src=arr[i];s.async=true;s.onload=function(){cb(true)};s.onerror=function(){s.remove();n(i+1)};(document.head||document.documentElement).appendChild(s);})(0);}
+  chain([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'],function(ok){
+    if(ok && window.ChatternetMessenger?.open){ window.ctOpen=window.ctOpen||function(){window.ChatternetMessenger.open("")}; window.ctMessage=window.ctMessage||function(n){window.ChatternetMessenger.open(n||"")}; }
+  });
+  document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="messages.html"]'); if(!a) return; if(window.ctOpen||window.ChatternetMessenger?.open){ e.preventDefault(); (window.ctOpen||window.ChatternetMessenger.open)(""); }},true);
+})();
+</script>
 
 <script>
-/* ===== helpers & keys ===== */
-const $ = s => document.querySelector(s);
-const $$ = s => Array.from(document.querySelectorAll(s));
-const LS = {
-  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', VIEW:'ct_profile_view_v1',
-  GROUPS:'ct_groups_v2', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1'
+/* ===== Storage / helpers ===== */
+const LS={
+  USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1',
+  NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
+  GROUPS:'cg_groups_v1', POSTS:'cg_posts_v1',
+  INVITES:'cg_invites_v1', GLOBAL:'ct_global_feed_v1',
+  EVENTS:'cg_events_v1', POLLS:'cg_polls_v1', FILES:'cg_files_v1', PINNED:'cg_pinned_v1'
 };
-function load(k,f){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{return f;} }
-function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
-const uid = (p='g') => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
-const toast=(m)=>{ const t=$("#toast"); t.textContent=m; t.className=""; void t.offsetWidth; t.className="show"; setTimeout(()=>t.className="",1300); };
-const face = n => `https://i.pravatar.cc/120?u=${encodeURIComponent(n||'Me')}`;
-const meName = ()=> (load(LS.PROFILE, {})['Me']?.displayName?.trim()) || 'Me';
-function avatarFor(name){ const p=(load(LS.PROFILE,{}))[name]||{}; return p.avatar||p.avatarUrl||face(name); }
-function addNotif(text){ const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text,time:new Date().toISOString()}); save(LS.NOTIF,arr); }
-function addInbox(text){ const arr=load(LS.INBOX,[]); arr.unshift({id:uid('m'),text,time:new Date().toISOString()}); save(LS.INBOX,arr); }
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const uid=(p='g')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+const nowISO=()=>new Date().toISOString();
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rel=iso=>{const d=(Date.now()-new Date(iso).getTime())/1000;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
+const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'Me')}`;
 
-/* ===== seed users + groups so page never blanks ===== */
-(function seedUsers(){
-  let u = load(LS.USERS,null);
-  if(!Array.isArray(u)||!u.length){
-    u=[{name:'Me',avatar:face('Me')},
-       {name:'Grace Lee',avatar:face('Grace Lee')},{name:'Liam Adams',avatar:face('Liam Adams')},
-       {name:'Ava Morgan',avatar:face('Ava Morgan')},{name:'Noah Walker',avatar:face('Noah Walker')}];
-    save(LS.USERS,u);
-  } else if(!u.find(x=>x.name==='Me')){ u.unshift({name:'Me',avatar:face('Me')}); save(LS.USERS,u); }
+/* Profiles / header */
+(function(){
+  const me=(load(LS.PROFILE,{}))['Me']||{};
+  const img=$('#myProfile'); if(img){ img.referrerPolicy='no-referrer'; img.loading='lazy'; img.src=me.avatar||face('Me'); img.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{} location.href='profile.html'; }; }
+  const notifModal=$('#notifModal'), inboxModal=$('#inboxModal');
+  function rN(){const a=load(LS.NOTIF,[]);$('#notifList').innerHTML=a.length?a.map(n=>`<div class="chip" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.';}
+  function rI(){const a=load(LS.INBOX,[]);$('#inboxList').innerHTML=a.length?a.map(n=>`<div class="chip" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.';}
+  $('#btnNotif').onclick=()=>{rN();notifModal.style.display='flex';}; $('#clearNotif').onclick=()=>{save(LS.NOTIF,[]);rN();}; $('#closeNotif').onclick=()=>{notifModal.style.display='none';};
+  $('#btnInbox').onclick=()=>{rI();inboxModal.style.display='flex';}; $('#closeInbox').onclick=()=>{inboxModal.style.display='none';};
+  $('#btnMsgs').onclick=(e)=>{e.preventDefault(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); location.href='messages.html'; };
 })();
-(function seedGroups(){
+
+/* Seed */
+(function seed(){
+  let u=load(LS.USERS,null);
+  if(!u||!u.length){
+    u=[{name:'Me',avatar:face('Me')},'Grace Lee','Liam Adams','Ava Morgan','Noah Walker','Sophia Turner','Jason Brooks','Emily Johnson']
+      .map(x=>typeof x==='string'?{name:x,avatar:face(x)}:x);
+    save(LS.USERS,u);
+  }
   let g=load(LS.GROUPS,null);
-  if(!Array.isArray(g)||!g.length){
+  if(!g||!g.length){
     g=[
-      {id:uid(), name:'Movie Lovers', desc:'Talk films, trailers & reviews.', cover:'https://picsum.photos/seed/movies/600/400', owner:'Grace Lee', members:['Grace Lee','Me']},
-      {id:uid(), name:'Music Vibes', desc:'Share tracks & playlists.', cover:'https://picsum.photos/seed/music/600/400', owner:'Liam Adams', members:['Liam Adams']},
-      {id:uid(), name:'Foodies', desc:'Recipes & restaurants.', cover:'https://picsum.photos/seed/food/600/400', owner:'Ava Morgan', members:['Ava Morgan']}
-    ];
+      {name:'Chatternet News',desc:'Announcements and platform updates.',creator:'Me',privacy:'Public',category:'General',location:'Internet',tags:['announcements','updates'],rules:'Be kind.\nNo spam.',members:['Me','Grace Lee','Liam Adams'],mods:['Me'],avatar:'',cover:'',createdAt:nowISO()},
+      {name:'Photography UK',desc:'Gear chat, shoots, tips and tricks.',creator:'Grace Lee',privacy:'Public',category:'Hobbies',location:'UK',tags:['photo','gear'],rules:'Respect models.\nCredit work.',members:['Grace Lee','Ava Morgan','Noah Walker'],mods:['Grace Lee'],avatar:'',cover:'',createdAt:nowISO()}
+    ].map(d=>({id:uid('grp'),...d}));
     save(LS.GROUPS,g);
   }
+  if(!load(LS.POSTS,null)) save(LS.POSTS,[]);
+  if(!load(LS.INVITES,null)) save(LS.INVITES,[]);
+  if(!load(LS.EVENTS,null)) save(LS.EVENTS,[]);
+  if(!load(LS.POLLS,null))  save(LS.POLLS,[]);
+  if(!load(LS.FILES,null))  save(LS.FILES,[]);
+  if(!load(LS.PINNED,null)) save(LS.PINNED,{});
 })();
 
-function groups(){ return load(LS.GROUPS,[]); }
-function setGroups(a){ save(LS.GROUPS,a); }
+/* Accessors */
+const groups = ()=>load(LS.GROUPS,[]);
+const setGroups = a=>save(LS.GROUPS,a);
+const posts = ()=>load(LS.POSTS,[]);
+const setPosts = a=>save(LS.POSTS,a);
 
-/* ===== header avatar & buttons ===== */
-(function wireHeader(){
-  const img=$("#myProfile");
-  const me = load(LS.PROFILE, {})['Me'] || {};
-  if(img){
-    img.src = me.avatar || me.avatarUrl || face('Me');
-    img.alt = me.displayName || 'Me';
-    img.onclick = ()=>{ try{ localStorage.setItem(LS.VIEW, JSON.stringify({name:'Me'})); }catch{} location.href='profile.html'; };
-  }
-
-  // Notifs / Inbox
-  const nModal=$("#notifModal"), nList=$("#notifList");
-  function rNotif(){
-    const arr=load(LS.NOTIF,[]);
-    nList.innerHTML = arr.length
-      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time||Date.now()).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
-      : '<div class="notifitem">No notifications yet.</div>';
-  }
-  $("#btnNotif").addEventListener('click',()=>{ rNotif(); nModal.style.display='flex'; });
-  $("#clearNotif").addEventListener('click',()=>{ save(LS.NOTIF,[]); rNotif(); });
-  $("#closeNotif").addEventListener('click',()=> nModal.style.display='none');
-
-  const iModal=$("#inboxModal"), iList=$("#inboxList");
-  function rInbox(){
-    const arr=load(LS.INBOX,[]);
-    iList.innerHTML = arr.length
-      ? arr.map(n=>`<div class="notifitem"><strong>${new Date(n.time||Date.now()).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
-      : '<div class="notifitem">Inbox is empty.</div>';
-  }
-  $("#btnInbox").addEventListener('click',()=>{ rInbox(); iModal.style.display='flex'; });
-  $("#closeInbox").addEventListener('click',()=> iModal.style.display='none');
-
-  // Messages -> overlay if present
-  $("#btnMsgs").addEventListener('click',(e)=>{
-    e.preventDefault(); e.stopPropagation();
-    if (window.ctOpen) return window.ctOpen();
-    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-    location.href='messages.html';
-  });
-
-  // Also intercept any <a href="messages.html">
-  document.addEventListener('click', (e)=>{
-    const a = e.target.closest && e.target.closest('a[href*="messages.html"]');
-    if(!a) return;
-    if (window.ctOpen || (window.ChatternetMessenger&&window.ChatternetMessenger.open)){
-      e.preventDefault();
-      (window.ctOpen || window.ChatternetMessenger.open)();
-    }
-  }, true);
-})();
-
-/* ===== render helpers ===== */
-function groupRow(g, mine=false){
-  const wrap=document.createElement('div'); wrap.className='gitem'; wrap.dataset.id=g.id;
-  wrap.innerHTML = `
-    <img class="gcover" src="${g.cover||'https://picsum.photos/seed/'+encodeURIComponent(g.name)+'/600/400'}" alt="">
-    <div>
-      <div class="gname">${g.name}</div>
-      <div class="gsub">${g.members.length} member${g.members.length===1?'':'s'} • Owner: ${g.owner||'—'}</div>
-      <div class="gsub" style="margin-top:4px">${g.desc||''}</div>
+/* Lists */
+function groupCardHtml(g, mine=false){
+  const mc=g.members?.length||0, pc=posts().filter(p=>p.gid===g.id).length;
+  return `<div class="g-item" data-id="${g.id}" tabindex="0" role="button">
+    <img class="g-cover-sm" src="${g.cover||'https://images.unsplash.com/photo-1517816743773-6e0fd518b4a6?q=80&w=1200&auto=format&fit=crop'}" alt="">
+    <div class="g-info">
+      <div class="g-name">${esc(g.name)}</div>
+      <div class="meta-line">${esc(g.privacy)} • ${mc} members • ${pc} posts${g.category?(' • '+esc(g.category)) : ''}</div>
+      <div class="g-desc">${esc((g.desc||'').slice(0,140))}</div>
     </div>
-    <div class="gact">
-      <button class="btn ghost" data-open="${g.id}">Open</button>
-      <button class="btn" data-msg="${g.id}">Message</button>
-      ${ mine
-          ? `<button class="btn danger" data-leave="${g.id}">Leave</button>`
-          : `<button class="btn primary" data-join="${g.id}">Join</button>` }
-    </div>`;
-  // actions
-  wrap.querySelector('[data-open]').onclick = ()=> openGroup(g.id);
-  wrap.querySelector('[data-msg]').onclick = ()=>{
-    const target = `#${g.name}`; // use group name as target label
-    if (window.ctMessage) return window.ctMessage(target);
-    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-    location.href='messages.html';
-  };
-  const j = wrap.querySelector('[data-join]');
-  if(j) j.onclick = ()=> joinGroup(g.id);
-  const l = wrap.querySelector('[data-leave]');
-  if(l) l.onclick = ()=> leaveGroup(g.id);
-  return wrap;
+    <div style="display:flex;gap:8px;flex-wrap:wrap" aria-hidden="true">
+      <button class="btn" data-act="open">Open</button>
+      ${mine?`<button class="btn ghost" data-act="leave">Leave</button>`:`<button class="btn primary" data-act="join">Join</button>`}
+    </div>
+  </div>`;
 }
+function renderMine(){
+  const me='Me', list=groups().filter(g=>g.members?.includes(me));
+  const q=($('#searchMine').value||'').toLowerCase();
+  const out=list.filter(g=>!q || (g.name+g.desc+(g.tags||[]).join(' ')).toLowerCase().includes(q));
+  $('#mineWrap').innerHTML=out.map(g=>groupCardHtml(g,true)).join('');
+  $('#mineEmpty').style.display = out.length?'none':'block';
+}
+function renderDiscover(){
+  const me='Me', list=groups().filter(g=>!(g.members||[]).includes(me));
+  const q=($('#searchAll').value||'').toLowerCase();
+  const out=list.filter(g=>!q || (g.name+g.desc+(g.tags||[]).join(' ')).toLowerCase().includes(q));
+  $('#allWrap').innerHTML=out.map(g=>groupCardHtml(g,false)).join('');
+  $('#allEmpty').style.display = out.length?'none':'block';
+}
+$('#searchMine').addEventListener('input',renderMine);
+$('#searchAll').addEventListener('input',renderDiscover);
 
-function renderMy(){
-  const me = meName();
-  const list = groups().filter(g=> (g.members||[]).includes(me));
-  const box = $("#myGroups"); box.innerHTML='';
-  $("#myEmpty").style.display = list.length ? 'none' : 'block';
-  $("#myCount").textContent = String(list.length)+' total';
-  list.forEach(g=> box.appendChild(groupRow(g, true)));
-}
-function renderDiscover(term=''){
-  const me = meName();
-  let list = groups().filter(g=> !(g.members||[]).includes(me));
-  if(term){ const t=term.toLowerCase(); list=list.filter(g=> g.name.toLowerCase().includes(t)); }
-  const box = $("#discoverList"); box.innerHTML='';
-  $("#discoverEmpty").style.display = list.length ? 'none' : 'block';
-  list.forEach(g=> box.appendChild(groupRow(g, false)));
-}
+/* Smarter clicks (fix: open anywhere on card) */
+document.addEventListener('click',(e)=>{
+  const card=e.target.closest('.g-item'); if(!card) return;
+  const id=card.dataset.id || card.dataset.gid;
+  const actEl=e.target.closest('[data-act]');
+  const act=actEl ? actEl.dataset.act : 'open';
+  const all=groups(); const i=all.findIndex(g=>g.id===id); if(i<0) return;
+  if(act==='open'){ openGroup(id); }
+  if(act==='join'){ all[i].members=all[i].members||[]; if(!all[i].members.includes('Me')) all[i].members.push('Me'); setGroups(all); renderMine(); renderDiscover(); openGroup(id); }
+  if(act==='leave'){ all[i].members=(all[i].members||[]).filter(n=>n!=='Me'); setGroups(all); renderMine(); renderDiscover(); $('#detail').style.display='none'; }
+});
+document.addEventListener('keydown',(e)=>{ const c=e.target.closest('.g-item'); if(!c) return; if(e.key==='Enter' || e.key===' '){ e.preventDefault(); c.click(); }});
 
-/* ===== actions ===== */
-function joinGroup(id){
-  const me = meName();
-  const arr = groups();
-  const g = arr.find(x=>x.id===id); if(!g) return;
-  if(!g.members.includes(me)) g.members.unshift(me);
-  setGroups(arr);
-  addNotif(`You joined ${g.name}.`);
-  addInbox(`Welcome to ${g.name}!`);
-  toast('Joined');
-  renderMy(); renderDiscover($("#q").value.trim());
-}
-function leaveGroup(id){
-  const me = meName();
-  const arr = groups();
-  const g = arr.find(x=>x.id===id); if(!g) return;
-  g.members = (g.members||[]).filter(n=>n!==me);
-  setGroups(arr);
-  addNotif(`You left ${g.name}.`);
-  toast('Left group');
-  renderMy(); renderDiscover($("#q").value.trim());
-}
-
+/* Detail */
+let currentGroup=null;
+function fillSelectAuthors(sel){ sel.innerHTML=''; load(LS.USERS,[]).forEach(u=>{ const o=document.createElement('option'); o.value=u.name; o.textContent=u.name; sel.appendChild(o); }); sel.value='Me'; }
 function openGroup(id){
-  const g = groups().find(x=>x.id===id); if(!g) return;
-  const m=$("#groupModal"), s=$("#groupSheet");
-  s.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-      <div style="font-weight:800;font-size:20px">${g.name}</div>
-      <button class="btn" id="gmClose">Close</button>
-    </div>
-    <img src="${g.cover||'https://picsum.photos/seed/'+encodeURIComponent(g.name)+'/900/400'}" style="width:100%;height:auto;border-radius:12px;border:1px solid #e5e7eb;margin:10px 0" alt="">
-    <div class="muted">${g.desc||''}</div>
-    <div style="margin-top:10px;font-weight:700">Members (${g.members.length})</div>
-    <div id="gmMembers" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px"></div>
-    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-      <button class="btn primary" id="gmMsg">Message</button>
-      <button class="btn" id="gmVisit">Visit Owner</button>
-      <button class="btn ghost" id="gmShare">Share to Inbox</button>
-    </div>
-  `;
-  const memBox = $("#gmMembers", s);
-  (g.members||[]).forEach(n=>{
-    const d=document.createElement('div');
-    d.style.cssText='display:flex;align-items:center;gap:6px;background:#f6f7fb;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px';
-    d.innerHTML = `<img src="${avatarFor(n)}" style="width:24px;height:24px;border-radius:50%;object-fit:cover"><span>${n}</span>`;
-    memBox.appendChild(d);
-  });
-  $("#gmClose", s).onclick = ()=> m.style.display='none';
-  $("#gmMsg", s).onclick   = ()=>{
-    const target = `#${g.name}`;
-    if (window.ctMessage) return window.ctMessage(target);
-    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-    location.href='messages.html';
-  };
-  $("#gmVisit", s).onclick = ()=>{ try{ localStorage.setItem(LS.VIEW, JSON.stringify({name:g.owner||'Me'})); }catch{} location.href='profile.html'; };
-  $("#gmShare", s).onclick = ()=>{ addInbox(`Check out group: ${g.name}`); toast('Shared'); };
-  m.style.display='flex';
+  const g=groups().find(x=>x.id===id); if(!g) return; currentGroup=id;
+  $('#detail').style.display='block';
+  $('#dCover').style.backgroundImage=`url('${g.cover||"https://images.unsplash.com/photo-1503264116251-35a269479413?q=80&w=1200&auto=format&fit=crop"}')`;
+  $('#dAvatar').src=g.avatar||'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?q=80&w=800&auto=format&fit=crop';
+  $('#dName').textContent=g.name||'Group';
+  $('#dMeta').textContent = `${g.members?.length||0} members • created by ${g.creator}`;
+  $('#dDesc').textContent = g.desc||'';
+  $('#dPrivacyPill').textContent = g.privacy||'Public';
+  $('#dCreatedBy').textContent = `Creator: ${g.creator}`;
+  const cat=$('#dCategory'), loc=$('#dLocation');
+  if(g.category){ cat.style.display='inline-flex'; cat.textContent=g.category; } else cat.style.display='none';
+  if(g.location){ loc.style.display='inline-flex'; loc.textContent=g.location; } else loc.style.display='none';
+  $('#dTags').innerHTML=(g.tags||[]).map(t=>`<span class="chip">#${esc(t)}</span>`).join('');
+  $('#dRules').textContent=g.rules||'';
+
+  const me='Me', amMember=(g.members||[]).includes(me), amMod=(g.mods||[]).includes(me) || g.creator===me;
+  const a=$('#dActions'); a.innerHTML='';
+  if(amMember) a.insertAdjacentHTML('beforeend','<button class="btn" id="actLeave">Leave</button>');
+  else a.insertAdjacentHTML('beforeend','<button class="btn primary" id="actJoin">Join</button>');
+  a.insertAdjacentHTML('beforeend','<button class="btn" id="actShare">Share to Feed</button>');
+  if(amMod) a.insertAdjacentHTML('beforeend','<button class="btn ghost" id="actEdit">Edit Group</button>');  /* ← always visible for mods/creator */
+
+  $('#actJoin')?.addEventListener('click',()=>{ const all=groups(); const i=all.findIndex(z=>z.id===id); if(i<0)return; all[i].members=all[i].members||[]; if(!all[i].members.includes(me)) all[i].members.push(me); setGroups(all); openGroup(id); renderMine(); renderDiscover(); });
+  $('#actLeave')?.addEventListener('click',()=>{ const all=groups(); const i=all.findIndex(z=>z.id===id); if(i<0)return; all[i].members=(all[i].members||[]).filter(n=>n!==me); setGroups(all); renderMine(); renderDiscover(); openGroup(id); });
+  $('#actEdit')?.addEventListener('click',()=>openEditPanel(g));
+  $('#actShare')?.addEventListener('click',()=>{ const arr=load(LS.GLOBAL,[]); arr.unshift({id:uid('gpost'),title:`${g.name}`,content:`New group: ${g.name} (${g.privacy})`,authorName:'Me',createdAt:nowISO(),media:g.cover||g.avatar||null}); save(LS.GLOBAL,arr); alert('Shared to Global Feed'); });
+
+  // composer & admin tools visibility by tab
+  $('#composer').style.display = amMember ? 'block' : 'none';
+  fillSelectAuthors($('#gpAuthor'));
+  renderTab('posts');
+  setupEventsUI(amMod); setupPollsUI(amMember, amMod); setupFilesUI(amMod);
 }
 
-/* ===== create & search ===== */
-$("#btnCreate").addEventListener('click', ()=>{
-  const name = ($("#gName").value||'').trim();
-  const desc = ($("#gDesc").value||'').trim();
-  const cover= ($("#gCover").value||'').trim();
-  if(!name) return alert('Enter a group name');
-  const arr = groups();
-  arr.unshift({id:uid(), name, desc, cover, owner:meName(), members:[meName()]});
-  setGroups(arr);
-  addNotif(`Group “${name}” created.`);
-  toast('Created');
-  ["#gName","#gDesc","#gCover"].forEach(s=> $(s).value='');
-  renderMy(); renderDiscover($("#q").value.trim());
+/* Tabs */
+$('#gTabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t) return;
+  $$('#gTabs .tab').forEach(x=>x.classList.toggle('active',x===t));
+  renderTab(t.dataset.tab);
 });
-$("#btnClearForm").addEventListener('click', ()=>["#gName","#gDesc","#gCover"].forEach(s=> $(s).value=''));
+function renderTab(tab){
+  if(!currentGroup) return;
+  const gid=currentGroup, all=posts().filter(p=>p.gid===gid);
+  $('#memberList').style.display='none'; $('#membersEmpty').style.display='none';
+  $('#eventsWrap').style.display='none'; $('#pollsWrap').style.display='none'; $('#filesWrap').style.display='none';
+  $('#gFeedList').style.display='none'; $('#gFeedEmpty').style.display='none'; $('#pinnedList').style.display='none';
 
-$("#btnSearch").addEventListener('click', ()=> renderDiscover($("#q").value.trim()));
-$("#btnClearSearch").addEventListener('click', ()=>{ $("#q").value=''; renderDiscover(''); });
+  if(tab==='members'){
+    const g=groups().find(x=>x.id===gid); const list=g?.members||[];
+    if(!list.length){ $('#membersEmpty').style.display='block'; return; }
+    $('#memberList').style.display='block';
+    $('#memberList').innerHTML = list.map(n=>`<div class="g-item" style="cursor:default"><img class="avatar" src="${face(n)}" alt=""><div style="flex:1"><strong>${esc(n)}</strong></div></div>`).join('');
+    return;
+  }
+  if(tab==='events'){ $('#eventsWrap').style.display='block'; renderEvents(); return; }
+  if(tab==='polls'){  $('#pollsWrap').style.display='block'; renderPolls();   return; }
+  if(tab==='files'){  $('#filesWrap').style.display='block'; renderFiles();   return; }
 
-/* ===== initial render + live sync ===== */
-renderMy(); renderDiscover('');
-window.addEventListener('storage', (e)=>{
-  if ([LS.GROUPS,LS.PROFILE].includes(e.key)){ renderMy(); renderDiscover($("#q").value.trim()); }
+  // posts/pinned/photos/videos
+  const pinned = (load(LS.PINNED,{}))[gid] || [];
+  if(tab==='pinned'){
+    const list = all.filter(p=>pinned.includes(p.id));
+    if(!list.length){ $('#gFeedEmpty').style.display='block'; return; }
+    $('#gFeedList').style.display='block';
+    $('#gFeedList').innerHTML=list.sort((a,b)=>new Date(b.time)-new Date(a.time)).map(p=>postHtml(p,true)).join('');
+    return;
+  }
+
+  let items=all;
+  if(tab==='photos') items=all.filter(p=>p.mediaType==='image');
+  if(tab==='videos') items=all.filter(p=>p.mediaType==='video' || p.mediaType==='youtube');
+
+  // show pinned strip if any
+  const pinList = all.filter(p=>pinned.includes(p.id));
+  if(pinList.length){
+    $('#pinnedList').style.display='block';
+    $('#pinnedList').innerHTML = `<h3 class="section-title" style="margin-top:6px">Pinned</h3>` + pinList.map(p=>postHtml(p,true)).join('');
+  }
+
+  if(!items.length){ $('#gFeedEmpty').style.display='block'; return; }
+  $('#gFeedList').style.display='block';
+  $('#gFeedList').innerHTML=items.sort((a,b)=>new Date(b.time)-new Date(a.time)).map(p=>postHtml(p,false)).join('');
+}
+
+/* Posting */
+function mediaTypeFrom(url){
+  if(!url) return null;
+  if(/(youtube\.com|youtu\.be)/i.test(url)) return 'youtube';
+  if(/\.(png|jpe?g|gif|webp|avif)$/i.test(url)) return 'image';
+  if(/\.(mp4|webm|ogg)$/i.test(url)) return 'video';
+  return null;
+}
+function postHtml(p, isPinnedStrip=false){
+  const amMod = (()=>{const g=groups().find(x=>x.id===p.gid); const me='Me'; return g && (g.mods?.includes(me) || g.creator==='Me');})();
+  const media=p.mediaUrl?(
+    p.mediaType==='image' ? `<img src="${esc(p.mediaUrl)}" alt="" style="width:100%;border-radius:10px;border:1px solid #eee;margin:8px 0">` :
+    p.mediaType==='video' ? `<video controls src="${esc(p.mediaUrl)}" style="width:100%;border-radius:10px;margin:8px 0"></video>` :
+    p.mediaType==='youtube' ? `<iframe width="100%" height="340" src="https://www.youtube.com/embed/${esc(p.youtubeId||'')}" title="YouTube video" frameborder="0" allowfullscreen style="border-radius:10px;margin:8px 0;border:1px solid #eee"></iframe>` : ''
+  ) : '';
+  const cmts=(p.cmts||[]);
+  const pinnedMap=load(LS.PINNED,{}); const isPinned=(pinnedMap[p.gid]||[]).includes(p.id);
+  return `<article class="feed-item" data-id="${p.id}">
+    <div class="f-head">
+      <img class="avatar" src="${face(p.author)}" alt="">
+      <div style="min-width:0;flex:1"><strong>${esc(p.title||p.author)}</strong><div class="muted" style="font-size:12px">${rel(p.time)} ago</div></div>
+      <div class="row" style="flex:0 0 auto;gap:6px">
+        ${amMod?`<button class="btn sm" data-act="pin">${isPinned?'Unpin':'Pin'}</button>`:''}
+        <button class="btn sm" data-act="msg">Message</button>
+      </div>
+    </div>
+    <div style="margin-top:6px;white-space:pre-wrap">${esc(p.text||'')}</div>
+    ${media}
+    <div class="row" style="margin-top:6px;align-items:center">
+      <button class="btn sm" data-act="like">❤️ ${p.likes||0}</button>
+      <button class="btn sm" data-act="toggle">💬 ${cmts.length}</button>
+      ${p.author==='Me'?'<button class="btn sm danger" data-act="del">Delete</button>':''}
+    </div>
+    <div data-role="cmts" style="display:none;margin-top:8px">
+      ${(cmts.length?cmts.map(c=>`<div class="comment"><img class="c-avatar" src="${face(c.author)}"><div><div class="muted" style="font-size:12px"><strong>${esc(c.author)}</strong> • ${rel(c.time)} ago</div><div style="white-space:pre-wrap">${esc(c.text)}</div></div></div>`).join(''):'<div class="muted">Be the first to comment.</div>')}
+      <div class="row" style="margin-top:6px"><input data-role="cmtText" placeholder="Write a comment…"><button class="btn sm primary" data-act="send">Post</button></div>
+    </div>
+  </article>`;
+}
+$('#gFeedList').addEventListener('click',postActions);
+$('#pinnedList').addEventListener('click',postActions);
+function postActions(e){
+  const art=e.target.closest('.feed-item'); if(!art) return; const id=art.dataset.id;
+  const act=e.target.getAttribute('data-act'); if(!act) return;
+  const arr=posts(); const i=arr.findIndex(p=>p.id===id); if(i<0) return;
+  if(act==='like'){ arr[i].likes=(arr[i].likes||0)+1; setPosts(arr); e.target.textContent=`❤️ ${arr[i].likes}`; }
+  if(act==='toggle'){ const el=art.querySelector('[data-role="cmts"]'); el.style.display = (el.style.display==='none'?'block':'none'); }
+  if(act==='send'){ const t=art.querySelector('[data-role="cmtText"]'); const val=(t.value||'').trim(); if(!val) return; arr[i].cmts=arr[i].cmts||[]; arr[i].cmts.push({author:'Me',text:val,time:nowISO()}); setPosts(arr); renderTab('posts'); }
+  if(act==='del'){ if(confirm('Delete this post?')){ arr.splice(i,1); setPosts(arr); renderTab('posts'); } }
+  if(act==='msg'){ if(window.ctMessage) ctMessage(arr[i].author); else if(window.ChatternetMessenger?.open) ChatternetMessenger.open(arr[i].author); else location.href='messages.html'; }
+  if(act==='pin'){ const map=load(LS.PINNED,{}); const gid=arr[i].gid; map[gid]=map[gid]||[]; const j=map[gid].indexOf(id); if(j>=0) map[gid].splice(j,1); else map[gid].unshift(id); save(LS.PINNED,map); renderTab('posts'); }
+}
+async function readFileAsDataURL(file){ return new Promise(res=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsDataURL(file);}); }
+$('#gpPost').onclick=async ()=>{
+  if(!currentGroup) return;
+  const title=$('#gpTitle').value.trim(), text=$('#gpBody').value.trim();
+  let url=$('#gpURL').value.trim(), file=$('#gpFile').files[0], mediaUrl='', mtype=null, yId=null;
+  if(file){ mediaUrl=await readFileAsDataURL(file); mtype=file.type.startsWith('video')?'video':'image'; }
+  else if(url){
+    mtype=mediaTypeFrom(url);
+    if(mtype==='youtube'){ const m=url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/); yId=m?m[1]:''; mediaUrl=url; }
+    else mediaUrl=url;
+  }
+  if(!text && !mediaUrl) return alert('Write something or attach media.');
+  const p={id:uid('post'),gid:currentGroup,author:$('#gpAuthor').value||'Me',time:nowISO(),title,text,mediaUrl,mediaType:mtype,youtubeId:yId,likes:0,cmts:[]};
+  const arr=posts(); arr.unshift(p); setPosts(arr);
+  $('#gpBody').value=''; $('#gpURL').value=''; $('#gpFile').value='';
+  renderTab('posts');
+};
+
+/* Edit panel */
+function openEditPanel(g){
+  const ed=$('#editPanel'); ed.hidden=false;
+  $('#eName').value=g.name||''; $('#ePrivacy').value=g.privacy||'Public';
+  $('#eCategory').value=g.category||''; $('#eLocation').value=g.location||'';
+  $('#eTags').value=(g.tags||[]).join(', '); $('#eDesc').value=g.desc||''; $('#eRules').value=g.rules||'';
+  $('#cancelEdit').onclick=()=>{ ed.hidden=true; };
+  $('#saveEdit').onclick=async ()=>{
+    const all=groups(); const i=all.findIndex(x=>x.id===g.id); if(i<0) return;
+    all[i].name=$('#eName').value.trim()||all[i].name;
+    all[i].privacy=$('#ePrivacy').value||all[i].privacy;
+    all[i].category=$('#eCategory').value||'';
+    all[i].location=$('#eLocation').value||'';
+    all[i].tags=$('#eTags').value.split(',').map(s=>s.trim()).filter(Boolean);
+    all[i].desc=$('#eDesc').value||'';
+    all[i].rules=$('#eRules').value||'';
+    const af=$('#eAvatar').files[0], cf=$('#eCover').files[0];
+    if(af) all[i].avatar=await readFileAsDataURL(af);
+    if(cf) all[i].cover =await readFileAsDataURL(cf);
+    setGroups(all); ed.hidden=true; openGroup(g.id); renderMine(); renderDiscover();
+  };
+  $('#deleteGroup').onclick=()=>{ if(!confirm('Delete this group?')) return; const all=groups().filter(x=>x.id!==g.id); setGroups(all); setPosts(posts().filter(p=>p.gid!==g.id)); $('#detail').style.display='none'; renderMine(); renderDiscover(); };
+  $('#editAddToFeed').onclick=()=>{ const arr=load(LS.GLOBAL,[]); arr.unshift({id:uid('g'),title:g.name,content:`${g.name} updated • ${g.privacy}`,authorName:'Me',createdAt:nowISO(),media:g.cover||g.avatar||null}); save(LS.GLOBAL,arr); alert('Sent to Global Feed'); };
+  $('#modsList').textContent = (g.mods||[]).join(', ') || 'No moderators yet.';
+  $('#sendInvite').onclick=()=>{ const who=$('#inviteUser').value.trim(); if(!who) return; const inv=load(LS.INVITES,[]); inv.unshift({id:uid('inv'),gid:g.id,to:who,by:'Me',time:nowISO()}); save(LS.INVITES,inv); alert('Invite sent'); $('#inviteUser').value=''; };
+}
+
+/* Invites */
+function renderInvites(){
+  const me='Me', inv=load(LS.INVITES,[]).filter(x=>x.to===me), gs=groups();
+  const box=$('#inviteWrap');
+  if(!inv.length){ box.innerHTML=''; $('#inviteEmpty').style.display='block'; return; }
+  $('#inviteEmpty').style.display='none';
+  box.innerHTML=inv.map(v=>{ const g=gs.find(x=>x.id===v.gid); if(!g) return ''; return `
+    <div class="g-item" data-gid="${g.id}">
+      <img class="g-cover-sm" src="${g.cover||''}" alt="">
+      <div class="g-info">
+        <div class="g-name">${esc(g.name)}</div>
+        <div class="meta-line">Moderator invite from ${esc(v.by)} • ${new Date(v.time).toLocaleString()}</div>
+      </div>
+      <div style="display:flex;gap:8px"><button class="btn primary" data-act="accept">Accept</button><button class="btn" data-act="decline">Decline</button></div>
+    </div>`; }).join('');
+}
+document.addEventListener('click',(e)=>{
+  const it=e.target.closest('#inviteWrap .g-item'); if(!it) return;
+  const act=e.target.getAttribute('data-act'); if(!act) return;
+  const gid=it.getAttribute('data-gid');
+  const gs=groups(); const i=gs.findIndex(x=>x.id===gid);
+  const inv=load(LS.INVITES,[]);
+  if(act==='accept'){ if(i>=0){ gs[i].mods=gs[i].mods||[]; if(!gs[i].mods.includes('Me')) gs[i].mods.push('Me'); setGroups(gs); } save(LS.INVITES,inv.slice(1)); renderInvites(); openGroup(gid); }
+  if(act==='decline'){ save(LS.INVITES,inv.slice(1)); renderInvites(); }
 });
+
+/* ===== Events ===== */
+function setupEventsUI(isMod){ $('#eventComposer').style.display=isMod?'block':'none'; }
+async function fileToUrl(file){ if(!file) return ''; return await readFileAsDataURL(file); }
+function eventsFor(gid){ return load(LS.EVENTS,[]).filter(e=>e.gid===gid); }
+function saveEvent(obj){ const a=load(LS.EVENTS,[]); a.unshift(obj); save(LS.EVENTS,a); }
+function renderEvents(){
+  const gid=currentGroup, list=eventsFor(gid);
+  const box=$('#eventsList'), empty=$('#eventsEmpty');
+  if(!list.length){ box.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  box.innerHTML=list.map(ev=>`<div><strong>${esc(ev.title)}</strong><div class="muted">${new Date(ev.when).toLocaleString()} • ${esc(ev.where||'')}</div><div style="margin-top:4px">${esc(ev.desc||'')}</div>${ev.cover?`<img src="${ev.cover}" style="width:100%;border-radius:10px;margin-top:6px">`:''}</div>`).join('');
+}
+$('#evCreate').onclick=async ()=>{
+  const title=$('#evTitle').value.trim(); const when=$('#evWhen').value; if(!title||!when) return alert('Title & date required.');
+  const where=$('#evWhere').value.trim(), desc=$('#evDesc').value.trim(), cover=await fileToUrl($('#evCover').files[0]);
+  saveEvent({id:uid('ev'),gid:currentGroup,title,when,where,desc,cover,by:'Me',time:nowISO()});
+  $('#evTitle').value=''; $('#evWhen').value=''; $('#evWhere').value=''; $('#evDesc').value=''; $('#evCover').value='';
+  renderEvents();
+};
+
+/* ===== Polls ===== */
+function setupPollsUI(isMember,isMod){ $('#pollComposer').style.display=isMember?'block':'none'; }
+function pollsFor(gid){ return load(LS.POLLS,[]).filter(p=>p.gid===gid); }
+function savePoll(obj){ const a=load(LS.POLLS,[]); a.unshift(obj); save(LS.POLLS,a); }
+function renderPolls(){
+  const gid=currentGroup, list=pollsFor(gid), me='Me';
+  const box=$('#pollsList'), empty=$('#pollsEmpty');
+  if(!list.length){ box.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  box.innerHTML=list.map(p=>{
+    const total=Object.values(p.votes||{}).reduce((s,arr)=>s+(arr?.length||0),0)||0;
+    const rows=p.options.map((opt,i)=>{ const arr=(p.votes&&p.votes[i])||[]; const pct=total?Math.round(100*arr.length/total):0;
+      const mine=arr.includes(me)?' (you)':''; return `<div style="margin:6px 0"><strong>${esc(opt)}</strong> — ${pct}% <span class="muted">(${arr.length})${mine}</span> <button class="btn sm" data-act="vote" data-idx="${i}" data-id="${p.id}">Vote</button><div style="height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:4px"><div style="width:${pct}%;height:100%;background:#93c5fd"></div></div></div>`; }).join('');
+    return `<div class="card" data-id="${p.id}">
+      <strong>${esc(p.q)}</strong>
+      <div class="muted" style="font-size:12px">By ${esc(p.by)} • ${rel(p.time)} ago</div>
+      <div style="margin-top:6px">${rows}</div>
+    </div>`;
+  }).join('');
+}
+$('#plAddOpt').onclick=()=>{ const c=document.createElement('input'); c.className='plOpt'; c.placeholder='Another option'; $('#pollComposer').querySelector('.row').after(c); };
+$('#plCreate').onclick=()=>{
+  const q=$('#plQuestion').value.trim(); const opts=[...document.querySelectorAll('.plOpt')].map(i=>i.value.trim()).filter(Boolean);
+  if(!q||opts.length<2) return alert('Question + at least 2 options.');
+  savePoll({id:uid('poll'),gid:currentGroup,q:q,options:opts,votes:{},by:'Me',time:nowISO()});
+  $('#plQuestion').value=''; document.querySelectorAll('.plOpt').forEach((i,k)=>{ if(k<2) i.value=''; else i.remove(); });
+  renderPolls();
+};
+document.addEventListener('click',(e)=>{
+  const b=e.target.closest('#pollsList [data-act="vote"]'); if(!b) return;
+  const id=b.dataset.id, idx=+b.dataset.idx; const me='Me';
+  const arr=load(LS.POLLS,[]); const i=arr.findIndex(p=>p.id===id); if(i<0) return;
+  arr[i].votes=arr[i].votes||{}; arr[i].votes[idx]=arr[i].votes[idx]||[];
+  // remove previous vote
+  Object.keys(arr[i].votes).forEach(k=>arr[i].votes[k]=arr[i].votes[k].filter(n=>n!==me));
+  arr[i].votes[idx].push(me);
+  save(LS.POLLS,arr); renderPolls();
+});
+
+/* ===== Files ===== */
+function setupFilesUI(isMod){ $('#fileComposer').style.display=isMod?'block':'none'; }
+function filesFor(gid){ return load(LS.FILES,[]).filter(f=>f.gid===gid); }
+function saveFile(obj){ const a=load(LS.FILES,[]); a.unshift(obj); save(LS.FILES,a); }
+$('#flAdd').onclick=async ()=>{
+  const title=$('#flTitle').value.trim(); const f=$('#flInput').files[0]; if(!title||!f) return alert('Title + file required.');
+  const data=await readFileAsDataURL(f);
+  saveFile({id:uid('file'),gid:currentGroup,title,by:'Me',time:nowISO(),dataURL:data,name:f.name,size:f.size});
+  $('#flTitle').value=''; $('#flInput').value='';
+  renderFiles();
+};
+function renderFiles(){
+  const list=filesFor(currentGroup), box=$('#filesList'), empty=$('#filesEmpty');
+  if(!list.length){ box.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  box.innerHTML=list.map(f=>`<div><strong>${esc(f.title)}</strong> <span class="muted">(${(f.size/1024).toFixed(1)} KB) • ${new Date(f.time).toLocaleString()}</span><div style="margin-top:6px"><a download="${esc(f.name)}" href="${f.dataURL}" class="btn sm">Download</a></div></div>`).join('');
+}
+
+/* Create group */
+$('#createBtn').onclick=async ()=>{
+  const name=$('#gName').value.trim(); if(!name) return alert('Group name is required.');
+  const g={
+    id:uid('grp'), name, privacy:$('#gPrivacy').value||'Public',
+    category:$('#gCategory').value||'', location:$('#gLocation').value||'',
+    tags:($('#gTags').value||'').split(',').map(s=>s.trim()).filter(Boolean),
+    rules:$('#gRules').value||'', desc:$('#gRules').value?$('#gRules').value.split('\n')[0]:'', // quick intro
+    creator:'Me', createdAt:nowISO(), members:['Me'], mods:['Me'],
+    avatar:'', cover:''
+  };
+  const af=$('#gAvatar').files[0], cf=$('#gCover').files[0];
+  if(af) g.avatar=await readFileAsDataURL(af);
+  if(cf) g.cover =await readFileAsDataURL(cf);
+  const all=groups(); all.unshift(g); setGroups(all);
+  $('#gName').value=''; ['gTags','gRules','gLocation'].forEach(id=>$('#'+id).value=''); $('#gAvatar').value=''; $('#gCover').value='';
+  renderMine(); renderDiscover(); openGroup(g.id);
+};
+
+/* Boot */
+function renderInv(){ renderInvites(); }
+function boot(){ renderMine(); renderDiscover(); renderInv(); fillSelectAuthors($('#gpAuthor')); }
+boot();
 </script>
 </body>
 </html>
