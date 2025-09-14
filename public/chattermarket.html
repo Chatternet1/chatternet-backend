@@ -4,91 +4,69 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Chatter Market — Chatternet</title>
-
 <style>
   :root{
-    --blueTop: 132px;   /* measured by script (same as Feed) */
-    --barH: 52px;
-    --navH: 48px;
-    --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
+    --blueTop:132px; --barH:52px; --navH:48px; --pagePad:calc(var(--blueTop)+var(--barH)+var(--navH));
+    --ink:#0f172a; --muted:#64748b; --line:#e6eaf2; --brand:#0ea5e9;
   }
-  html,body{margin:0;padding:0;background:#f5f7fb;color:#0f172a;
-    font:14px/1.45 "Segoe UI", Arial, system-ui, -apple-system, sans-serif}
+  html,body{margin:0;padding:0;background:#f5f7fb;color:var(--ink);
+    font:14px/1.45 "Segoe UI",Arial,system-ui,-apple-system,sans-serif}
   a{color:#2563eb;text-decoration:none}
   *{box-sizing:border-box}
 
-  /* Fixed blue bar */
-  .top-bar{
-    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 14px; background:#0ea5e9; color:#fff;
-    border-bottom:1px solid rgba(255,255,255,.2);
-  }
-  .top-bar h2{margin:0;font-size:18px;font-weight:700}
-  .top-actions{display:flex;gap:10px;align-items:center}
-  .pillbtn{height:36px;padding:0 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff}
+  /* Blue bar (same as base) */
+  .top-bar{position:fixed;left:0;right:0;top:var(--blueTop);z-index:1200;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--brand);color:#fff;border-bottom:1px solid rgba(255,255,255,.2)}
+  .top-bar h2{margin:0;font-size:18px;font-weight:800}
+  .pillbtn{height:36px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff;cursor:pointer}
   .pillbtn:hover{background:rgba(255,255,255,.26)}
   #meAvatar{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.7);object-fit:cover;cursor:pointer}
 
-  /* App nav (same as Feed) */
-  nav.app-nav{
-    position:fixed; left:0; right:0;
-    top:calc(var(--blueTop) + var(--barH));
-    z-index:1190; background:#fff; border-bottom:1px solid #e6eaf2;
-    visibility:visible !important;
-  }
-  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
-  nav.app-nav a{
-    display:inline-block !important; padding:8px 10px !important; border-radius:999px !important;
-    color:#111 !important; background:#f3f4f6 !important; text-decoration:none !important;
-    line-height:1 !important; font-weight:500 !important;
-  }
-  nav.app-nav a.active{background:#dbeafe !important; color:#1e3a8a !important}
-  nav.app-nav a:hover{background:#e5e7eb !important}
+  /* App nav (same as base) */
+  nav.app-nav{position:fixed;left:0;right:0;top:calc(var(--blueTop)+var(--barH));z-index:1190;background:#fff;border-bottom:1px solid #e6eaf2}
+  nav.app-nav .inner{max-width:1180px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+  nav.app-nav a{display:inline-block;padding:8px 10px;border-radius:999px;color:#111;background:#f3f4f6;text-decoration:none;font-weight:600}
+  nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
+  nav.app-nav a:hover{background:#e5e7eb}
 
   /* Page */
-  .page{max-width:1100px;margin:14px auto;padding:0 12px;padding-top:var(--pagePad)}
+  .page{max-width:1180px;margin:14px auto;padding:0 12px;padding-top:var(--pagePad)}
   .card{background:#fff;border:1px solid #e6eaf2;border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(15,23,42,.03)}
   .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .muted{color:#6b7280}
-  .btn{padding:8px 12px;border:1px solid #d7d7d7;border-radius:999px;background:#fff;cursor:pointer}
+  .muted{color:var(--muted)}
+  .btn{padding:8px 12px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:#3b82f6;border-color:#3b82f6;color:#fff}
-  .btn.warn{border-color:#ef4444;color:#b91c1c}
-  .input{padding:8px 10px;border:1px solid #d7d7d7;border-radius:10px;min-width:0}
+  .btn.primary:hover{background:#2563eb}
+  .btn.bad{background:#fee2e2;border-color:#fecaca;color:#991b1b}
 
-  /* Tabs */
+  /* Tabs & filters */
   .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
-  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:700;user-select:none}
+  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:800}
   .tab.active{background:#e9f2ff;border-color:#cfe1ff}
+  .filters .input, .filters select{padding:10px 12px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;font:inherit}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{border:1px solid #e6eaf2;border-radius:999px;padding:4px 8px;background:#f8fafc;font-size:12px}
 
-  /* Grid + cards */
+  /* Grid + card */
   .grid{display:grid;grid-template-columns:repeat(3,minmax(260px,1fr));gap:14px}
   @media (max-width:1020px){.grid{grid-template-columns:repeat(2,minmax(260px,1fr))}}
   @media (max-width:660px){.grid{grid-template-columns:1fr}}
-
-  .item{border:1px solid #e6eaf2;border-radius:14px;background:#fff;overflow:visible;display:flex;flex-direction:column}
-  .item .img{width:100%;height:210px;object-fit:cover;background:#f3f4f6;display:block;cursor:pointer;
-             border-top-left-radius:14px;border-top-right-radius:14px}
-
-  /* ✅ readability lock inside card body */
-  .i-body{padding:12px; line-height:1.35}
-  .i-body, .i-body *{letter-spacing:normal; text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased; word-break:break-word}
-  .price{font-weight:800;margin:0 0 6px;font-size:18px}
-  .title{font-weight:800;margin:0 0 4px;font-size:15px}
-  .i-meta{color:#334155;font-size:12.5px}
-
+  .item{border:1px solid #e6eaf2;border-radius:14px;background:#fff;overflow:hidden;display:flex;flex-direction:column}
+  .item .img{width:100%;height:210px;object-fit:cover;background:#f3f4f6;display:block;cursor:pointer}
+  .i-body{padding:12px}
+  .price{font-weight:900;margin:0 0 4px;font-size:18px}
+  .title{font-weight:800;margin:0 0 2px}
+  .i-meta{color:var(--muted);font-size:12px}
   .seller{display:flex;gap:8px;align-items:center;margin-top:8px}
-  .ava{width:28px;height:28px;border-radius:999px;object-fit:cover;border:1px solid #e6eaf2}
+  .ava{width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid #e6eaf2}
   .i-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-
   .stars{display:inline-flex;gap:2px}
   .star{width:14px;height:14px;display:inline-block;background:linear-gradient(0deg,#fbbf24,#f59e0b);
     -webkit-mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21 16.54 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>') no-repeat center/contain;
             mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21 16.54 13.97 22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>') no-repeat center/contain}
 
-  /* Modals & gallery */
+  /* Modals + cart */
   .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000}
-  .sheet{background:#fff;border-radius:12px;max-width:960px;width:92%;max-height:88vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.3);padding:16px}
+  .sheet{background:#fff;border-radius:14px;max-width:960px;width:94%;max-height:88vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.35);padding:16px}
   .gallery{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
   @media (max-width:900px){.gallery{grid-template-columns:1fr}}
   .g-main{border:1px solid #e6eaf2;border-radius:12px;overflow:hidden}
@@ -97,7 +75,6 @@
   .thumbs img{width:70px;height:70px;object-fit:cover;border-radius:8px;border:2px solid transparent;cursor:pointer}
   .thumbs img.active{border-color:#3b82f6}
 
-  /* Cart drawer */
   .cart-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:3990}
   .cart{position:fixed;right:0;top:0;bottom:0;width:min(420px,92vw);background:#fff;box-shadow:-8px 0 24px rgba(0,0,0,.25);transform:translateX(100%);transition:transform .25s ease;z-index:4001;display:flex;flex-direction:column}
   .cart.open{transform:translateX(0)}
@@ -105,12 +82,6 @@
   .cart-list{padding:12px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:10px}
   .c-item{display:flex;gap:10px;border:1px solid #e6eaf2;border-radius:12px;padding:10px}
   .c-item img{width:64px;height:64px;object-fit:cover;border-radius:8px}
-
-  /* Wishlist inside cart */
-  .cart-wish{border-top:1px solid #e6eaf2;padding:12px;max-height:220px;overflow:auto}
-  .cw-item{display:flex;gap:8px;align-items:center;border:1px dashed #e6eaf2;border-radius:10px;padding:8px;margin-top:8px}
-  .cw-item img{width:48px;height:48px;border-radius:8px;object-fit:cover}
-
   .cart-foot{border-top:1px solid #e6eaf2;padding:14px}
 
   /* Toast */
@@ -118,19 +89,11 @@
   #toast.show{opacity:1}
 </style>
 
-<!-- Positioner (same as Feed) -->
+<!-- Positioner (same as base) -->
 <script>
 (function(){
   var GAP=12, MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
-  function pickMenuBottom(){
-    var bottoms=[]; for(var i=0;i<MENU_SELS.length;i++){var el=document.querySelector(MENU_SELS[i]); if(!el) continue;
-      var r=el.getBoundingClientRect(), h=r.height, w=r.width;
-      var ok=h>=32&&h<=120&&r.top>-20&&r.top<180&&w>300; if(ok) bottoms.push(Math.round(r.bottom));
-    }
-    var best=bottoms.length?Math.min.apply(null,bottoms):120; if(best>200) best=120;
-    try{var force=localStorage.getItem('ct_force_header_px');if(force)best=parseInt(force,10)||best;}catch{}
-    return best;
-  }
+  function pickMenuBottom(){var bottoms=[];for(var i=0;i<MENU_SELS.length;i++){var el=document.querySelector(MENU_SELS[i]);if(!el)continue;var r=el.getBoundingClientRect(),h=r.height,w=r.width;var ok=h>=32&&h<=120&&r.top>-20&&r.top<180&&w>300;if(ok)bottoms.push(Math.round(r.bottom));}var best=bottoms.length?Math.min.apply(null,bottoms):120;if(best>200)best=120;try{var force=localStorage.getItem('ct_force_header_px');if(force)best=parseInt(force,10)||best;}catch{}return best;}
   function measure(el,fb){if(!el)return fb;var r=el.getBoundingClientRect();return Math.max(fb,Math.round(r.height));}
   function apply(){var blueTop=pickMenuBottom()+GAP;var barH=measure(document.querySelector('.top-bar'),52);var navH=measure(document.querySelector('nav.app-nav'),48);
     document.documentElement.style.setProperty('--blueTop',blueTop+'px');
@@ -145,7 +108,7 @@
 <body>
 
 <!-- Blue bar -->
-<div class="top-bar" role="banner" aria-label="Page header">
+<div class="top-bar">
   <h2>Chatter Market</h2>
   <div class="top-actions">
     <button id="btnNotif" class="pillbtn">Notifications</button>
@@ -190,7 +153,7 @@
       <button class="tab" data-tab="reviews">Reviews</button>
     </div>
 
-    <div class="row" data-panel="browse">
+    <div class="filters row" data-panel="browse">
       <input id="q" class="input" placeholder="Search items…" style="flex:2 1 320px">
       <select id="cat" class="input" style="flex:1 1 180px">
         <option value="">All categories</option>
@@ -210,8 +173,8 @@
         <option value="USD">$ USD</option><option value="GBP">£ GBP</option><option value="EUR">€ EUR</option>
         <option value="CAD">$ CAD</option><option value="AUD">$ AUD</option>
       </select>
-      <input id="minp" class="input" type="number" min="0" placeholder="Min" style="width:100px">
-      <input id="maxp" class="input" type="number" min="0" placeholder="Max" style="width:100px">
+      <input id="minp" class="input" type="number" min="0" placeholder="Min">
+      <input id="maxp" class="input" type="number" min="0" placeholder="Max">
       <select id="sort" class="input" style="flex:0 0 200px">
         <option value="relevance">Sort: Relevance</option>
         <option value="price-asc">Price: Low → High</option>
@@ -232,7 +195,7 @@
   <section id="recentBox" class="card" data-panel="recent" style="display:none">
     <div class="row" style="justify-content:space-between;align-items:center">
       <h3 style="margin:0;font-size:18px">Recently viewed</h3>
-      <button class="btn warn" data-act="clearRecent">Clear</button>
+      <button class="btn bad" data-act="clearRecent">Clear</button>
     </div>
     <div id="recentGrid" class="grid" style="margin-top:10px"></div>
   </section>
@@ -243,7 +206,7 @@
       <h3 style="margin:0;font-size:18px">Wishlist</h3>
       <div class="row">
         <button class="btn primary" data-act="wishAllToCart">Add all to cart</button>
-        <button class="btn warn" data-act="wishClear">Clear wishlist</button>
+        <button class="btn bad" data-act="wishClear">Clear wishlist</button>
       </div>
     </div>
     <div id="wishGrid" class="grid" style="margin-top:10px"></div>
@@ -293,8 +256,8 @@
       <input id="tSite" class="input" placeholder="Website (optional)">
     </div>
     <div class="row">
-      <label class="chip"><input id="dPickup" type="checkbox" style="width:auto"> Pickup</label>
-      <label class="chip"><input id="dShip" type="checkbox" style="width:auto"> Shipping</label>
+      <label class="chip"><input id="dPickup" type="checkbox" style="accent-color:#3b82f6"> Pickup</label>
+      <label class="chip"><input id="dShip" type="checkbox" style="accent-color:#3b82f6"> Shipping</label>
       <input id="dShipCost" class="input" type="number" min="0" placeholder="Shipping cost">
     </div>
     <div class="row" style="align-items:flex-start">
@@ -316,35 +279,19 @@
       <button id="clear" class="btn">Clear</button>
     </div>
   </section>
+
 </div>
 
 <!-- Notifications / Inbox -->
-<div class="modalbg" id="notifBg">
-  <div class="sheet">
-    <h3 style="margin:0 0 10px">Notifications</h3>
-    <div id="notifList"></div>
-    <div class="row" style="margin-top:8px">
-      <button id="clearNotif" class="btn primary">Clear</button>
-      <button id="closeNotif" class="btn">Close</button>
-    </div>
-  </div>
-</div>
-<div class="modalbg" id="inboxBg">
-  <div class="sheet">
-    <h3 style="margin:0 0 10px">Inbox</h3>
-    <div id="inboxList"></div>
-    <div class="row" style="margin-top:8px">
-      <button id="closeInbox" class="btn">Close</button>
-    </div>
-  </div>
-</div>
+<div class="modalbg" id="notifBg"><div class="sheet"><h3 style="margin:0 0 10px">Notifications</h3><div id="notifList"></div><div class="row" style="margin-top:8px"><button id="clearNotif" class="btn primary">Clear</button><button id="closeNotif" class="btn">Close</button></div></div></div>
+<div class="modalbg" id="inboxBg"><div class="sheet"><h3 style="margin:0 0 10px">Inbox</h3><div id="inboxList"></div><div class="row" style="margin-top:8px"><button id="closeInbox" class="btn">Close</button></div></div></div>
 
 <!-- Product modal -->
 <div class="modalbg" id="pBg" aria-hidden="true">
   <div class="sheet">
     <div class="gallery">
       <div>
-        <div class="g-main"><img id="gMain" alt="" referrerpolicy="no-referrer" loading="lazy"></div>
+        <div class="g-main"><img id="gMain" alt=""></div>
         <div id="gThumbs" class="thumbs"></div>
       </div>
       <div>
@@ -370,6 +317,8 @@
           <button id="pReview" class="btn">Leave review</button>
           <button id="pClose" class="btn" style="margin-left:auto">Close</button>
         </div>
+
+        <!-- Reviews list -->
         <hr style="border:none;border-top:1px solid #e6eaf2;margin:12px 0">
         <div id="pReviewList"></div>
       </div>
@@ -399,16 +348,6 @@
 <aside id="cart" class="cart" aria-hidden="true">
   <div class="cart-head"><strong>Cart</strong><button id="cartClose" class="btn">Close</button></div>
   <div id="cartList" class="cart-list"></div>
-
-  <!-- Wishlist inside cart -->
-  <div class="cart-wish">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <strong>Wishlist</strong>
-      <button class="btn" data-act="cartWishAddAll">Add all</button>
-    </div>
-    <div id="cartWishList"></div>
-  </div>
-
   <div class="cart-foot">
     <div class="row" style="justify-content:space-between"><div class="muted">Subtotal</div><div id="cartSubtotal" style="font-weight:800"></div></div>
     <button id="checkout" class="btn primary" style="width:100%;margin-top:10px">Checkout (demo)</button>
@@ -418,80 +357,69 @@
 <div id="toast"></div>
 
 <script>
-/* ===== helpers & store ===== */
-const LS={ USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
-           ITEMS:'cm_items_v2', CART:'cm_cart_v1', RECENT:'cm_recent_v1', WISH:'cm_wish_v1', GLOBAL:'ct_global_feed_v1' };
+/* ===== Helpers / storage ===== */
+const LS={USERS:'ct_users_v3',PROFILE:'ct_profile_data_v1',NOTIF:'ct_notifications_v1',INBOX:'ct_inbox_v1',
+          ITEMS:'cm_items_v2',CART:'cm_cart_v1',RECENT:'cm_recent_v1',WISH:'cm_wish_v1',GLOBAL:'ct_global_feed_v1'};
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const load=(k,f)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;} };
-const save=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
-const uid=(p='itm')=>p+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const uid=(p='m')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
 const nowISO=()=>new Date().toISOString();
-const face=n=>`https://i.pravatar.cc/200?u=${encodeURIComponent(n||'me')}`;
+const face=n=>`https://i.pravatar.cc/150?u=${encodeURIComponent(n||'me')}`;
 const fmt=(n,cur)=>new Intl.NumberFormat(undefined,{style:'currency',currency:cur||'USD'}).format(Number(n)||0);
 const toast=m=>{const t=$("#toast");t.textContent=m;t.className="";void t.offsetWidth;t.className="show";setTimeout(()=>t.className="",1200);};
 const clean=s=>String(s||'').trim();
 
-/* fallback img */
-const FALLBACK='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="%23eef2f7"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%239aa2af" font-family="Segoe UI,Arial" font-size="20">image unavailable</text></svg>';
-function imgErr(e){ if(!e.target) return; e.target.onerror=null; e.target.src=FALLBACK; }
-
-/* ===== header wiring ===== */
-(function header(){
+/* ===== Header wiring ===== */
+(function(){
   const prof=(load(LS.PROFILE,{}))['Me']||{};
-  const me=$('#meAvatar'); if(me){ me.referrerPolicy='no-referrer'; me.loading='lazy'; me.src=prof.avatar||face('Me'); me.alt='Me'; me.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{}; location.href='profile.html'; }; }
-  $('#btnMsgs').onclick = (e)=>{ e.preventDefault(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); if(window.ctOpen) return window.ctOpen(); location.href='messages.html'; };
-  const nbg=$('#notifBg'), ibg=$('#inboxBg');
-  function rN(){ const arr=load(LS.NOTIF,[]); $('#notifList').innerHTML=arr.length?arr.map(n=>`<div class="chip" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${n.text||''}</div>`).join(''):'No notifications yet.'; }
-  function rI(){ const arr=load(LS.INBOX,[]); $('#inboxList').innerHTML=arr.length?arr.map(n=>`<div class="chip" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${n.text||''}</div>`).join(''):'Inbox is empty.'; }
-  $('#btnNotif').onclick=()=>{ rN(); nbg.style.display='flex'; };
-  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); };
-  $('#closeNotif').onclick=()=>{ nbg.style.display='none'; };
-  $('#btnInbox').onclick=()=>{ rI(); ibg.style.display='flex'; };
-  $('#closeInbox').onclick=()=>{ ibg.style.display='none'; };
+  const a=$('#meAvatar'); if(a){ a.src=prof.avatar||face('Me'); a.alt=prof.displayName||'Me'; a.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{} location.href='profile.html'; }; }
+  $('#btnMsgs')?.addEventListener('click',(e)=>{e.preventDefault();if(window.ChatternetMessenger?.open)return ChatternetMessenger.open();if(window.ctOpen)return window.ctOpen();location.href='messages.html';});
+  const nbg=$('#notifBg'),ibg=$('#inboxBg');
+  function rN(){const a=load(LS.NOTIF,[]);$('#notifList').innerHTML=a.length?a.map(n=>`<div class="chip" style="display:block">${new Date(n.time).toLocaleString()} — ${n.text||''}</div>`).join(''):'No notifications yet.';}
+  function rI(){const a=load(LS.INBOX,[]);$('#inboxList').innerHTML=a.length?a.map(n=>`<div class="chip" style="display:block">${new Date(n.time).toLocaleString()} — ${n.text||''}</div>`).join(''):'Inbox is empty.';}
+  $('#btnNotif').onclick=()=>{rN();nbg.style.display='flex';}; $('#clearNotif').onclick=()=>{save(LS.NOTIF,[]);rN();}; $('#closeNotif').onclick=()=>{nbg.style.display='none';};
+  $('#btnInbox').onclick=()=>{rI();ibg.style.display='flex';}; $('#closeInbox').onclick=()=>{ibg.style.display='none';};
 })();
 
-/* ===== seed demo ===== */
+/* ===== Demo seed ===== */
 (function seed(){
   let u=load(LS.USERS,null);
-  if(!u||!u.length){
-    const want=['Me','Grace Lee','Liam Adams','Ava Morgan','Noah Walker','Sophia Turner'];
-    u=want.map(n=>({name:n,avatar:face(n)})); save(LS.USERS,u);
-  } else if(!u.find(x=>x && x.name==='Me')){ u.unshift({name:'Me',avatar:face('Me')}); save(LS.USERS,u); }
-
+  if(!u||!u.length){u=[{name:'Me',avatar:face('Me')},'Grace Lee','Liam Adams','Ava Morgan','Noah Walker','Sophia Turner'].map(x=>typeof x==='string'?{name:x,avatar:face(x)}:x); save(LS.USERS,u);}
   let items=load(LS.ITEMS,null);
   if(!items||!items.length){
     const demo=[
       {t:'Tent',p:800,cur:'GBP',cat:'Outdoors',cond:'Like New',tags:['Crawley','tent','camping'],imgs:['https://images.unsplash.com/photo-1504280390368-3971c192a2b4?q=80&w=1200&auto=format&fit=crop'],desc:'4-person tent, barely used.',loc:'Crawley, UK',seller:'Ava Morgan'},
-      {t:'Canon EOS M50',p:420,cur:'USD',cat:'Photography',cond:'Good',tags:['camera','photography','UK'],imgs:['https://images.unsplash.com/photo-1519183071298-a2962be96f83?q=80&w=1200&auto=format&fit=crop'],desc:'Great vlogging camera.',loc:'London, UK',seller:'Liam Adams'},
-      {t:'Road Bike',p:350,cur:'USD',cat:'Cycling',cond:'Good',tags:['bike','cycling'],imgs:['https://images.unsplash.com/photo-1496545672447-f699b503d270?q=80&w=1200&auto=format&fit=crop'],desc:'Alloy frame, size M.',loc:'Brighton, UK',seller:'Grace Lee'}
+      {t:'Canon EOS M50',p:420,cur:'USD',cat:'Photography',cond:'Other',tags:['camera','photography','UK'],imgs:['https://images.unsplash.com/photo-1519183071298-a2962be96f83?q=80&w=1200&auto=format&fit=crop'],desc:'Great vlogging camera.',loc:'London, UK',seller:'Liam Adams'},
+      {t:'Road Bike',p:350,cur:'USD',cat:'Cycling',cond:'Other',tags:['bike','cycling'],imgs:['https://images.unsplash.com/photo-1496545672447-f699b503d270?q=80&w=1200&auto=format&fit=crop'],desc:'Alloy frame, size M.',loc:'Brighton, UK',seller:'Grace Lee'}
     ];
     items=demo.map(d=>({id:uid('itm'),title:d.t,price:d.p,currency:d.cur,category:d.cat,condition:d.cond,tags:d.tags,images:d.imgs,desc:d.desc,location:d.loc,seller:d.seller,sellerAva:face(d.seller),delivery:{pickup:true,shipping:true,shipCost:10},phone:'',site:'',reviews:[],createdAt:nowISO()}));
     save(LS.ITEMS,items);
   }
 })();
 
-/* ===== state ===== */
+/* ===== State ===== */
 const state={tab:'browse',current:null,imagesToAdd:[]};
 
-/* ===== tabs ===== */
-$('#tabs').addEventListener('click',(e)=>{
+/* ===== Tabs ===== */
+$('#tabs').addEventListener('click',e=>{
   const t=e.target.closest('.tab'); if(!t) return;
   $$('#tabs .tab').forEach(x=>x.classList.toggle('active',x===t));
   state.tab=t.dataset.tab;
-  $$('[data-panel]').forEach(p=>{ p.style.display = (p.getAttribute('data-panel')===state.tab || (state.tab==='browse' && p.getAttribute('data-panel')==='browse')) ? 'block' : 'none'; });
+  $$('[data-panel]').forEach(p=>p.style.display=(p.getAttribute('data-panel').split(' ').includes(state.tab)?'block':'none'));
   renderAll();
 });
 
-/* ===== items ===== */
+/* ===== Items ===== */
 const items=()=>load(LS.ITEMS,[]); const setItems=a=>save(LS.ITEMS,a);
 
-/* ===== render helpers ===== */
-function starHtml(n){ const full=Math.round((Number(n)||0)*2)/2; const count=Math.max(0,Math.min(5,Math.round(full))); return Array.from({length:count}).map(()=>'<i class="star"></i>').join(''); }
-function sellerRating(name){ const it=items(); const revs=it.filter(i=>i.seller===name).flatMap(i=>i.reviews||[]); if(!revs.length) return 0; return revs.reduce((s,r)=>s+(Number(r.stars)||0),0)/revs.length; }
+/* ===== Render helpers ===== */
+function starHtml(n){const full=Math.round((Number(n)||0)*2)/2;const count=Math.max(0,Math.min(5,Math.round(full)));return Array.from({length:count}).map(()=>'<i class="star"></i>').join('');}
+function sellerRating(name){const it=items();const revs=it.filter(i=>i.seller===name).flatMap(i=>i.reviews||[]);if(!revs.length)return 0;return revs.reduce((s,r)=>s+(Number(r.stars)||0),0)/revs.length;}
 function cardHtml(it){
   const rat=it.reviews.length?(it.reviews.reduce((s,r)=>s+Number(r.stars||0),0)/it.reviews.length):0;
   return `<article class="item" data-id="${it.id}">
-    <img class="img" src="${(it.images&&it.images[0])||''}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="imgErr(event)">
+    <img class="img" src="${(it.images&&it.images[0])||''}" alt="">
     <div class="i-body">
       <div class="price">${fmt(it.price,it.currency)}</div>
       <div class="title">${(it.title||'').slice(0,90)}</div>
@@ -509,11 +437,9 @@ function cardHtml(it){
   </article>`;
 }
 
-/* ===== filters & grids ===== */
+/* ===== Filters & grid ===== */
 $('#apply').onclick=()=>renderGrid();
-['q','cat','cond','cur','minp','maxp','sort'].forEach(id=>{
-  $('#'+id).addEventListener('keydown',(e)=>{ if(e.key==='Enter') $('#apply').click(); });
-});
+['q','cat','cond','cur','minp','maxp','sort'].forEach(id=>$('#'+id).addEventListener('keydown',(e)=>{ if(e.key==='Enter') $('#apply').click(); }));
 function applyFilters(list){
   const q=clean($('#q').value).toLowerCase(), cat=$('#cat').value, cond=$('#cond').value, cur=$('#cur').value;
   const min=Number($('#minp').value)||-Infinity, max=Number($('#maxp').value)||Infinity;
@@ -530,63 +456,60 @@ function applyFilters(list){
   if(sort==='newest') out.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
   return out;
 }
-function renderGrid(){ $('#grid').innerHTML=(applyFilters(items()).map(cardHtml).join(''))||'<div class="muted">No items match.</div>'; }
-function renderRecent(){ const ids=load(LS.RECENT,[]); const map=new Map(items().map(i=>[i.id,i])); const list=ids.map(id=>map.get(id)).filter(Boolean); $('#recentGrid').innerHTML=list.map(cardHtml).join('')||'<div class="muted">Nothing yet — open some items.</div>'; }
-function renderWish(){ const ids=load(LS.WISH,[]); const map=new Map(items().map(i=>[i.id,i])); const list=ids.map(id=>map.get(id)).filter(Boolean); $('#wishGrid').innerHTML=list.map(i=>cardHtml(i).replace('data-act="wish"','data-act="wishRemove"').replace('♡ Wishlist','Remove')).join('')||'<div class="muted">Wishlist is empty.</div>'; }
-function renderMine(){ const list=items().filter(i=>i.seller==='Me'); $('#mineGrid').innerHTML=list.map(i=>cardHtml(i).replace('data-act="msg"','data-act="del"').replace('Message','Delete')).join('')||'<div class="muted">You haven’t listed anything yet.</div>'; }
+function renderGrid(){ $('#grid').innerHTML=(applyFilters(items()).map(cardHtml).join(''))||'<div class="muted">No items match.</div>'; wireActClicks($('#grid')); }
+function renderRecent(){ const ids=load(LS.RECENT,[]); const map=new Map(items().map(i=>[i.id,i])); const list=ids.map(id=>map.get(id)).filter(Boolean); $('#recentGrid').innerHTML=list.map(cardHtml).join('')||'<div class="muted">Nothing yet — open some items.</div>'; wireActClicks($('#recentGrid')); }
+function renderWish(){ const ids=load(LS.WISH,[]); const map=new Map(items().map(i=>[i.id,i])); const list=ids.map(id=>map.get(id)).filter(Boolean); $('#wishGrid').innerHTML=list.map(i=>cardHtml(i).replace('data-act="wish"','data-act="wishRemove"').replace('♡ Wishlist','Remove')).join('')||'<div class="muted">Wishlist is empty.</div>'; wireActClicks($('#wishGrid')); }
+function renderMine(){ const list=items().filter(i=>i.seller==='Me'); $('#mineGrid').innerHTML=list.map(i=>cardHtml(i).replace('data-act="msg"','data-act="del"').replace('Message','Delete')).join('')||'<div class="muted">You haven’t listed anything yet.</div>'; wireActClicks($('#mineGrid')); }
 function renderMyReviews(){ const me='Me'; const rows=[]; items().forEach(it=>{ (it.reviews||[]).forEach(r=>{ if((r.author||'Me')===me) rows.push({it,r}); }); }); $('#myReviews').innerHTML=rows.length?rows.map(({it,r})=>`<div class="card" style="margin:6px 0"><div class="row" style="justify-content:space-between"><strong>${it.title}</strong><span class="stars">${starHtml(r.stars)}</span></div><div class="muted">${new Date(r.time).toLocaleString()}</div><div style="margin-top:4px">${r.text||''}</div></div>`).join(''):'<div class="muted">No reviews yet.</div>'; }
 function renderAll(){ if(state.tab==='browse') renderGrid(); if(state.tab==='recent') renderRecent(); if(state.tab==='wishlist') renderWish(); if(state.tab==='mine') renderMine(); if(state.tab==='reviews') renderMyReviews(); }
 
-/* ===== robust action wiring ===== */
-/* capture + bubble, so we still fire if a theme stops propagation */
-function handleActClick(e){
+/* ===== Add robust click wiring (fixes “Add to Cart not working”) ===== */
+function wireActClicks(root){
+  if(!root) return;
+  root.addEventListener('click', onActClick);
+  // Also bind buttons rendered now (in case a theme/framework stops delegation)
+  root.querySelectorAll('[data-act]').forEach(b=>{ b.removeEventListener?.('_once',onActClick); b.addEventListener?.('click', onActClick, {once:false}); });
+}
+function onActClick(e){
   const el=e.target.closest && e.target.closest('[data-act]'); if(!el) return;
   const act=el.getAttribute('data-act'); const card=el.closest('[data-id]'); const id=el.getAttribute('data-id') || (card && card.getAttribute('data-id'));
   if(!act) return;
 
-  if(act==='view'){ openModal(id); }
-  else if(act==='add'){ addToCart(id,1); openCart(); }                            /* ✅ open on add */
-  else if(act==='wish'){ toggleWish(id,false); toast('Saved to wishlist'); }
-  else if(act==='wishRemove'){ toggleWish(id,true); toast('Removed from wishlist'); }
-  else if(act==='msg'){ const it=items().find(i=>i.id===id); if(window.ctMessage) ctMessage(it?.seller||''); else if(window.ChatternetMessenger?.open) ChatternetMessenger.open(it?.seller||''); else location.href='messages.html'; }
-  else if(act==='del'){ const arr=items().filter(i=>i.id!==id); setItems(arr); renderMine(); }
-  else if(act==='wishAllToCart'){ const ids=load(LS.WISH,[]).slice(); ids.forEach(x=>addToCart(x,1)); openCart(); }   /* ✅ add all */
-  else if(act==='wishClear'){ save(LS.WISH,[]); renderWish(); renderCartWishlist(); }
-  else if(act==='clearRecent'){ save(LS.RECENT,[]); renderRecent(); }
-  else if(act==='cartAddFromWish'){ addToCart(id,1); }
-  else if(act==='cartWishRemove'){ toggleWish(id,true); renderCartWishlist(); }
-  else if(act==='cartWishAddAll'){ const ids=load(LS.WISH,[]).slice(); ids.forEach(x=>addToCart(x,1)); openCart(); }
+  if(act==='view') openModal(id);
+  if(act==='add') addToCart(id,1);
+  if(act==='wish') { toggleWish(id); toast('Saved to wishlist'); }
+  if(act==='wishRemove') { toggleWish(id,true); toast('Removed from wishlist'); }
+  if(act==='msg'){ const it=items().find(i=>i.id===id); if(window.ctMessage) ctMessage(it?.seller||''); else if(window.ChatternetMessenger?.open) ChatternetMessenger.open(it?.seller||''); else location.href='messages.html'; }
+  if(act==='del'){ const arr=items().filter(i=>i.id!==id); setItems(arr); renderMine(); }
+  if(act==='wishAllToCart'){ load(LS.WISH,[]).forEach(x=>addToCart(x,1)); }
+  if(act==='wishClear'){ save(LS.WISH,[]); renderWish(); }
+  if(act==='clearRecent'){ save(LS.RECENT,[]); renderRecent(); }
 }
-document.addEventListener('click', handleActClick, true);   /* capture */
-document.addEventListener('click', handleActClick);         /* bubble  */
 
-/* ===== recent & wishlist ===== */
+/* ===== Recent / wishlist ===== */
 function pushRecent(id){ const a=load(LS.RECENT,[]); const i=a.indexOf(id); if(i>=0)a.splice(i,1); a.unshift(id); if(a.length>30)a.length=30; save(LS.RECENT,a); }
-function toggleWish(id,remove=false){ const a=load(LS.WISH,[]); const i=a.indexOf(id); if(remove){ if(i>=0)a.splice(i,1);}else{ if(i<0)a.unshift(id);} save(LS.WISH,a); if(state.tab==='wishlist') renderWish(); renderCartWishlist(); }
+function toggleWish(id,remove=false){ const a=load(LS.WISH,[]); const i=a.indexOf(id); if(remove){ if(i>=0)a.splice(i,1);}else{ if(i<0)a.unshift(id);} save(LS.WISH,a); if(state.tab==='wishlist') renderWish(); }
 
-/* ===== cart ===== */
+/* ===== Cart ===== */
 function cart(){return load(LS.CART,[]);} function setCart(a){save(LS.CART,a); renderCart();}
 function addToCart(id,qty=1){ if(!id) return; const itItem=items().find(i=>i.id===id); if(!itItem){toast('Item not found');return;}
   const c=cart(); const line=c.find(x=>x.id===id); if(line) line.qty+=qty; else c.unshift({id,qty:Math.max(1,qty)});
-  setCart(c); toast('Added to cart');
+  setCart(c); toast('Added to cart'); openCart();
 }
 function removeFromCart(id){ const c=cart().filter(x=>x.id!==id); setCart(c); }
 function renderCart(){
   const map=new Map(items().map(i=>[i.id,i])); const lines=cart().map(x=>({...x,it:map.get(x.id)})).filter(x=>x.it);
   $('#cartList').innerHTML=lines.length?lines.map(({it,qty})=>`<div class="c-item" data-id="${it.id}">
-    <img src="${(it.images&&it.images[0])||''}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="imgErr(event)">
-    <div style="flex:1;min-width:0">
-      <div style="font-weight:700">${it.title}</div><div class="muted">${fmt(it.price,it.currency)}</div>
-      <div class="row" style="margin-top:6px"><button class="btn" data-act="dec">−</button><span>${qty}</span><button class="btn" data-act="inc">+</button><button class="btn warn" data-act="cartDel" style="margin-left:auto">Remove</button></div>
-    </div>
-  </div>`).join(''):'<div class="muted">Your cart is empty.</div>';
-  if(!lines.length){$('#cartSubtotal').textContent='—';} else {
-    const sameCur=lines.every(l=>l.it.currency===lines[0].it.currency);
-    if(!sameCur){$('#cartSubtotal').textContent='Multiple currencies';}
-    else{ const sum=lines.reduce((s,l)=>s+(Number(l.it.price)||0)*l.qty,0); $('#cartSubtotal').textContent=fmt(sum,lines[0].it.currency); }
-  }
-  renderCartWishlist();
+    <img src="${(it.images&&it.images[0])||''}" alt=""><div style="flex:1;min-width:0">
+    <div style="font-weight:700">${it.title}</div><div class="muted">${fmt(it.price,it.currency)} • ${it.currency}</div>
+    <div class="row" style="margin-top:6px"><button class="btn" data-act="dec">−</button><span>${qty}</span><button class="btn" data-act="inc">+</button><button class="btn bad" data-act="cartDel" style="margin-left:auto">Remove</button></div></div></div>`).join(''):'<div class="muted">Your cart is empty.</div>';
+  if(!lines.length){$('#cartSubtotal').textContent='—';return;}
+  const sameCur=lines.every(l=>l.it.currency===lines[0].it.currency);
+  if(!sameCur){$('#cartSubtotal').textContent='Multiple currencies';return;}
+  const sum=lines.reduce((s,l)=>s+(Number(l.it.price)||0)*l.qty,0);
+  $('#cartSubtotal').textContent=fmt(sum,lines[0].it.currency);
 }
+// cart controls
 $('#cartList').addEventListener('click',e=>{
   const b=e.target.closest('[data-act]'); if(!b) return;
   const id=b.closest('.c-item')?.getAttribute('data-id'); if(!id) return;
@@ -597,29 +520,10 @@ $('#cartList').addEventListener('click',e=>{
 function openCart(){ $('#cartBG').style.display='block'; $('#cart').classList.add('open'); }
 function closeCart(){ $('#cartBG').style.display='none'; $('#cart').classList.remove('open'); }
 $('#cartBtn').onclick=openCart; $('#cartClose').onclick=closeCart; $('#cartBG').onclick=closeCart;
-$('#checkout').onclick=()=>alert('Demo checkout. Connect payments on your backend.');
+$('#checkout').onclick=()=>alert('Demo checkout. Wire Stripe Checkout from your backend when ready.');
 
-/* wishlist block inside cart */
-function renderCartWishlist(){
-  const ids=load(LS.WISH,[]);
-  if(!ids.length){ $('#cartWishList').innerHTML='<div class="muted">No items in wishlist.</div>'; return; }
-  const map=new Map(items().map(i=>[i.id,i]));
-  $('#cartWishList').innerHTML = ids.map(id=>{
-    const it=map.get(id); if(!it) return '';
-    return `<div class="cw-item" data-id="${id}">
-      <img src="${(it.images&&it.images[0])||''}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="imgErr(event)">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600">${it.title}</div>
-        <div class="muted" style="font-size:12px">${fmt(it.price,it.currency)}</div>
-      </div>
-      <button class="btn" data-act="cartAddFromWish" data-id="${id}">Add</button>
-      <button class="btn warn" data-act="cartWishRemove" data-id="${id}">Remove</button>
-    </div>`;
-  }).join('');
-}
-
-/* ===== product modal + reviews ===== */
-function starHtmlEl(el,n){ el.innerHTML=starHtml(n); }
+/* ===== Product modal + reviews ===== */
+function fillStars(el,n){ el.innerHTML=starHtml(n); }
 function renderReviewList(it){
   const r=it.reviews||[];
   $('#pReviewList').innerHTML = r.length ? r.map(v=>`
@@ -631,24 +535,22 @@ function renderReviewList(it){
 }
 function openModal(id){
   const it=items().find(x=>x.id===id); if(!it) return; state.current=id; pushRecent(id);
-  const main=$('#gMain'); main.src=(it.images&&it.images[0])||''; main.setAttribute('referrerpolicy','no-referrer'); main.setAttribute('loading','lazy'); main.onerror=imgErr;
-  $('#gThumbs').innerHTML=(it.images||[]).map((u,i)=>`<img src="${u}" class="${i===0?'active':''}" data-idx="${i}" referrerpolicy="no-referrer" loading="lazy" onerror="imgErr(event)">`).join('');
+  $('#gMain').src=(it.images&&it.images[0])||''; $('#gThumbs').innerHTML=(it.images||[]).map((u,i)=>`<img src="${u}" class="${i===0?'active':''}" data-idx="${i}">`).join('');
   $('#pTitle').textContent=it.title||''; $('#pPrice').textContent=fmt(it.price,it.currency);
   $('#pCat').textContent=it.category||'Other'; $('#pCond').textContent=it.condition||'Other'; $('#pLoc').textContent=it.location||'';
   $('#pDesc').textContent=it.desc||''; $('#pSellerAva').src=it.sellerAva||face(it.seller); $('#pSellerName').textContent=it.seller||'';
-  starHtmlEl($('#pStars'), it.reviews.length?(it.reviews.reduce((s,r)=>s+(Number(r.stars)||0),0)/it.reviews.length):0);
-  starHtmlEl($('#pSellerStars'), sellerRating(it.seller));
+  fillStars($('#pStars'), it.reviews.length?(it.reviews.reduce((s,r)=>s+(Number(r.stars)||0),0)/it.reviews.length):0); fillStars($('#pSellerStars'), sellerRating(it.seller));
   const del=it.delivery||{}; $('#pDelivery').textContent=del.pickup&&del.shipping?'Pickup / Shipping':del.pickup?'Pickup':del.shipping?'Shipping':'Delivery: N/A';
   if(del.shipping){ $('#pShipCost').style.display='inline-block'; $('#pShipCost').textContent='Ship: '+fmt(del.shipCost||0,it.currency);} else { $('#pShipCost').style.display='none'; }
   const ph=clean(it.phone), site=clean(it.site); const phEl=$('#pPhone'), stEl=$('#pSite');
-  phEl.style.display=ph?'inline-block':'none'; phEl.textContent=ph?('☎ '+ph):''; phEl.href=ph?('tel:'+ph):'#';
-  stEl.style.display=site?'inline-block':'none'; stEl.textContent=site?('🔗 '+new URL(site).hostname):''; stEl.href=site||'#';
+  phEl.style.display=ph?'inline-block':'none'; phEl.textContent=ph?('□ '+ph):''; phEl.href=ph?('tel:'+ph):'#';
+  stEl.style.display=site?'inline-block':'none'; stEl.textContent=site?('□ '+new URL(site).hostname):''; stEl.href=site||'#';
   renderReviewList(it);
   $('#pBg').style.display='flex';
 }
 $('#pClose').onclick=()=>$('#pBg').style.display='none';
 $('#gThumbs').addEventListener('click',e=>{const im=e.target.closest('img'); if(!im)return; $$('#gThumbs img').forEach(x=>x.classList.remove('active')); im.classList.add('active'); $('#gMain').src=im.src;});
-$('#pAdd').onclick=()=>{ if(state.current) { addToCart(state.current,1); openCart(); } };
+$('#pAdd').onclick=()=>{ if(state.current) addToCart(state.current,1); };
 $('#pWish').onclick=()=>{ if(state.current) { toggleWish(state.current); toast('Saved to wishlist'); } };
 $('#pMsg').onclick=()=>{ const it=items().find(i=>i.id===state.current); if(window.ctMessage) ctMessage(it?.seller||''); else if(window.ChatternetMessenger?.open) ChatternetMessenger.open(it?.seller||''); else location.href='messages.html'; };
 $('#pShare').onclick=()=>{ const it=items().find(i=>i.id===state.current); if(!it) return; const arr=load(LS.GLOBAL,[]); arr.unshift({id:uid('g'),title:it.title,content:`${it.title} — ${fmt(it.price,it.currency)} (${it.category})`,authorName:'Me',createdAt:nowISO(),media:(it.images&&it.images[0])||null}); save(LS.GLOBAL,arr); toast('Shared to Global Feed'); };
@@ -661,52 +563,35 @@ $('#rSave').onclick=()=>{
   if(state.tab==='browse') renderGrid(); if(state.tab==='reviews') renderMyReviews();
 };
 
-/* ===== sell form ===== */
+/* ===== Sell form ===== */
 (function hydrateSell(){ const sel=$('#tSeller'); sel.innerHTML=''; load(LS.USERS,[]).forEach(u=>{const o=document.createElement('option');o.value=u.name;o.textContent=u.name;sel.appendChild(o);}); sel.value='Me'; })();
-function renderUploadThumbs(){ const box=$('#tImgs'); box.innerHTML=state.imagesToAdd.length?state.imagesToAdd.map((u,i)=>`<img src="${u}" data-idx="${i}" title="Click to remove" referrerpolicy="no-referrer" loading="lazy" onerror="imgErr(event)">`).join(''):'<div class="muted">No images yet.</div>'; }
-document.body.addEventListener('click',(e)=>{ if(e.target.closest('[data-act="addImgUrl"]')){ const u=clean($('#tImgUrl').value); if(u){ state.imagesToAdd.push(u); $('#tImgUrl').value=''; renderUploadThumbs(); } }
-  if(e.target.closest('[data-act="addImgFiles"]')){ const fs=$('#tImgFiles').files||[]; if(!fs.length) return; Array.from(fs).slice(0,12).forEach(f=>{const r=new FileReader(); r.onload=ev=>{state.imagesToAdd.push(ev.target.result); renderUploadThumbs();}; r.readAsDataURL(f);}); $('#tImgFiles').value=''; }});
+function renderUploadThumbs(){ const box=$('#tImgs'); box.innerHTML=state.imagesToAdd.map((u,i)=>`<img src="${u}" data-idx="${i}" title="Click to remove">`).join('')||'<div class="muted">No images yet.</div>'; }
+document.body.addEventListener('click',(e)=>{ const a=e.target.closest('[data-act="addImgUrl"]'); if(a){ const u=clean($('#tImgUrl').value); if(u){ state.imagesToAdd.push(u); $('#tImgUrl').value=''; renderUploadThumbs(); } }
+  const b=e.target.closest('[data-act="addImgFiles"]'); if(b){ const fs=$('#tImgFiles').files||[]; if(!fs.length) return; Array.from(fs).slice(0,12).forEach(f=>{const r=new FileReader(); r.onload=e=>{state.imagesToAdd.push(e.target.result); renderUploadThumbs();}; r.readAsDataURL(f);}); $('#tImgFiles').value=''; }});
 $('#tImgs').addEventListener('click',e=>{const im=e.target.closest('img'); if(!im) return; const i=Number(im.dataset.idx); state.imagesToAdd.splice(i,1); renderUploadThumbs();});
 $('#clear').onclick=()=>{ ['tTitle','tDesc','tPrice','tTags','tLoc','tPhone','tSite','tImgUrl'].forEach(id=>$('#'+id).value=''); state.imagesToAdd.length=0; renderUploadThumbs(); };
-$('#create').onclick=()=>{ const title=clean($('#tTitle').value); const price=Number($('#tPrice').value)||0; if(!title||!price) return alert('Title and price are required.');
+$('#create').onclick=()=>{
+  const title=clean($('#tTitle').value); const price=Number($('#tPrice').value)||0; if(!title||!price) return alert('Title and price are required.');
   const obj={id:uid('itm'),title,price,currency:$('#tCur').value||'USD',category:$('#tCat').value||'Other',condition:$('#tCond').value||'Other',
     tags:clean($('#tTags').value).split(',').map(t=>clean(t)).filter(Boolean),images:state.imagesToAdd.slice(),desc:clean($('#tDesc').value),location:clean($('#tLoc').value),
     seller:$('#tSeller').value||'Me',sellerAva:face($('#tSeller').value||'Me'),phone:clean($('#tPhone').value),site:clean($('#tSite').value),
     delivery:{pickup:!!$('#dPickup').checked,shipping:!!$('#dShip').checked,shipCost:Number($('#dShipCost').value)||0},reviews:[],createdAt:nowISO()};
   const arr=items(); arr.unshift(obj); setItems(arr); toast('Listing created'); ['tTitle','tDesc','tPrice','tTags','tLoc','tPhone','tSite','tImgUrl'].forEach(id=>$('#'+id).value=''); state.imagesToAdd.length=0; renderUploadThumbs();
-  state.tab='mine'; $$('#tabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='mine')); $$('[data-panel]').forEach(p=>p.style.display=(p.getAttribute('data-panel')==='mine'?'block':'none')); renderMine(); };
+  state.tab='mine'; $$('#tabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='mine')); $$('[data-panel]').forEach(p=>p.style.display=(p.getAttribute('data-panel').split(' ').includes('mine')?'block':'none')); renderMine();
+};
 
-/* ===== boot ===== */
-renderUploadThumbs(); renderAll(); renderCart();   // ensure cart hydrated
-</script>
+/* ===== Boot ===== */
+renderUploadThumbs(); renderAll();
 
-<!-- ===== Chatternet: Universal Footer (Base Footer v1 — unchanged) ===== -->
-<style>html,body{overflow-y:auto!important}:root{--ct-header-bottom:120px;--ct-scroll-pad:130px}</style>
-<script>
-(function(){
-  "use strict"; if (window._ctFooterLoaded) return; window._ctFooterLoaded = true;
-  var MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
-  function menuBottomPx(){var best=120;for(var i=0;i<MENU_SELS.length;i++){var el=document.querySelector(MENU_SELS[i]);if(!el)continue;var r=el.getBoundingClientRect(),h=r.height;var plausible=h>=36&&h<=160&&r.top>=-10&&r.top<=200;if(plausible)best=Math.max(best,Math.round(r.bottom));}var clamped=Math.max(80,Math.min(160,best));try{var force=localStorage.getItem('ct_force_header_px');if(force)clamped=parseInt(force,10)||clamped;}catch(e){}return clamped;}
-  function applyLayout(){var top=menuBottomPx();var root=document.documentElement;root.style.setProperty('--ct-header-bottom',top+'px');root.style.setProperty('--ct-scroll-pad',(top+10)+'px');root.classList.add('ct-layout-ready');}
-  applyLayout(); window.addEventListener('resize',applyLayout,{passive:true}); window.addEventListener('orientationchange',applyLayout,{passive:true});
-  var BASE=(window.CT_API_BASE||localStorage.getItem("ct_api_base")||"https://chatternet-backend-1.onrender.com").replace(/\/+$/,''); window.CT_API_BASE=BASE; try{ localStorage.setItem("ct_api_base", BASE);}catch(_){}
-  function loadOne(src,ok,err){var s=document.createElement("script");s.src=src;s.async=true;s.onload=function(){try{ok&&ok();}catch(_){}};s.onerror=function(){try{err&&err();}catch(_){}};(document.head||document.documentElement).appendChild(s);}
-  function tryMany(list,done){(function next(i){if(i>=list.length){try{done(false);}catch(_){}}else loadOne(list[i],function(){done(true)},function(){next(i+1)})})(0)}
-  var COMMON_PATHS=[BASE+"/assets/common.js","/assets/common.js","assets/common.js"];
-  var MSG_PATHS=[BASE+"/assets/messenger.js","/assets/messenger.js","assets/messenger.js","/messenger.js","messenger.js"];
-  tryMany(COMMON_PATHS,function(){ tryMany(MSG_PATHS,function(){
-    if(!window.ctOpen){ window.ctOpen=function(){ if(window.ChatternetMessenger && typeof window.ChatternetMessenger.open==="function"){return window.ChatternetMessenger.open();} location.href="messages.html"; }; }
-    if(!window.ctMessage) window.ctMessage=window.ctOpen;
-    document.addEventListener("click",function(e){
-      var el=e.target.closest&&e.target.closest("a,button"); if(!el) return;
-      var id=(el.id||"").toLowerCase(), txt=(el.textContent||"").trim().toLowerCase(), href=(el.getAttribute("href")||"").toLowerCase();
-      var looks=id==="btnmsgs"||txt==="messages"||txt==="message"||txt.indexOf("message")>-1||href.indexOf("messages.html")>-1||el.hasAttribute("data-message")||el.matches(".message,btn-message");
-      if(looks){ e.preventDefault(); e.stopPropagation(); return void window.ctOpen(); }
-    }, true);
-    document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest('a[href*="messages.html"]'); if(!a) return; e.preventDefault(); window.ctOpen();}, true);
-  });});
+/* ===== Messenger loader ===== */
+(function () {
+  var FALLBACK='https://chatternet-backend-1.onrender.com';
+  var ls=localStorage.getItem('ct_api_base')||''; var base=(window.CT_API_BASE||ls||FALLBACK).replace(/\/+$/,''); window.CT_API_BASE=base; if(!ls){try{localStorage.setItem('ct_api_base',base);}catch{}}
+  function chain(arr,cb){(function next(i){if(i>=arr.length){cb(false);return;}var s=document.createElement('script');s.src=arr[i];s.async=true;s.onload=function(){cb(true)};s.onerror=function(){s.remove();next(i+1)};(document.head||document.documentElement).appendChild(s);})(0);}
+  function ensure(cb){ if(window.ChatternetMessenger?.open) return cb(true);
+    chain([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'],function(ok){ if(ok && window.ChatternetMessenger?.open){ window.ctOpen=window.ctOpen||function(){window.ChatternetMessenger.open("")}; window.ctMessage=window.ctMessage||function(n){window.ChatternetMessenger.open(n||"")}; } cb(!!ok); }); }
+  document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="messages.html"]'); if(!a) return; e.preventDefault(); if(window.ctOpen) return window.ctOpen(); ensure(function(ok){ if(ok) window.ChatternetMessenger.open(""); else location.href='messages.html'; });},true);
 })();
 </script>
-<!-- ===== /Footer ===== -->
 </body>
 </html>
