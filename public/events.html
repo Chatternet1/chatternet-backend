@@ -4,301 +4,571 @@
 <meta charset="UTF-8" />
 <title>Chatternet — Events</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+
 <style>
-  :root{ --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; --ok:#10b981; --warn:#b45309; }
-  *{ box-sizing:border-box }
-  html,body{ margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 'Segoe UI',Arial,sans-serif }
-  a{ color:inherit; text-decoration:none }
+  :root{
+    --brand:#0ea5e9; --brand-2:#0989c3;
+    --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2;
+    --blueTop:132px; --barH:52px; --navH:48px; --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
+  }
+  *{box-sizing:border-box}
+  html,body{max-width:100%;overflow-x:hidden}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",Arial,system-ui,-apple-system,sans-serif}
 
-  /* Header */
-  .top-bar{ position:sticky; top:0; z-index:40; display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--brand); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.2) }
-  .top-bar h2{ margin:0; font-weight:800; letter-spacing:.2px }
-  .top-actions{ display:flex; gap:8px; align-items:center }
-  .top-actions button{ background:#fff; color:#000; border:none; padding:8px 10px; border-radius:10px; cursor:pointer }
-  .top-actions button:hover{ background:#eef4ff }
-  .top-actions img{ width:36px; height:36px; border-radius:50%; border:2px solid rgba(255,255,255,.85); object-fit:cover; cursor:pointer }
+  /* type fixes */
+  .page, .page *{
+    letter-spacing:normal!important; word-spacing:normal!important;
+    font-variant-ligatures:none!important; font-kerning:normal!important;
+    text-rendering:optimizeLegibility!important;
+    -webkit-font-smoothing:antialiased!important; -moz-osx-font-smoothing:grayscale!important;
+  }
 
-  /* Layout */
-  .page{ max-width:1140px; margin:18px auto; padding:0 12px 28px }
-  .grid{ display:grid; grid-template-columns:340px 1fr; gap:14px }
-  @media (max-width:980px){ .grid{ grid-template-columns:1fr } }
+  /* Blue header (pinned below site menu) */
+  .top-bar{
+    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px; background:var(--brand); color:#fff;
+    border-bottom:1px solid rgba(255,255,255,.25)
+  }
+  .top-bar h2{margin:0;font-weight:800;font-size:18px}
+  .top-actions{display:flex;gap:10px;align-items:center}
+  .pillbtn{height:36px;padding:0 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff}
+  .pillbtn:hover{background:rgba(255,255,255,.26)}
+  #myProfile{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
 
-  .card{ background:var(--card); border:1px solid rgba(0,0,0,.06); border-radius:14px; box-shadow:0 6px 16px rgba(0,0,0,.06); padding:14px }
-  .section-title{ font-size:22px; font-weight:800; margin:0 0 10px }
-  .muted{ color:var(--muted) }
-  .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
-  .btn{ padding:10px 14px; border:1px solid #d7d7d7; border-radius:10px; background:#fff; cursor:pointer }
-  .btn.primary{ background:var(--brand); border-color:var(--brand); color:#fff }
-  .btn.primary:hover{ background:var(--brand-2) }
-  .btn.good{ background:#d1fae5; border-color:#a7f3d0; color:#065f46 }
-  .btn.warn{ background:#fff7ed; border-color:#fed7aa; color:#7c2d12 }
-  input,select,textarea{ width:100%; padding:10px; border:1px solid #d7d7d7; border-radius:10px; font:inherit; background:#fff }
-  textarea{ resize:vertical; min-height:90px }
+  /* App nav (matches your screenshot) */
+  nav.app-nav{position:fixed;left:0;right:0;top:calc(var(--blueTop) + var(--barH));z-index:1190;background:#fff;border-bottom:1px solid var(--line)}
+  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+  nav.app-nav a{display:inline-block;padding:8px 10px;border-radius:999px;background:#f3f4f6;color:#111;font-weight:700;text-decoration:none}
+  nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
+  nav.app-nav a:hover{background:#e5e7eb}
 
-  /* Event cards */
-  .tools{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px }
-  .grid-items{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px }
-  @media (max-width:820px){ .grid-items{ grid-template-columns:1fr } }
-  .ev{ border:1px solid #e8ecf4; border-radius:14px; overflow:hidden; background:#fff; display:flex; flex-direction:column }
-  .ev img{ width:100%; height:200px; object-fit:cover; background:#e5e7eb }
-  .ev-body{ padding:10px 12px; flex:1 }
-  .ev h4{ margin:0 0 4px; font-size:18px }
-  .badge{ display:inline-block; font-size:12px; padding:3px 8px; border:1px solid #d7d7d7; border-radius:999px; background:#f8fafc; margin-left:6px }
-  .pill{ display:inline-block; padding:4px 8px; border:1px solid #d7d7d7; border-radius:999px; background:#f8fafc; font-size:12px; margin-right:6px }
-  .small{ font-size:12px }
+  /* Page shell */
+  .page{max-width:1100px;margin:14px auto;padding:0 12px;padding-top:var(--pagePad)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);padding:14px;margin:14px 0}
+  .section-title{font-size:22px;font-weight:800;margin:4px 0 10px}
+  .muted{color:var(--muted)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row>*{min-width:0}
+  input,select,textarea,button{font:inherit}
+  input,select,textarea{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
+  textarea{min-height:90px;resize:vertical}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-2)}
+  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
+  .btn.danger{background:#fee2e2;border-color:#fecaca;color:#991b1b}
+  .btn.sm{padding:6px 10px;border-radius:8px;font-size:12px}
+  .empty{color:#6b7280;text-align:center;padding:16px}
 
-  /* toast */
-  .toast{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:#111; color:#fff; padding:10px 14px; border-radius:10px; opacity:0; pointer-events:none; transition:opacity .2s; z-index:5000 }
-  .toast.show{ opacity:1 }
+  /* Tabs (wide pills across page) */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+  .tab{padding:8px 12px;border:1px solid #dfe3f0;border-radius:999px;background:#fff;cursor:pointer;font-weight:800}
+  .tab.active{background:#e9f2ff;border-color:#cfe1ff}
+
+  /* List item */
+  .ev{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid #ececec;border-radius:12px;background:#fafafa;margin:10px 0}
+  .ev-img{width:180px;height:110px;border-radius:10px;object-fit:cover;background:#e9eef6;border:1px solid #e5e7eb;flex:0 0 auto}
+  .ev-info{flex:1;min-width:0}
+  .ev-name{font-size:20px;font-weight:800;margin:0 0 4px}
+  .ev-meta{color:#475569;margin:2px 0 6px;font-size:13px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#f6f7fb;border:1px solid #e6e8f2;padding:5px 10px;border-radius:999px;font-size:12px;margin:0 6px 6px 0}
+
+  /* Detail hero */
+  .hero{position:relative;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.12);margin-bottom:12px}
+  .hero-bg{aspect-ratio:16/6;min-height:260px;background:#dfe7f5;background-size:cover;background-position:center}
+  .hero-bar{position:absolute;left:16px;right:16px;bottom:16px;display:flex;gap:16px;align-items:center;padding:12px 14px;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.8);border-radius:14px}
+  .avatar-lg{width:64px;height:64px;border-radius:12px;object-fit:cover;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .tabs.sub{margin-top:8px}
+
+  /* Comments */
+  .comment{padding:8px;border:1px solid #eee;border-radius:10px;background:#fff;margin:8px 0;display:flex;gap:8px;align-items:flex-start}
+  .comment .c-avatar{width:28px;height:28px;border-radius:50%;flex:0 0 auto;border:1px solid #e5e7eb}
+
+  /* Calendar */
+  .cal-wrap{border:1px solid #e5e7eb;border-radius:12px;background:#fff;overflow:hidden}
+  .cal-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e5e7eb}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#e5e7eb}
+  .cell{background:#fff;min-height:94px;padding:6px 6px 10px}
+  .dow{font-weight:700;font-size:12px;color:#475569;background:#f3f4f6}
+  .dnum{font-size:12px;color:#334155}
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#0ea5e9;margin-right:4px}
 </style>
+
+<!-- Positioner (keeps blue bar + nav below your site header) -->
+<script>
+(function(){
+  var GAP=12, MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
+  function pickMenuBottom(){var bottoms=[];for(var i=0;i<MENU_SELS.length;i++){var el=document.querySelector(MENU_SELS[i]);if(!el)continue;var r=el.getBoundingClientRect(),h=r.height,w=r.width;var ok=h>=32&&h<=120&&r.top>-20&&r.top<180&&w>300;if(ok)bottoms.push(Math.round(r.bottom));}var best=bottoms.length?Math.min.apply(null,bottoms):120;if(best>200)best=120;try{var force=localStorage.getItem('ct_force_header_px');if(force)best=parseInt(force,10)||best;}catch{}return best;}
+  function measure(el,fb){if(!el)return fb;var r=el.getBoundingClientRect();return Math.max(fb,Math.round(r.height));}
+  function apply(){var blueTop=pickMenuBottom()+GAP;var barH=measure(document.querySelector('.top-bar'),52);var navH=measure(document.querySelector('nav.app-nav'),48);
+    document.documentElement.style.setProperty('--blueTop',blueTop+'px');
+    document.documentElement.style.setProperty('--barH',barH+'px');
+    document.documentElement.style.setProperty('--navH',navH+'px');
+    document.documentElement.style.setProperty('--pagePad',(blueTop+barH+navH)+'px');}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}
+  addEventListener('resize',apply,{passive:true}); addEventListener('orientationchange',apply,{passive:true});
+})();
+</script>
 </head>
 <body>
 
-<!-- Header -->
+<!-- Blue header -->
 <div class="top-bar">
   <h2>Events</h2>
   <div class="top-actions">
-    <button id="btnNotif">Notifications</button>
-    <button id="btnInbox">Inbox</button>
-    <button id="btnMsgs">Messages</button>
+    <button id="btnNotif" class="pillbtn">Notifications</button>
+    <button id="btnInbox" class="pillbtn">Inbox</button>
+    <button id="btnMsgs" class="pillbtn">Messages</button>
     <img id="myProfile" alt="Me" />
   </div>
 </div>
 
+<!-- FULL pill nav under the blue bar -->
+<nav class="app-nav" aria-label="Site">
+  <div class="inner">
+    <a href="index.html">Home</a>
+    <a href="feed.html">Feed</a>
+    <a href="friends.html">Friends</a>
+    <a href="chattermarket.html">Market</a>
+    <a href="groups.html">Groups</a>
+    <a class="active" href="events.html" aria-current="page">Events</a>
+    <a href="media.html">Media</a>
+    <a href="dating.html">Dating</a>
+    <a href="blogs.html">Blogs</a>
+    <a href="polls.html">Polls</a>
+    <a href="music.html">Music</a>
+    <a href="messages.html">Messages</a>
+    <a href="profile.html">Profile</a>
+    <a href="settings.html">Settings</a>
+  </div>
+</nav>
+
 <div class="page">
-  <div class="grid">
 
-    <!-- Create/Edit -->
-    <aside class="card">
-      <h3 class="section-title">Create Event</h3>
-      <input id="eTitle" placeholder="Event title">
-      <div class="row">
-        <input id="eWhen" type="datetime-local">
-        <input id="eEnd" type="datetime-local" placeholder="End (optional)">
+  <!-- TABS (events features) -->
+  <section class="card">
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-tab="discover">Discover</button>
+      <button class="tab" data-tab="create">Create</button>
+      <button class="tab" data-tab="mine">My RSVPs</button>
+      <button class="tab" data-tab="hosting">Hosting</button>
+      <button class="tab" data-tab="calendar">Calendar</button>
+      <button class="tab" data-tab="past">Past</button>
+    </div>
+
+    <!-- Filters (shown on list-like tabs) -->
+    <div class="row" data-panel="discover mine hosting past" id="fltRow">
+      <input id="searchBox" placeholder="Search events…" style="flex:2 1 320px">
+      <select id="fltCategory" style="flex:1 1 160px"><option value="">All categories</option><option>Music</option><option>Comedy</option><option>Gaming</option><option>Education</option><option>Meetup</option><option>Business</option><option>Sports</option></select>
+      <select id="fltPrivacy" style="flex:1 1 140px"><option value="">Any privacy</option><option>Public</option><option>Private</option></select>
+      <button class="btn" id="fltClear">Clear</button>
+    </div>
+  </section>
+
+  <!-- LIST PANELS -->
+  <section class="card" id="secDiscover" data-panel="discover">
+    <h3 class="section-title" style="margin:0 0 6px">Upcoming Events</h3>
+    <div id="listDiscover"></div><div id="emptyDiscover" class="empty" style="display:none">No events yet.</div>
+  </section>
+
+  <section class="card" id="secMine" data-panel="mine" style="display:none">
+    <h3 class="section-title" style="margin:0 0 6px">My RSVPs</h3>
+    <div id="listMine"></div><div id="emptyMine" class="empty" style="display:none">You haven’t RSVP’d yet.</div>
+  </section>
+
+  <section class="card" id="secHosting" data-panel="hosting" style="display:none">
+    <h3 class="section-title" style="margin:0 0 6px">Hosting</h3>
+    <div id="listHosting"></div><div id="emptyHosting" class="empty" style="display:none">You’re not hosting anything yet.</div>
+  </section>
+
+  <section class="card" id="secPast" data-panel="past" style="display:none">
+    <h3 class="section-title" style="margin:0 0 6px">Past Events</h3>
+    <div id="listPast"></div><div id="emptyPast" class="empty" style="display:none">No past events.</div>
+  </section>
+
+  <!-- CALENDAR PANEL -->
+  <section class="card" id="secCalendar" data-panel="calendar" style="display:none">
+    <div class="cal-wrap">
+      <div class="cal-head">
+        <button class="btn sm" id="calPrev">◀</button>
+        <div><strong id="calMonth"></strong></div>
+        <button class="btn sm" id="calNext">▶</button>
       </div>
-      <input id="eWhere" placeholder="Location (or link)">
-      <div class="row">
-        <select id="eVis">
-          <option value="public">Public</option>
-          <option value="friends">Friends</option>
-          <option value="private">Only me</option>
-        </select>
-        <input id="eBanner" placeholder="Banner image URL (optional)">
+      <div class="grid" id="calDow"></div>
+      <div class="grid" id="calGrid"></div>
+    </div>
+  </section>
+
+  <!-- CREATE PANEL -->
+  <section class="card" id="secCreate" data-panel="create" style="display:none">
+    <h3 class="section-title">Create an Event</h3>
+    <div class="row">
+      <input id="evTitle" placeholder="Event title" style="flex:2">
+      <select id="evPrivacy" style="width:160px"><option>Public</option><option>Private</option></select>
+      <select id="evCategory" style="width:200px"><option value="">Category</option><option>Music</option><option>Comedy</option><option>Gaming</option><option>Education</option><option>Meetup</option><option>Business</option><option>Sports</option></select>
+    </div>
+    <div class="row">
+      <input id="evDate" type="date"><input id="evTime" type="time">
+      <input id="evEndDate" type="date" placeholder="End date"><input id="evEndTime" type="time" placeholder="End time">
+    </div>
+    <div class="row">
+      <input id="evLocation" placeholder="Location (or Online link)">
+      <input id="evTickets" placeholder="Tickets / RSVP link (optional)">
+      <input id="evPrice" placeholder="Price (optional)">
+    </div>
+    <div class="row">
+      <input id="evCoverURL" placeholder="Cover image URL (optional)">
+      <input type="file" id="evCoverFile" accept="image/*">
+      <input id="evTags" placeholder="Tags (comma separated)">
+      <input id="evCapacity" placeholder="Capacity (optional)">
+    </div>
+    <div class="row"><textarea id="evDesc" placeholder="Description…"></textarea></div>
+    <div class="row" style="justify-content:flex-end"><button class="btn primary" id="createBtn">Create</button></div>
+  </section>
+
+  <!-- DETAIL -->
+  <section class="card" id="detail" style="display:none">
+    <div class="hero">
+      <div class="hero-bg" id="dCover"></div>
+      <div class="hero-bar">
+        <img id="dAvatar" class="avatar-lg" alt="">
+        <div class="hero-title">
+          <h2 id="dTitle">Event</h2>
+          <div class="muted" id="dMeta"></div>
+        </div>
+        <div id="dActions" style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"></div>
       </div>
-      <textarea id="eDesc" placeholder="Describe the event…"></textarea>
-      <div class="row" style="margin-top:8px">
-        <button class="btn primary" id="saveEvent">Save event</button>
-        <button class="btn" id="clearEvent">Clear</button>
+    </div>
+
+    <div class="row" style="gap:14px;align-items:flex-start">
+      <div style="flex:2">
+        <h3 class="section-title">About</h3>
+        <p id="dDesc" style="margin-top:6px"></p>
+        <div style="display:flex;flex-wrap:wrap;margin:6px 0" id="dChips"></div>
+
+        <div class="tabs sub" id="evTabs">
+          <div class="tab active" data-tab="discussion">Discussion</div>
+          <div class="tab" data-tab="attendees">Attendees</div>
+          <div class="tab" data-tab="photos">Photos</div>
+        </div>
+
+        <div id="discussion">
+          <div class="row" style="margin:8px 0">
+            <input id="cName" placeholder="Your name (defaults to Me)">
+            <input id="cText" placeholder="Write a comment…">
+            <button class="btn primary" id="cAdd">Comment</button>
+          </div>
+          <div id="cList"></div><div id="cEmpty" class="empty" style="display:none">No comments yet.</div>
+        </div>
+
+        <div id="attendees" style="display:none">
+          <div id="attGoing"></div>
+          <div id="attMaybe" style="margin-top:10px"></div>
+          <div id="attNo" style="margin-top:10px"></div>
+        </div>
+
+        <div id="photos" style="display:none">
+          <div class="row">
+            <input type="file" id="phInput" accept="image/*" />
+            <button class="btn sm" id="phAdd">Upload</button>
+          </div>
+          <div class="row" id="phGrid" style="margin-top:8px"></div>
+          <div id="phEmpty" class="empty" style="display:none">No photos yet.</div>
+        </div>
       </div>
 
-      <h4 style="margin:16px 0 6px">My Events</h4>
-      <div id="myEvents"></div>
-    </aside>
+      <div style="flex:1" id="sidePanel">
+        <h3 class="section-title">RSVP</h3>
+        <div class="row">
+          <button class="btn" id="rGoing">Going</button>
+          <button class="btn" id="rMaybe">Maybe</button>
+          <button class="btn" id="rNo">Not going</button>
+        </div>
 
-    <!-- List -->
-    <main class="card">
-      <div class="tools">
-        <input id="q" placeholder="Search…" style="flex:1">
-        <select id="fVis">
-          <option value="">All</option>
-          <option value="public">Public</option>
-          <option value="friends">Friends</option>
-          <option value="private">Only me</option>
-        </select>
-        <select id="sort">
-          <option value="soon">Soonest</option>
-          <option value="new">Newest created</option>
-        </select>
-        <button class="btn" id="apply">Apply</button>
+        <div style="margin:10px 0">
+          <button class="btn sm" id="addReminder">🔔 Remind me</button>
+          <a class="btn sm" id="addICS" download>📅 Add to Calendar</a>
+          <button class="btn sm ghost" id="shareFeed">Share to Feed</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:12px 0">
+
+        <h3 class="section-title">Manage</h3>
+        <div class="row">
+          <button class="btn ghost" id="eEdit">Edit</button>
+          <button class="btn danger" id="eDelete">Delete</button>
+          <button class="btn sm" id="eDuplicate">Duplicate</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <input id="cohostName" placeholder="Invite co-host by username">
+          <button class="btn sm" id="cohostInvite">Invite</button>
+        </div>
+        <div id="cohosts" class="muted" style="margin-top:6px"></div>
       </div>
-      <div id="list" class="grid-items"></div>
-    </main>
+    </div>
+  </section>
 
+</div>
+
+<!-- Notifications / Inbox -->
+<div id="notifModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000">
+  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+    <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
+    <div id="notifList"></div>
+    <div class="row" style="margin-top:8px"><button id="clearNotif" class="btn primary">Clear</button><button id="closeNotif" class="btn">Close</button></div>
+  </div>
+</div>
+<div id="inboxModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000">
+  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+    <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
+    <div id="inboxList"></div>
+    <div class="row" style="margin-top:8px"><button id="closeInbox" class="btn">Close</button></div>
   </div>
 </div>
 
-<div id="toast" class="toast"></div>
+<!-- Messenger overlay autoloader -->
+<script>
+(function () {
+  var FALLBACK='https://chatternet-backend-1.onrender.com';
+  var ls=localStorage.getItem('ct_api_base')||''; var base=(window.CT_API_BASE||ls||FALLBACK).replace(/\/+$/,'');
+  window.CT_API_BASE=base; if(!ls){try{localStorage.setItem('ct_api_base',base);}catch{}}
+  function chain(arr,cb){(function n(i){if(i>=arr.length){cb(false);return;}var s=document.createElement('script');s.src=arr[i];s.async=true;s.onload=function(){cb(true)};s.onerror=function(){s.remove();n(i+1)};(document.head||document.documentElement).appendChild(s);})(0);}
+  chain([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'],function(ok){
+    if(ok && window.ChatternetMessenger?.open){ window.ctOpen=window.ctOpen||function(){window.ChatternetMessenger.open("")}; window.ctMessage=window.ctMessage||function(n){window.ChatternetMessenger.open(n||"")}; }
+  });
+  document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href*="messages.html"]'); if(!a) return; if(window.ctOpen||window.ChatternetMessenger?.open){ e.preventDefault(); (window.ctOpen||window.ChatternetMessenger.open)(""); }},true);
+})();
+</script>
 
 <script>
+/* ===== Storage / helpers ===== */
+const LS={USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
+          EVENTS:'ct_events_cache_v2', EV_PHOTOS:'ct_event_photos_v1', REMIND:'ct_event_reminders_v1', GLOBAL:'ct_global_feed_v1'};
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}}; const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`; const nowISO=()=>new Date().toISOString();
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'Me')}`;
+const rel=iso=>{const d=(Date.now()-new Date(iso||Date.now()).getTime())/1000;if(d<60)return'just now';if(d<3600)return Math.floor(d/60)+'m';if(d<86400)return Math.floor(d/3600)+'h';return Math.floor(d/86400)+'d';};
+function setImgSafe(img,name){ if(!img) return; img.referrerPolicy='no-referrer'; const p=(load(LS.PROFILE,{}))[name]||{}; img.src=p.avatar||p.avatarUrl||face(name); img.onerror=()=>{img.onerror=null; img.src=face(name);} }
+function myName(){ const p=load(LS.PROFILE,{})['Me']; return p?.displayName?.trim()||'Me'; }
+
+/* Header wiring */
 (function(){
-  "use strict";
-
-  /* ===== tiny utils ===== */
-  const $=(s,el=document)=>el.querySelector(s);
-  const $$=(s,el=document)=>Array.from(el.querySelectorAll(s));
-  const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
-  const save=(k,v)=>localStorage.setItem(k, JSON.stringify(v));
-  const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-  const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'cover')}`;
-  const toast=m=>{ const t=$("#toast"); t.textContent=m; t.className="toast show"; setTimeout(()=>t.className="toast",1200) };
-
-  const LS={ PROFILE:'ct_profile_data_v1', SETTINGS:'ct_settings_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1',
-             EVENTS:'ct_events_v1', RSVP:'ct_rsvp_v1' };
-
-  const me = (()=>{ const s=load(LS.SETTINGS,{}); return s?.profile?.actor || 'Me'; })();
-
-  /* ===== robust load shared scripts (messenger + header helpers) ===== */
-  (function robustLoad(){
-    const base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
-    const tryScripts=(arr)=>{ (function next(i){ if(i>=arr.length) return; const s=document.createElement('script'); s.src=arr[i]; s.async=true; s.onerror=()=>{ s.remove(); next(i+1); }; (document.head||document.documentElement).appendChild(s); })(0); };
-    tryScripts([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js']);
-    tryScripts([base+'/assets/common.js','/assets/common.js','assets/common.js']);
-  })();
-
-  /* ===== header wiring ===== */
-  (function header(){
-    const prof=(load(LS.PROFILE,{})['Me']||{});
-    const img=$("#myProfile"); if(img){ img.src=prof.avatar||prof.avatarUrl||face('Me'); img.alt=prof.displayName||'Me'; img.onclick=()=>location.href='profile.html'; }
-    $("#btnNotif").onclick=()=>{ const arr=load(LS.NOTIF,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'No notifications yet.'); };
-    $("#btnInbox").onclick=()=>{ const arr=load(LS.INBOX,[]); alert(arr.length?arr.map(n=>`• ${new Date(n.time||Date.now()).toLocaleString()}\n  ${n.text||''}`).join('\n\n'):'Inbox is empty.'); };
-    $("#btnMsgs").onclick=(e)=>{ e.preventDefault(); e.stopPropagation(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); };
-  })();
-
-  /* ===== data ===== */
-  function events(){ return load(LS.EVENTS,[]); }
-  function saveEvents(a){ save(LS.EVENTS,a); }
-  function rsvps(){ return load(LS.RSVP,{}); }     // {eventId: 'going'|'interested'|'no'}
-  function saveRsvps(o){ save(LS.RSVP,o); }
-
-  /* seed a demo event if empty */
-  (function seed(){
-    let E=events(); if(E.length) return;
-    const now=Date.now()+3*24*3600e3;
-    E=[{
-      id:'e_'+Date.now(),
-      title:'Chatternet Launch Party',
-      start: new Date(now).toISOString(),
-      end: new Date(now+2*3600e3).toISOString(),
-      where:'Online — Stream link in description',
-      banner:'https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=1200&auto=format&fit=crop',
-      desc:'Celebrate our launch with live music and giveaways!',
-      vis:'public',
-      host:'Grace Lee',
-      created: Date.now()
-    }];
-    saveEvents(E);
-  })();
-
-  /* ===== render ===== */
-  function myRow(ev){
-    const div=document.createElement('div'); div.className='row'; div.style.border='1px solid #eef2f7'; div.style.borderRadius='10px'; div.style.padding='8px';
-    const when=new Date(ev.start).toLocaleString();
-    div.innerHTML = `<img src="${ev.banner||face(ev.title)}" style="width:44px;height:44px;border-radius:8px;object-fit:cover">
-      <div style="flex:1">
-        <div style="font-weight:800">${esc(ev.title)}</div>
-        <div class="muted small">${when} • ${esc(ev.where||'')}</div>
-      </div>
-      <button class="btn" data-act="edit">Edit</button>
-      <button class="btn warn" data-act="del">Delete</button>`;
-    div.onclick=(e)=>{
-      const a=e.target?.dataset?.act; if(!a) return;
-      if(a==='del'){ if(!confirm('Delete this event?')) return; let E=events().filter(x=>x.id!==ev.id); saveEvents(E); renderAll(); }
-      if(a==='edit'){ $("#eTitle").value=ev.title; $("#eWhen").value=ev.start.slice(0,16); $("#eEnd").value=ev.end?ev.end.slice(0,16):''; $("#eWhere").value=ev.where||''; $("#eVis").value=ev.vis||'public'; $("#eBanner").value=ev.banner||''; $("#eDesc").value=ev.desc||''; $("#saveEvent").dataset.edit=ev.id; window.scrollTo({top:0,behavior:'smooth'}); }
-    };
-    return div;
-  }
-
-  function ics(ev){
-    const pad=n=>String(n).padStart(2,'0');
-    const fmt = (d)=>{ const t=new Date(d); const y=t.getUTCFullYear(); const m=pad(t.getUTCMonth()+1); const da=pad(t.getUTCDate()); const h=pad(t.getUTCHours()); const mi=pad(t.getUTCMinutes()); const s=pad(t.getUTCSeconds()); return `${y}${m}${da}T${h}${mi}${s}Z`; };
-    const body = [
-      'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chatternet//EN','BEGIN:VEVENT',
-      `UID:${ev.id}@chatternet`,
-      `DTSTAMP:${fmt(new Date())}`,
-      `DTSTART:${fmt(ev.start)}`,
-      ev.end?`DTEND:${fmt(ev.end)}`:null,
-      `SUMMARY:${ev.title}`,
-      `DESCRIPTION:${(ev.desc||'').replace(/\n/g,'\\n')}`,
-      `LOCATION:${ev.where||''}`,
-      'END:VEVENT','END:VCALENDAR'
-    ].filter(Boolean).join('\r\n');
-    const url='data:text/calendar;charset=utf-8,'+encodeURIComponent(body);
-    const a=document.createElement('a'); a.href=url; a.download=`${ev.title||'event'}.ics`; a.click();
-  }
-
-  function card(ev){
-    const wrap=document.createElement('div'); wrap.className='ev';
-    const when=new Date(ev.start).toLocaleString();
-    const len= ev.end ? ' • ends '+new Date(ev.end).toLocaleTimeString() : '';
-    wrap.innerHTML = `
-      <img src="${ev.banner||face(ev.title)}" alt="${esc(ev.title)}">
-      <div class="ev-body">
-        <h4>${esc(ev.title)} <span class="badge">${esc(ev.vis)}</span></h4>
-        <div class="muted small">${when}${len}</div>
-        <div class="muted small" style="margin:4px 0">at ${esc(ev.where||'TBA')} • host ${esc(ev.host||'Unknown')}</div>
-        <div class="muted" style="min-height:40px">${esc(ev.desc||'')}</div>
-      </div>
-      <div class="row" style="padding:10px 12px;border-top:1px solid #eef2f7;justify-content:space-between">
-        <div class="row">
-          <button class="btn good" data-act="going">Going</button>
-          <button class="btn" data-act="interested">Interested</button>
-          <button class="btn" data-act="no">Not going</button>
-        </div>
-        <div class="row">
-          <button class="btn" data-act="cal">Add to calendar</button>
-          <button class="btn primary" data-act="msg">Message host</button>
-        </div>
-      </div>`;
-    wrap.onclick=(e)=>{
-      const act=e.target?.dataset?.act; if(!act) return;
-      if(act==='msg'){ if(window.ctMessage) return window.ctMessage(ev.host||''); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(ev.host||''); location.href='messages.html?msg='+encodeURIComponent(ev.host||''); }
-      if(act==='cal'){ ics(ev); }
-      if(['going','interested','no'].includes(act)){ const R=rsvps(); R[ev.id]=act; saveRsvps(R); toast('Response saved'); renderAll(); }
-    };
-    // show current RSVP
-    const r=rsvps()[ev.id]; if(r){ $$('button[data-act]', wrap).forEach(b=>{ if(b.dataset.act===r) b.classList.add('good'); }); }
-    return wrap;
-  }
-
-  function renderAll(){
-    const E=events();
-    // left (mine)
-    $("#myEvents").innerHTML='';
-    E.filter(x=>x.host===me).forEach(x=>$("#myEvents").appendChild(myRow(x)));
-
-    // right list
-    const q=($("#q").value||'').trim().toLowerCase();
-    const vis=$("#fVis").value||'';
-    const sort=$("#sort").value;
-
-    let A=E.slice();
-    if(q) A=A.filter(x=>[x.title,x.desc,x.where,x.host].join(' ').toLowerCase().includes(q));
-    if(vis) A=A.filter(x=>x.vis===vis);
-    if(sort==='new') A=A.sort((a,b)=>b.created-a.created);
-    else A=A.sort((a,b)=>new Date(a.start)-new Date(b.start));
-
-    const box=$("#list"); box.innerHTML='';
-    if(!A.length){ box.innerHTML='<div class="muted">No events match.</div>'; return; }
-    A.forEach(x=> box.appendChild(card(x)));
-  }
-
-  /* ===== actions ===== */
-  $("#apply").onclick=renderAll;
-  $("#clearEvent").onclick=()=>{ ["eTitle","eWhere","eBanner","eDesc"].forEach(id=>$("#"+id).value=''); $("#eVis").value='public'; $("#eWhen").value=''; $("#eEnd").value=''; delete $("#saveEvent").dataset.edit; };
-
-  $("#saveEvent").onclick=()=>{
-    const title=($("#eTitle").value||'').trim();
-    const start=$("#eWhen").value? new Date($("#eWhen").value).toISOString() : '';
-    const end=$("#eEnd").value? new Date($("#eEnd").value).toISOString() : '';
-    const where=($("#eWhere").value||'').trim();
-    const vis=$("#eVis").value||'public';
-    const banner=($("#eBanner").value||'').trim();
-    const desc=($("#eDesc").value||'').trim();
-    if(!title || !start){ alert('Title and start date/time are required.'); return; }
-    let E=events();
-    const editId=$("#saveEvent").dataset.edit;
-    if(editId){
-      const i=E.findIndex(x=>x.id===editId); if(i>=0){ E[i]={...E[i], title,start,end,where,vis,banner,desc}; }
-      delete $("#saveEvent").dataset.edit;
-    }else{
-      E.unshift({ id:'e_'+Date.now(), title,start,end,where,vis,banner,desc, host:me, created:Date.now() });
-    }
-    saveEvents(E); renderAll(); toast('Event saved'); $("#clearEvent").click();
-  };
-
-  /* ===== init ===== */
-  renderAll();
+  setImgSafe($('#myProfile'),'Me');
+  $('#myProfile')?.addEventListener('click',()=>{try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{}; location.href='profile.html';});
+  const notifModal=$('#notifModal'), inboxModal=$('#inboxModal');
+  function rN(){const a=load(LS.NOTIF,[]);$('#notifList').innerHTML=a.length?a.map(n=>`<div class="chip" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.';}
+  function rI(){const a=load(LS.INBOX,[]);$('#inboxList').innerHTML=a.length?a.map(n=>`<div class="chip" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.';}
+  $('#btnNotif').onclick=()=>{rN();notifModal.style.display='flex';}; $('#clearNotif').onclick=()=>{save(LS.NOTIF,[]);rN();}; $('#closeNotif').onclick=()=>{notifModal.style.display='none';};
+  $('#btnInbox').onclick=()=>{rI();inboxModal.style.display='flex';}; $('#closeInbox').onclick=()=>{inboxModal.style.display='none';};
+  $('#btnMsgs').onclick=(e)=>{e.preventDefault(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); location.href='messages.html'; };
 })();
+
+/* API (optional; falls back to local) */
+const API_BASE=(window.CT_API_BASE||localStorage.getItem('ct_api_base')||'/api').replace(/\/+$/,'');
+async function api(path,opts={}){ const url=API_BASE+(path.startsWith('/')?path:`/${path}`); const r=await fetch(url,{credentials:'include',headers:{'Content-Type':'application/json'},...opts}).catch(()=>null); if(!r) throw new Error('offline'); const txt=await r.text().catch(()=> ''); if(!r.ok) throw new Error(txt||'error'); try{return JSON.parse(txt||'{}')}catch{return{}} }
+
+/* Model */
+function ensureEvent(ev={}){ return {
+  id:ev.id||uid('ev'), title:ev.title||'Event',
+  date:ev.date||'', time:ev.time||'', endDate:ev.endDate||'', endTime:ev.endTime||'',
+  location:ev.location||'', tickets:ev.tickets||'', price:ev.price||'',
+  privacy:ev.privacy||'Public', category:ev.category||'', tags:Array.isArray(ev.tags)?ev.tags:[],
+  desc:ev.desc||'', imgSrc:ev.imgSrc||'',
+  creator:ev.creator||myName(), cohosts:ev.cohosts||[],
+  rsvp: ev.rsvp||{Going:[],Maybe:[],NotGoing:[]},
+  discussion: ev.discussion||[], likes: ev.likes||[],
+  createdAt: ev.createdAt||nowISO()
+};}
+
+/* State */
+let EVENTS=[], CURRENT=null; const cache=()=>save(LS.EVENTS,EVENTS);
+
+/* CRUD */
+async function loadEvents(){ try{EVENTS=(await api('/events')).map(ensureEvent); cache();}catch{EVENTS=(load(LS.EVENTS,[])||[]).map(ensureEvent);} }
+async function createEvent(d){ try{const ev=await api('/events',{method:'POST',body:JSON.stringify(d)}); EVENTS.unshift(ensureEvent(ev)); }catch{EVENTS.unshift(ensureEvent(d));} cache(); renderAll(); }
+async function updateEvent(ev){ const i=EVENTS.findIndex(e=>String(e.id)===String(ev.id)); if(i>-1) EVENTS[i]=ensureEvent(ev); else EVENTS.unshift(ensureEvent(ev)); cache(); try{await api('/events/'+encodeURIComponent(ev.id),{method:'PUT',body:JSON.stringify(ev)});}catch{} renderAll(); }
+async function deleteEvent(id){ EVENTS=EVENTS.filter(e=>String(e.id)!==String(id)); cache(); try{await api('/events/'+encodeURIComponent(id),{method:'DELETE'});}catch{} renderAll(); }
+
+/* Tabs */
+const state={tab:'discover'};
+$('#tabs').addEventListener('click',e=>{const t=e.target.closest('.tab'); if(!t) return; $$('#tabs .tab').forEach(x=>x.classList.toggle('active',x===t)); state.tab=t.dataset.tab; $$('[data-panel]').forEach(p=>{const want=(p.getAttribute('data-panel').split(' ').includes(state.tab)); p.style.display=want?'block':'none';}); renderAll();});
+
+/* Filters */
+['searchBox','fltCategory','fltPrivacy'].forEach(id=>$('#'+id).addEventListener('input',renderAll));
+$('#fltClear').onclick=()=>{['searchBox','fltCategory','fltPrivacy'].forEach(id=>$('#'+id).value=''); renderAll();};
+
+/* Render helpers */
+function matchesFilters(e){
+  const q=($('#searchBox').value||'').toLowerCase();
+  const c=$('#fltCategory').value, p=$('#fltPrivacy').value;
+  const txt=(e.title+' '+e.location+' '+e.desc+' '+(e.tags||[]).join(' ')).toLowerCase();
+  const okQ=!q || txt.includes(q), okC=!c || e.category===c, okP=!p || e.privacy===p;
+  return okQ && okC && okP;
+}
+function evCardHtml(e){
+  const going=(e.rsvp?.Going||[]).length, maybe=(e.rsvp?.Maybe||[]).length, no=(e.rsvp?.NotGoing||[]).length;
+  return `<div class="ev" data-id="${e.id}">
+    <img class="ev-img" src="${esc(e.imgSrc||'https://picsum.photos/seed/'+encodeURIComponent(e.id)+'/600/360')}" alt="">
+    <div class="ev-info">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h4 class="ev-name">${esc(e.title)}</h4>
+        <div class="row" style="flex:0 0 auto"><button class="btn sm ghost" data-act="view">View</button></div>
+      </div>
+      <div class="ev-meta">${esc(e.date||'TBA')} ${esc(e.time||'')} • ${esc(e.location||'Online')} • ${e.privacy||'Public'}${e.category?(' • '+esc(e.category)) : ''}</div>
+      <div class="muted" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(e.desc||'')}</div>
+      <div style="margin-top:6px">
+        <span class="chip">Going: ${going}</span>
+        <span class="chip">Maybe: ${maybe}</span>
+        <span class="chip">No: ${no}</span>
+      </div>
+    </div>
+  </div>`;
+}
+function listTo(target, arr){ const wrap=$(target.wrap), empty=$(target.empty); wrap.innerHTML=arr.map(evCardHtml).join(''); empty.style.display=arr.length?'none':'block'; }
+document.addEventListener('click',e=>{const el=e.target.closest('.ev'); if(!el) return; if(e.target.closest('[data-act="view"]')||el){ openDetail(el.dataset.id); }});
+
+/* Lists by tab */
+function renderLists(){
+  const now=new Date();
+  const upcoming = EVENTS.filter(e=> new Date((e.date||'1970-01-01')+'T'+(e.time||'00:00')) >= now);
+  const past     = EVENTS.filter(e=> new Date((e.date||'1970-01-01')+'T'+(e.time||'00:00')) <  now);
+  const mine     = EVENTS.filter(e=> ['Going','Maybe','NotGoing'].some(k=> (e.rsvp?.[k]||[]).includes(myName())));
+  const hosting  = EVENTS.filter(e=> (e.creator===myName()) || (e.cohosts||[]).includes(myName()));
+  const f = arr => arr.filter(matchesFilters);
+
+  if(state.tab==='discover') listTo({wrap:'#listDiscover',empty:'#emptyDiscover'}, f(upcoming).sort((a,b)=>new Date(a.date+'T'+a.time)-new Date(b.date+'T'+b.time)));
+  if(state.tab==='mine')     listTo({wrap:'#listMine',     empty:'#emptyMine'    }, f(mine));
+  if(state.tab==='hosting')  listTo({wrap:'#listHosting',  empty:'#emptyHosting' }, f(hosting));
+  if(state.tab==='past')     listTo({wrap:'#listPast',     empty:'#emptyPast'    }, f(past).sort((a,b)=>new Date(b.date+'T'+b.time)-new Date(a.date+'T'+a.time)));
+}
+
+/* Calendar */
+let calMonth=new Date();
+function renderCalendar(){
+  if(state.tab!=='calendar') return;
+  const month=new Date(calMonth.getFullYear(), calMonth.getMonth(), 1);
+  $('#calMonth').textContent=month.toLocaleString(undefined,{month:'long',year:'numeric'});
+  const dow=['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; $('#calDow').innerHTML=dow.map(d=>`<div class="cell dow"><strong>${d}</strong></div>`).join('');
+  const firstDow=new Date(month.getFullYear(),month.getMonth(),1).getDay();
+  const days=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
+  const cells=[];
+  for(let i=0;i<firstDow;i++) cells.push('<div class="cell" aria-hidden="true"></div>');
+  for(let d=1; d<=days; d++){
+    const iso=(new Date(month.getFullYear(),month.getMonth(),d)).toISOString().slice(0,10);
+    const todays=EVENTS.filter(e=>e.date===iso && matchesFilters(e));
+    const items=todays.slice(0,4).map(e=>`<div><span class="dot"></span><a href="#" data-open="${e.id}">${esc(e.title)}</a></div>`).join('');
+    const more=todays.length>4?`<div class="muted" style="font-size:12px">+${todays.length-4} more</div>`:'';
+    cells.push(`<div class="cell"><div class="dnum">${d}</div>${items}${more}</div>`);
+  }
+  $('#calGrid').innerHTML=cells.join('');
+}
+$('#calPrev').onclick=()=>{ calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1); renderCalendar(); };
+$('#calNext').onclick=()=>{ calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1); renderCalendar(); };
+document.addEventListener('click',e=>{ const a=e.target.closest('a[data-open]'); if(!a)return; e.preventDefault(); openDetail(a.dataset.open); });
+
+/* Detail */
+function openDetail(id){
+  CURRENT=EVENTS.find(e=>String(e.id)===String(id)); if(!CURRENT) return;
+  const e=CURRENT;
+  $('#detail').style.display='block';
+  $('#dCover').style.backgroundImage=`url('${esc(e.imgSrc||'https://picsum.photos/seed/'+encodeURIComponent(e.id)+'/1200/500')}')`;
+  setImgSafe($('#dAvatar'), e.creator||'Me');
+  $('#dTitle').textContent=e.title||'Event';
+  $('#dMeta').textContent = `${e.date||'TBA'} ${e.time||''}${e.endDate||e.endTime?(' – '+(e.endDate||e.date)+' '+(e.endTime||'')) : ''} • ${e.location||'Online'} • ${e.privacy||'Public'}`;
+  $('#dDesc').textContent=e.desc||'';
+  const chips=$('#dChips'); chips.innerHTML='';
+  [e.category&&('Category: '+e.category), e.price&&('Price: '+e.price), e.tickets&&('Tickets available'), 'Created '+rel(e.createdAt)].filter(Boolean)
+    .forEach(t=>{ const c=document.createElement('span'); c.className='chip'; c.textContent=t; chips.appendChild(c); });
+  $('#cohosts').textContent = e.cohosts?.length ? ('Co-hosts: '+e.cohosts.join(', ')) : 'No co-hosts yet.';
+
+  const A=$('#dActions'); A.innerHTML='';
+  A.insertAdjacentHTML('beforeend','<button class="btn" id="actGoing">Going</button><button class="btn" id="actMaybe">Maybe</button><button class="btn" id="actNo">Not going</button>');
+  if(e.tickets) A.insertAdjacentHTML('beforeend',`<a class="btn ghost" href="${esc(e.tickets)}" target="_blank" rel="noopener">Tickets</a>`);
+  A.insertAdjacentHTML('beforeend','<button class="btn sm" id="actICS">Add to Calendar</button><button class="btn sm ghost" id="actShare">Share</button>');
+  $('#actGoing').onclick=()=>setRSVP(e.id,'Going',myName());
+  $('#actMaybe').onclick=()=>setRSVP(e.id,'Maybe',myName());
+  $('#actNo').onclick = ()=>setRSVP(e.id,'NotGoing',myName());
+  $('#actICS').onclick = ()=>downloadICS(e);
+  $('#actShare').onclick= ()=>{ const arr=load(LS.GLOBAL,[]); arr.unshift({id:uid('g'),title:e.title,content:`${e.title} • ${e.date} ${e.time}`,authorName:'Me',createdAt:nowISO(),media:e.imgSrc||null}); save(LS.GLOBAL,arr); alert('Shared to Global Feed'); };
+
+  $('#eEdit').onclick=()=>editInline();
+  $('#eDelete').onclick=()=>{ if(confirm('Delete this event?')){ deleteEvent(e.id); $('#detail').style.display='none'; } };
+  $('#eDuplicate').onclick=()=>{ const copy={...ensureEvent({...e,id:uid('ev'),title:e.title+' (copy)'})}; EVENTS.unshift(copy); cache(); renderAll(); alert('Duplicated'); };
+  $('#cohostInvite').onclick=()=>{ const who=($('#cohostName').value||'').trim(); if(!who) return; e.cohosts=e.cohosts||[]; if(!e.cohosts.includes(who)) e.cohosts.push(who); updateEvent(e).then(()=>{ $('#cohosts').textContent='Co-hosts: '+e.cohosts.join(', '); $('#cohostName').value=''; }); };
+
+  $('#addReminder').onclick=()=>{ addReminder(e); };
+  $('#addICS').href = makeICSDataURL(e);
+  $('#shareFeed').onclick=()=>{ const arr=load(LS.GLOBAL,[]); arr.unshift({id:uid('g'),title:e.title,content:`${e.title} • ${e.date} ${e.time}`,authorName:'Me',createdAt:nowISO(),media:e.imgSrc||null}); save(LS.GLOBAL,arr); alert('Shared to Global Feed'); };
+
+  renderComments(); renderAttendees(); renderPhotos();
+}
+
+function renderComments(){
+  const e=CURRENT; if(!e) return; const box=$('#cList'), empty=$('#cEmpty'); const arr=e.discussion||[];
+  box.innerHTML=''; if(!arr.length){ empty.style.display='block'; return; } empty.style.display='none';
+  box.innerHTML=arr.map(c=>`<div class="comment"><img class="c-avatar" src="${face(c.userName||'Me')}" alt=""><div><div class="muted" style="font-size:12px"><strong>${esc(c.userName||'Me')}</strong> • ${rel(c.createdAt)}</div><div>${esc(c.text||'')}</div></div></div>`).join('');
+}
+$('#cAdd').onclick=()=>{ if(!CURRENT) return; const who=($('#cName').value.trim()||myName()); const text=$('#cText').value.trim(); if(!text) return alert('Write a comment'); (CURRENT.discussion ||= []).push({ id: uid('cm'), userName: who, text, createdAt: nowISO() }); $('#cText').value=''; updateEvent(CURRENT).then(renderComments); };
+
+function renderAttendees(){
+  const e=CURRENT; if(!e) return; const g=(e.rsvp?.Going||[]), m=(e.rsvp?.Maybe||[]), n=(e.rsvp?.NotGoing||[]);
+  $('#attGoing').innerHTML = `<h4>Going (${g.length})</h4>` + g.map(n=>`<span class="chip">${esc(n)}</span>`).join(' ');
+  $('#attMaybe').innerHTML = `<h4>Maybe (${m.length})</h4>` + m.map(n=>`<span class="chip">${esc(n)}</span>`).join(' ');
+  $('#attNo').innerHTML     = `<h4>Not going (${n.length})</h4>` + n.map(nm=>`<span class="chip">${esc(nm)}</span>`).join(' ');
+}
+
+/* RSVP */
+async function setRSVP(id, bucket, who){
+  const e=EVENTS.find(x=>String(x.id)===String(id)); if(!e) return;
+  ['Going','Maybe','NotGoing'].forEach(k=>{ const set=new Set(e.rsvp?.[k]||[]); set.delete(who); e.rsvp[k]=Array.from(set); });
+  const set=new Set(e.rsvp?.[bucket]||[]); set.add(who); e.rsvp[bucket]=Array.from(set);
+  await updateEvent(e); if(CURRENT&&CURRENT.id===id) { CURRENT=e; renderAttendees(); } renderLists(); renderCalendar();
+}
+
+/* Photos */
+const PH = { get:(id)=>load(LS.EV_PHOTOS,{})[id]||[], set:(id,arr)=>{const m=load(LS.EV_PHOTOS,{}); m[id]=arr; save(LS.EV_PHOTOS,m);} };
+function renderPhotos(){ const e=CURRENT; if(!e) return; const arr=PH.get(e.id); const grid=$('#phGrid'), empty=$('#phEmpty'); if(!arr.length){ grid.innerHTML=''; empty.style.display='block'; } else { empty.style.display='none'; grid.innerHTML=arr.map(src=>`<img src="${src}" style="width:160px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb">`).join(''); } }
+function fileToDataURL(f){ return new Promise(res=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsDataURL(f); }); }
+$('#phAdd').onclick=async ()=>{ const f=$('#phInput').files[0]; if(!f||!CURRENT) return; const url=await fileToDataURL(f); const arr=PH.get(CURRENT.id); arr.unshift(url); PH.set(CURRENT.id,arr); $('#phInput').value=''; renderPhotos(); };
+
+/* Detail tabs */
+$('#evTabs').addEventListener('click',e=>{ const t=e.target.closest('.tab'); if(!t) return; $$('#evTabs .tab').forEach(x=>x.classList.toggle('active',x===t)); const key=t.dataset.tab; ['discussion','attendees','photos'].forEach(k=>$('#'+k).style.display=(k===key?'block':'none')); });
+
+/* Create / Edit */
+async function readCoverInput(){ const f=$('#evCoverFile').files[0]; if(f){ return await fileToDataURL(f); } return ($('#evCoverURL').value||'').trim(); }
+$('#createBtn').onclick=async ()=>{ const title=$('#evTitle').value.trim(); if(!title) return alert('Add a title');
+  const draft=ensureEvent({
+    title, privacy:$('#evPrivacy').value, category:$('#evCategory').value,
+    date:$('#evDate').value, time:$('#evTime').value, endDate:$('#evEndDate').value, endTime:$('#evEndTime').value,
+    location:$('#evLocation').value.trim(), tickets:$('#evTickets').value.trim(), price:$('#evPrice').value.trim(),
+    desc:$('#evDesc').value.trim(), imgSrc:await readCoverInput(),
+    tags:($('#evTags').value||'').split(',').map(s=>s.trim()).filter(Boolean), capacity:($('#evCapacity').value||'').trim(),
+    creator: myName()
+  });
+  await createEvent(draft);
+  ['evTitle','evDate','evTime','evEndDate','evEndTime','evLocation','evTickets','evPrice','evDesc','evCoverURL','evTags','evCapacity'].forEach(id=>$('#'+id).value=''); $('#evCoverFile').value='';
+  addNotif(`${myName()} created "${draft.title}".`);
+  state.tab='discover'; $$('#tabs .tab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='discover')); renderAll();
+};
+function editInline(){ const e=CURRENT; if(!e) return;
+  const title=prompt('Title', e.title)||e.title, date=prompt('Date (YYYY-MM-DD)', e.date)||e.date, time=prompt('Time (HH:MM)', e.time)||e.time;
+  const location=prompt('Location', e.location)||e.location, cover=prompt('Cover URL', e.imgSrc||'')||e.imgSrc, desc=prompt('Description', e.desc||'')||e.desc;
+  const privacy=prompt('Privacy (Public/Private)', e.privacy)||e.privacy, category=prompt('Category', e.category||'')||e.category;
+  Object.assign(e,{title,date,time,location,imgSrc:cover,desc,privacy,category}); updateEvent(e).then(()=>openDetail(e.id));
+}
+
+/* Reminders + ICS */
+function addReminder(e){ const when=new Date((e.date||'')+'T'+(e.time||'00:00')); if(Number.isNaN(+when)) return alert('Set date/time first.'); const arr=load(LS.REMIND,[]); if(!arr.find(x=>x.id===e.id)) arr.push({id:e.id, at:when.toISOString(), title:e.title}); save(LS.REMIND,arr); alert('Reminder saved.'); }
+function makeICSDataURL(e){ const dt=(s,t)=> s? (s.replace(/-/g,'') + 'T' + (t||'00:00').replace(':','')+'00') : ''; const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Chatternet//Events//EN','CALSCALE:GREGORIAN','BEGIN:VEVENT','UID:'+(e.id||'evt')+'@chatternet','DTSTAMP:'+dt(new Date().toISOString().slice(0,10), new Date().toTimeString().slice(0,5)),e.date?('DTSTART:'+dt(e.date,e.time)):'',(e.endDate||e.endTime)?('DTEND:'+dt(e.endDate||e.date,e.endTime||e.time)):'','SUMMARY:'+(e.title||'Event'),'LOCATION:'+(e.location||''),'DESCRIPTION:'+(e.desc||''),'END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n'); return 'data:text/calendar;charset=utf-8,'+encodeURIComponent(ics); }
+function downloadICS(e){ const a=document.createElement('a'); a.href=makeICSDataURL(e); a.download=(e.title||'event')+'.ics'; document.body.appendChild(a); a.click(); a.remove(); }
+function addNotif(text){ const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text,time:nowISO()}); save(LS.NOTIF,arr); }
+
+/* Render master */
+function renderAll(){ renderLists(); renderCalendar(); }
+(async function boot(){ await loadEvents(); renderAll(); })();
 </script>
 </body>
 </html>
