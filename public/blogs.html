@@ -1,122 +1,137 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>Chatternet — Blogs</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Blogs — Chatternet</title>
+
 <style>
   :root{
-    --brand:#3498db; --brand-2:#2980b9; --ink:#0f172a; --bg:#f5f7fb; --card:#fff; --muted:#667085; --line:#e6eaf2;
-    --ct-bluebar-top:120px; --ct-bluebar-h:58px; --ct-nav-h:44px; --ct-gap:8px;
+    --brand:#0ea5e9; --brand-2:#0989c3;
+    --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2;
+    --blueTop:132px; --barH:52px; --navH:48px;
+    --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif;overflow-x:hidden;overflow-y:visible}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif}
+  a{color:#2563eb;text-decoration:none}
 
-  /* Blue header (fixed under Weebly header) */
+  /* ===== Top blue bar (same as Market/Groups/Dating) ===== */
   .top-bar{
-    position:fixed;left:0;right:0;top:var(--ct-bluebar-top);z-index:70;
-    display:flex;justify-content:space-between;align-items:center;
-    padding:10px 14px;height:var(--ct-bluebar-h);
-    background:linear-gradient(0deg,var(--brand),var(--brand-2));color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12)
+    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px; background:var(--brand); color:#fff;
+    border-bottom:1px solid rgba(255,255,255,.2)
   }
-  .top-bar h2{margin:0;font-weight:800}
-  .act{display:flex;gap:8px;align-items:center}
-  .act .btn{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.25);padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700}
-  .act .btn:hover{background:rgba(255,255,255,.22)}
-  .act img{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.55);object-fit:cover}
+  .top-bar h2{margin:0;font-weight:800;font-size:18px}
+  .top-actions{display:flex;gap:10px;align-items:center}
+  .pillbtn{height:36px;padding:0 12px;border-radius:999px;cursor:pointer;
+    border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff}
+  .pillbtn:hover{background:rgba(255,255,255,.26)}
+  #myProfile{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
 
-  /* App nav (pills) */
-  .nav{
-    position:fixed;left:0;right:0;top:calc(var(--ct-bluebar-top) + var(--ct-bluebar-h) + var(--ct-gap));
-    z-index:65;background:#e9f2ff;border-bottom:1px solid #d7e6ff;
-    padding:8px 12px;display:flex;gap:10px;flex-wrap:wrap
-  }
-  .nav a{color:#0b3a67;text-decoration:none;font-weight:600;border:1px solid #e6eaf2;background:#fff;padding:8px 12px;border-radius:999px}
-  .nav a[aria-current="page"]{background:#e8f1ff;border-color:#cfe0ff}
-  .nav a:hover{background:#eef4ff}
+  /* ===== App nav chips (same as base stack) ===== */
+  nav.app-nav{position:fixed;left:0;right:0;top:calc(var(--blueTop) + var(--barH));
+    z-index:1190;background:#fff;border-bottom:1px solid var(--line)}
+  nav.app-nav .inner{max-width:1180px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+  nav.app-nav a{display:inline-block;padding:8px 10px;border-radius:999px;background:#f3f4f6;color:#111;font-weight:600}
+  nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
+  nav.app-nav a:hover{background:#e5e7eb}
 
-  /* Spacer so content starts below fixed bars */
-  .ct-spacer{height:calc(var(--ct-bluebar-h) + var(--ct-nav-h) + var(--ct-gap));}
-
-  /* Page */
-  .wrap{max-width:1120px;margin:0 auto;padding:0 12px 28px}
-  .row{display:grid;grid-template-columns:340px 1fr;gap:14px}
+  /* ===== Page shell ===== */
+  .page{max-width:1180px;margin:14px auto;padding:0 12px;padding-top:var(--pagePad)}
+  .row{display:grid;grid-template-columns:360px 1fr;gap:14px}
   @media (max-width:980px){ .row{grid-template-columns:1fr} }
-
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
-  .title{font-weight:800;margin:0 0 8px;font-size:22px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);padding:14px}
+  .title{font-size:22px;font-weight:800;margin:4px 0 10px}
   .muted{color:var(--muted)}
-  .btn{padding:10px 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;cursor:pointer}
+  input,select,textarea,button{font:inherit}
+  input,select,textarea{width:100%;padding:10px;border:1px solid #d7d7d7;border-radius:10px}
+  textarea{resize:vertical;min-height:120px}
+  .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .btn.primary:hover{background:var(--brand-2)}
-  input,textarea,select{width:100%;padding:10px 12px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
-  textarea{min-height:120px;resize:vertical}
+  .btn.ghost{background:#f6f9ff;border-color:#e5edff}
+  .btn.sm{padding:6px 10px;font-size:12px;border-radius:8px}
 
-  /* Drop target */
-  .drop{display:grid;place-items:center;height:120px;border:1px dashed #d7d7d7;border-radius:10px;background:#fafbff;color:#6b7280;font-size:13px}
-  .drop.drag{background:#eef2ff;border-color:#bfdbfe}
+  /* ===== Composer bits ===== */
+  .drop{display:grid;place-items:center;height:120px;border:1px dashed #d7d7d7;border-radius:10px;background:#fafafa;color:#6b7280}
+  .drop.drag{background:#eef6ff;border-color:#bfdbfe}
 
-  /* Blog list */
-  .list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  @media (max-width:980px){ .list{grid-template-columns:1fr} }
-  .post{border:1px solid #ececec;background:#fff;border-radius:12px;overflow:hidden}
-  .cover{width:100%;height:160px;object-fit:cover;background:#f1f5f9}
-  .px{padding:10px 12px}
-  .meta{display:flex;align-items:center;gap:8px;font-size:12px;color:#334155}
-  .b-ava{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#e5e7eb;border:1px solid #d1d5e1;flex:0 0 28px}
-  .line{display:flex;align-items:center;gap:6px;color:#64748b;font-size:12px}
-
-  /* Heart + comments */
-  .heart{display:inline-flex;align-items:center;gap:6px}
-  .heart button{width:34px;height:34px;border-radius:9px;border:1px solid #e6e8f2;background:#f6f7fb;cursor:pointer}
-  .heart button.active{background:#ffe7ed;border-color:#ffd3de}
+  /* ===== Feed layout (replaces small boxes) ===== */
+  .feed{display:flex;flex-direction:column;gap:12px}
+  .feed-item{padding:12px;border:1px solid #ececec;border-radius:12px;background:#fff}
+  .f-head{display:flex;gap:10px;align-items:center}
+  .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid #e5e7eb;background:#fff}
+  .b-title{font-weight:800;font-size:18px;margin:6px 0}
+  .media{border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;margin:8px 0}
+  .media img{width:100%;display:block}
+  .media iframe,.media video{width:100%;aspect-ratio:16/9;height:auto;min-height:220px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#f6f7fb;border:1px solid #e6e8f2;padding:5px 10px;border-radius:999px;font-size:12px}
+  .util{display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap}
+  .heart{width:34px;height:34px;border-radius:9px;border:1px solid #e6e8f2;background:#f6f7fb;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
   .heart svg{width:18px;height:18px;fill:none;stroke:#555;stroke-width:2}
-  .heart button.active svg{fill:#ff3b5c;stroke:#ff3b5c}
+  .heart.active{background:#ffe7ed;border-color:#ffd3de}
+  .heart.active svg{fill:#ff3b5c;stroke:#ff3b5c}
   .comments{border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px}
-  .comment{background:#fff;border:1px solid #eee;border-radius:10px;padding:8px;display:flex;gap:8px;align-items:flex-start;margin:6px 0}
-  .c-body{flex:1}
-  .c-head{display:flex;align-items:center;gap:8px;font-size:12px;color:#475569;margin-bottom:4px}
-  .c-name{font-weight:700}
-  .c-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  @media (max-width:700px){ .c-two{grid-template-columns:1fr} }
-  .comments .btn{padding:6px 10px;border-radius:8px;font-size:13px}
+  .comment{padding:8px;border:1px solid #eee;border-radius:10px;background:#f8fafc;margin:8px 0;display:flex;gap:8px;align-items:flex-start}
+  .c-avatar{width:28px;height:28px;border-radius:50%;border:1px solid #e5e7eb;object-fit:cover}
 </style>
+
+<!-- Header positioner (same as base stack) -->
+<script>
+(function(){
+  var GAP=12, MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
+  function pickMenuBottom(){var bottoms=[];for(var i=0;i<MENU_SELS.length;i++){var el=document.querySelector(MENU_SELS[i]);if(!el)continue;var r=el.getBoundingClientRect(),h=r.height,w=r.width;var ok=h>=32&&h<=120&&r.top>-20&&r.top<180&&w>300;if(ok)bottoms.push(Math.round(r.bottom));}var best=bottoms.length?Math.min.apply(null,bottoms):120;if(best>200)best=120;try{var force=localStorage.getItem('ct_force_header_px');if(force)best=parseInt(force,10)||best;}catch{}return best;}
+  function measure(el,fb){if(!el)return fb;var r=el.getBoundingClientRect();return Math.max(fb,Math.round(r.height));}
+  function apply(){var blueTop=pickMenuBottom()+GAP;var barH=measure(document.querySelector('.top-bar'),52);var navH=measure(document.querySelector('nav.app-nav'),48);
+    document.documentElement.style.setProperty('--blueTop',blueTop+'px');
+    document.documentElement.style.setProperty('--barH',barH+'px');
+    document.documentElement.style.setProperty('--navH',navH+'px');
+    document.documentElement.style.setProperty('--pagePad',(blueTop+barH+navH)+'px');}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}
+  addEventListener('resize',apply,{passive:true}); addEventListener('orientationchange',apply,{passive:true});
+})();
+</script>
 </head>
 <body>
 
-<!-- Blue header -->
-<header class="top-bar" id="topBar">
+<!-- Blue bar -->
+<div class="top-bar">
   <h2>Blogs</h2>
-  <div class="act">
-    <button class="btn" id="btnNotif">Notifications</button>
-    <button class="btn" id="btnInbox">Inbox</button>
-    <button class="btn" id="btnMsgs">Messages</button>
-    <img id="myProfile" alt="Me" />
+  <div class="top-actions">
+    <button id="btnNotif" class="pillbtn" type="button">Notifications</button>
+    <button id="btnInbox" class="pillbtn" type="button">Inbox</button>
+    <button id="btnMsgs" class="pillbtn" type="button">Messages</button>
+    <img id="myProfile" alt="My Profile" title="My Profile"/>
   </div>
-</header>
+</div>
 
-<!-- App nav (pills) -->
-<nav class="nav" id="appNav">
-  <a href="index.html">Home</a>
-  <a href="feed.html">Feed</a>
-  <a href="friends.html">Friends</a>
-  <a href="chattermarket.html">Market</a>
-  <a href="groups.html">Groups</a>
-  <a href="events.html">Events</a>
-  <a href="media.html">Media</a>
-  <a href="dating.html">Dating</a>
-  <a href="blogs.html" aria-current="page">Blogs</a>
-  <a href="polls.html">Polls</a>
-  <a href="music.html">Music</a>
-  <a href="messages.html">Messages</a>
-  <a href="profile.html">Profile</a>
-  <a href="settings.html">Settings</a>
+<!-- App nav (chip nav, identical across app) -->
+<nav class="app-nav" aria-label="Site">
+  <div class="inner">
+    <a href="index.html">Home</a>
+    <a href="feed.html">Feed</a>
+    <a href="friends.html">Friends</a>
+    <a href="chattermarket.html">Market</a>
+    <a href="groups.html">Groups</a>
+    <a href="events.html">Events</a>
+    <a href="media.html">Media</a>
+    <a href="dating.html">Dating</a>
+    <a class="active" href="blogs.html" aria-current="page">Blogs</a>
+    <a href="polls.html">Polls</a>
+    <a href="music.html">Music</a>
+    <a href="messages.html">Messages</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html">Admin</a>
+    <a href="settings.html">Settings</a>
+  </div>
 </nav>
 
-<!-- Spacer under fixed bars -->
-<div class="ct-spacer" id="ctSpacer"></div>
-
-<div class="wrap">
+<!-- Page -->
+<div class="page">
   <div class="row">
     <!-- Composer -->
     <section class="card">
@@ -125,263 +140,171 @@
       <div class="muted" style="margin:6px 0">Posting as <span id="postingAs">Me</span></div>
       <label>Cover image URL (optional)<input id="bCoverUrl" placeholder="https://example.com/cover.jpg"></label>
       <div class="drop" id="dropZone">Drop an image here or click Upload</div>
-      <div style="display:flex;gap:8px;margin:8px 0">
-        <input type="file" id="fileInp" accept="image/*" hidden>
-        <button class="btn" id="chooseFile">Upload image</button>
-        <button class="btn" id="removeCover">Remove</button>
+      <div class="row" style="grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <input type="file" id="fileInp" accept="image/*">
+        <button class="btn" id="removeCover" type="button">Remove image</button>
       </div>
-      <label>Content<textarea id="bBody" placeholder="Write something..."></textarea></label>
-      <div style="display:flex;justify-content:flex-end;margin-top:8px">
-        <button class="btn primary" id="publishBtn">Publish</button>
+      <label style="margin-top:8px">Tags (comma separated)<input id="bTags" placeholder="news, announcement"></label>
+      <label style="margin-top:8px">Content<textarea id="bBody" placeholder="Write something..."></textarea></label>
+      <div class="row" style="align-items:center;justify-content:space-between;margin-top:8px">
+        <label style="display:flex;align-items:center;gap:8px"><input id="bShareMain" type="checkbox"> Also share to Main Feed</label>
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost" id="clearDraft" type="button">Clear</button>
+          <button class="btn primary" id="publishBtn" type="button">Publish</button>
+        </div>
       </div>
       <div class="muted" id="postState" style="margin-top:6px"></div>
     </section>
 
-    <!-- Latest -->
+    <!-- Latest Blogs (FEED) -->
     <section class="card">
-      <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+      <div class="row" style="grid-template-columns:1fr 260px;align-items:center">
         <h3 class="title" style="margin:0">Latest Blogs</h3>
-        <input id="search" placeholder="Search title or author..." style="max-width:260px">
+        <input id="search" placeholder="Search title, body, author, #tag">
       </div>
-      <div id="list" class="list" style="margin-top:8px"></div>
-      <div id="empty" class="muted" style="padding:10px;display:none">No blogs yet.</div>
+      <div id="feedList" class="feed" style="margin-top:8px"></div>
+      <div id="feedEmpty" class="muted" style="display:none">No blogs yet.</div>
     </section>
   </div>
 </div>
 
 <!-- Notifications / Inbox -->
-<div id="notifBg" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500">
-  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
-    <h3 class="title" style="margin:0 0 10px">Notifications</h3>
-    <div id="notifList"></div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button id="clearNotif" class="btn primary">Clear</button>
-      <button id="closeNotif" class="btn">Close</button>
-    </div>
-  </div>
-</div>
-<div id="inboxBg" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:500">
-  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
-    <h3 class="title" style="margin:0 0 10px">Inbox</h3>
-    <div id="inboxList"></div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button id="closeInbox" class="btn">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Keep bars just under Weebly header -->
-<script>
-(function(){
-  const EXCLUDE=new Set(['topBar','appNav','ctSpacer']);
-  const GAP=8, LIFT_UP=22;
-  function headerBottom(){
-    const sels=['header','.wsite-header','#wsite-header','.site-banner','.wsite-menus','.w-nav','.navbar','.weebly-header','.weebly-nav'];
-    let b=0;
-    document.querySelectorAll(sels.join(',')).forEach(el=>{
-      if(EXCLUDE.has(el.id)) return;
-      const r=el.getBoundingClientRect(); b=Math.max(b, r.bottom + window.scrollY);
-    });
-    return Math.max(b,80);
-  }
-  function apply(){
-    const top=Math.max(0, Math.round(headerBottom()+GAP-LIFT_UP));
-    document.documentElement.style.setProperty('--ct-bluebar-top', top+'px');
-    const nav=document.getElementById('appNav'); const navH=nav?Math.round(nav.getBoundingClientRect().height):44;
-    document.documentElement.style.setProperty('--ct-nav-h', navH+'px');
-    const sp=document.getElementById('ctSpacer'); if(sp){ sp.style.height=`calc(var(--ct-bluebar-h) + ${navH}px + var(--ct-gap))`; }
-  }
-  apply(); window.addEventListener('load',apply,{once:true});
-  window.addEventListener('resize',()=>{ clearTimeout(window.__ct_blogs_rz); window.__ct_blogs_rz=setTimeout(apply,120); });
-  setTimeout(apply,250); setTimeout(apply,900);
-})();
-</script>
-
-<!-- Messenger overlay (messages-only) -->
-<script>
-(function(){
-  function tryLoad(urls,done){(function next(i){if(i>=urls.length){done(false);return}var s=document.createElement('script');s.src=urls[i];s.async=true;s.onload=function(){done(true)};s.onerror=function(){s.remove();next(i+1)};(document.head||document.documentElement).appendChild(s)})(0)}
-  var base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
-  var candidates=[base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'];
-  tryLoad(candidates,function(ok){
-    if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
-      window.ctOpen=function(){ window.ChatternetMessenger.open(); onlyMessages(); };
-      window.ctMessage=function(n){ window.ChatternetMessenger.open(n||""); onlyMessages(); };
-      function onlyMessages(){
-        try{
-          const root=document.querySelector('#ctMessengerRoot,.ct-messenger,[data-ct="messenger"]'); if(!root) return;
-          const tab=[...root.querySelectorAll('button,[role="tab"],a')].find(el=>/messages?/i.test(el.textContent||'')); tab && tab.click();
-        }catch{}
-      }
-      setTimeout(onlyMessages,200);
-    }
-  });
-})();
-</script>
+<div class="modalbg" id="notifBg"><div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+  <h3 class="title" style="margin:0 0 10px">Notifications</h3><div id="notifList"></div>
+  <div style="display:flex;gap:8px;margin-top:8px"><button id="clearNotif" class="btn primary">Clear</button><button id="closeNotif" class="btn">Close</button></div>
+</div></div>
+<div class="modalbg" id="inboxBg"><div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+  <h3 class="title" style="margin:0 0 10px">Inbox</h3><div id="inboxList"></div>
+  <div style="display:flex;gap:8px;margin-top:8px"><button id="closeInbox" class="btn">Close</button></div>
+</div></div>
 
 <script>
 /* ===== helpers / storage ===== */
+const LS={USERS:'ct_users_v3',PROFILE:'ct_profile_data_v1',NOTIF:'ct_notifications_v1',INBOX:'ct_inbox_v1',BLOGS:'ct_blogs_v1',GLOBAL:'ct_global_feed_v1'};
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}};
-const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
-const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}}; const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const uid=(p='b')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
 const nowISO=()=>new Date().toISOString();
-const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
-const LS={ USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1', BLOGS:'ct_blogs_v1' };
-
-/* ===== avatar utilities ===== */
-const FALLBACK_AVA = "data:image/svg+xml;utf8,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64'><rect width='64' height='64' fill='#e5e7eb'/><circle cx='32' cy='24' r='12' fill='#cbd5e1'/><rect x='16' y='42' width='32' height='14' rx='7' fill='#cbd5e1'/></svg>`);
-function getMeDisplayName(){ const p=load(LS.PROFILE,{})['Me']; return p?.displayName?.trim()||'Me'; }
-function getAvatarFor(name){
-  const prof=load(LS.PROFILE,{})[name];
-  if(prof && (prof.avatar||prof.avatarUrl||prof.photo)) return prof.avatar||prof.avatarUrl||prof.photo;
-  const users=load(LS.USERS,[]); const u=users.find(x=>x.name===name);
-  if(u && u.avatar) return u.avatar;
-  return `https://i.pravatar.cc/100?u=${encodeURIComponent(name||'me')}`;
-}
-function ensureAva(img, name){
-  if(!img) return;
-  img.referrerPolicy='no-referrer'; img.loading='lazy'; img.decoding='async';
-  img.src=getAvatarFor(name||'Me'); img.onerror=()=>{ img.onerror=null; img.src=FALLBACK_AVA; };
-}
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ===== header wiring ===== */
-(function header(){
-  const img=$('#myProfile'); if(img){ ensureAva(img,'Me'); img.alt=getMeDisplayName(); img.onclick=()=>location.href='profile.html'; }
-  $('#btnMsgs')?.addEventListener('click',e=>{ e.preventDefault(); if(window.ctOpen) ctOpen(); else if(window.ChatternetMessenger?.open) window.ChatternetMessenger.open(); else location.href='messages.html'; });
-
+(function(){
+  const me=(load(LS.PROFILE,{}))['Me']||{};
+  const img=$('#myProfile'); if(img){ img.src=me.avatar||`https://i.pravatar.cc/120?u=Me`; img.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{} location.href='profile.html'; }; }
   const notifBg=$('#notifBg'), inboxBg=$('#inboxBg');
-  const rNotif=()=>{ const arr=load(LS.NOTIF,[]); const box=document.getElementById('notifList'); if(box) box.innerHTML=arr.length?arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; };
-  const rInbox=()=>{ const arr=load(LS.INBOX,[]); const box=document.getElementById('inboxList'); if(box) box.innerHTML=arr.length?arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; };
-  document.getElementById('btnNotif').onclick=()=>{ rNotif(); notifBg.style.display='flex'; };
-  document.getElementById('clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rNotif(); };
-  document.getElementById('closeNotif').onclick=()=>{ notifBg.style.display='none'; };
-  document.getElementById('btnInbox').onclick=()=>{ rInbox(); inboxBg.style.display='flex'; };
-  document.getElementById('closeInbox').onclick=()=>{ inboxBg.style.display='none'; };
+  const rN=()=>{const arr=load(LS.NOTIF,[]);$('#notifList').innerHTML=arr.length?arr.map(n=>`<div class="chip" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.';};
+  const rI=()=>{const arr=load(LS.INBOX,[]);$('#inboxList').innerHTML=arr.length?arr.map(n=>`<div class="chip" style="display:block">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.';};
+  $('#btnNotif').onclick=()=>{rN();notifBg.style.display='flex';}; $('#clearNotif').onclick=()=>{save(LS.NOTIF,[]);rN();}; $('#closeNotif').onclick=()=>{notifBg.style.display='none';};
+  $('#btnInbox').onclick=()=>{rI();inboxBg.style.display='flex';}; $('#closeInbox').onclick=()=>{inboxBg.style.display='none';};
+  $('#btnMsgs')?.addEventListener('click',(e)=>{e.preventDefault();if(window.ChatternetMessenger?.open)return ChatternetMessenger.open("");if(window.ctOpen)return ctOpen();location.href='messages.html';});
 })();
 
 /* ===== seed users once ===== */
-(function seedUsers(){
-  let users=load(LS.USERS,null);
-  if(!users){ users=[{name:'Me',avatar:`https://i.pravatar.cc/100?u=me`}]; }
-  if(!users.find(u=>u.name==='Me')) users.unshift({name:'Me',avatar:`https://i.pravatar.cc/100?u=me`});
-  save(LS.USERS,users);
-})();
+(function seedUsers(){ let users=load(LS.USERS,null); if(!users||!users.length){ users=[{name:'Me',avatar:`https://i.pravatar.cc/120?u=Me`}]; } if(!users.find(u=>u.name==='Me')) users.unshift({name:'Me',avatar:`https://i.pravatar.cc/120?u=Me`}); save(LS.USERS,users);})();
 
-/* ===== cover drag/drop + choose ===== */
+/* ===== cover upload / url ===== */
 const drop=$('#dropZone'), fileInp=$('#fileInp'); let coverDataUrl='';
-document.getElementById('chooseFile').onclick=()=>fileInp.click();
-fileInp.onchange=async e=>{ const f=e.target.files?.[0]; if(!f) return; const url=await fileToDataURL(f); coverDataUrl=url; visualizeDrop(true); };
-drop.addEventListener('click',()=>fileInp.click());
-drop.addEventListener('dragover',e=>{e.preventDefault(); drop.classList.add('drag');});
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag');});
 drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));
-drop.addEventListener('drop',async e=>{ e.preventDefault(); drop.classList.remove('drag'); const f=e.dataTransfer.files?.[0]; if(!f) return; const url=await fileToDataURL(f); coverDataUrl=url; visualizeDrop(true); });
-document.getElementById('removeCover').onclick=()=>{ coverDataUrl=''; document.getElementById('bCoverUrl').value=''; visualizeDrop(false); };
-function visualizeDrop(has){ drop.textContent = has ? 'Image selected ✓ (will be used)' : 'Drop an image here or click Upload'; }
-function fileToDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsDataURL(file); }); }
+drop.addEventListener('drop',async e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files?.[0]; if(f){ coverDataUrl=await fileToURL(f); drop.textContent='Image selected ✓'; }});
+fileInp.addEventListener('change',async e=>{const f=e.target.files?.[0]; if(f){ coverDataUrl=await fileToURL(f); drop.textContent='Image selected ✓'; }});
+$('#removeCover').onclick=()=>{ coverDataUrl=''; $('#bCoverUrl').value=''; drop.textContent='Drop an image here or click Upload'; };
+const fileToURL=f=>new Promise(res=>{const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsDataURL(f);});
 
-/* ===== blogs state ===== */
-let BLOGS=load(LS.BLOGS,[]);
-function saveBlogs(){ save(LS.BLOGS,BLOGS); }
+/* ===== blog data ===== */
+const getBlogs=()=>load(LS.BLOGS,[]);
+const setBlogs=a=>save(LS.BLOGS,a);
 
-/* ===== render list (with comments) ===== */
-function render(){
-  const list=document.getElementById('list'), empty=document.getElementById('empty'); const q=(document.getElementById('search').value||'').toLowerCase();
-  const items=[...BLOGS].filter(b=>!q || (b.title||'').toLowerCase().includes(q) || (b.authorName||'').toLowerCase().includes(q))
-    .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
-  list.innerHTML='';
-  if(!items.length){ empty.style.display='block'; return; }
-  empty.style.display='none';
-  items.forEach(b=>{
-    const el=document.createElement('div'); el.className='post';
-    const cover = b.cover || b.coverUrl || '';
-    el.innerHTML = `
-      <img class="cover" alt="" ${cover?`src="${esc(cover)}"`:''}>
-      <div class="px">
-        <div style="font-weight:800" class="clamp-1">${esc(b.title||'(untitled)')}</div>
-        <div class="meta" style="margin:6px 0">
-          <img class="b-ava" alt="${esc(b.authorName||'Me')}" referrerpolicy="no-referrer">
-          <div>
-            <div class="clamp-1">${esc(b.authorName||'Me')}</div>
-            <div class="line"><span>${new Date(b.createdAt||nowISO()).toLocaleString()}</span></div>
-          </div>
-        </div>
-        <div style="margin:6px 0 8px;color:#334155">${esc(b.content||'')}</div>
+/* ===== media helpers ===== */
+function toYouTubeEmbed(url){ try{ const u=new URL(url); const host=u.hostname.replace(/^www\./,''); let id=''; if(host==='youtu.be'){ id=u.pathname.split('/')[1]||''; } else if(host.endsWith('youtube.com')){ if(u.pathname==='/watch') id=u.searchParams.get('v')||''; else id=(u.pathname.split('/')[2]||''); } if(!id) return null; return `https://www.youtube.com/embed/${encodeURIComponent(id)}?rel=0&modestbranding=1&playsinline=1`; }catch{return null;} }
+function detectMedia(url){ if(!url) return null; try{ new URL(url); }catch{ return null; } const yt=toYouTubeEmbed(url); const lower=url.toLowerCase(); if(yt) return {type:'embed',src:yt}; if(/\.(png|jpe?g|gif|webp|avif)(\?|$)/.test(lower)) return {type:'image',src:url}; if(/\.(mp4|webm|ogv|mov|m4v)(\?|$)/.test(lower)) return {type:'video',src:url}; return {type:'link',src:url}; }
 
-        <div class="heart">
-          <button type="button" aria-label="like"><svg viewBox="0 0 24 24"><path d="M12 21s-6.716-4.27-9.167-7.38C.63 11.154 1.57 7.9 3.985 6.54c1.75-1.01 4.005-.63 5.348.89L12 9.2l2.667-1.77c1.343-1.52 3.598-1.9 5.348-.89 2.414 1.36 3.354 4.614 1.152 7.08C18.716 16.73 12 21 12 21z"/></svg></button>
-          <span class="muted"><span class="cnt">${(b.likes||[]).length||0}</span></span>
-        </div>
+/* ===== FEED rendering ===== */
+function heartBtn(active){ const b=document.createElement('button'); b.className='heart'; if(active) b.classList.add('active'); b.innerHTML=`<svg viewBox="0 0 24 24"><path d="M12 21s-6.716-4.27-9.167-7.38C.63 11.154 1.57 7.9 3.985 6.54c1.75-1.01 4.005-.63 5.348.89L12 9.2l2.667-1.77c1.343-1.52 3.598-1.9 5.348-.89 2.414 1.36 3.354 4.614 1.152 7.08C18.716 16.73 12 21 12 21z"/></svg>`; return b; }
+function rowHtml(b){
+  const wrap=document.createElement('article'); wrap.className='feed-item'; wrap.dataset.id=b.id;
+  wrap.innerHTML=`
+    <div class="f-head">
+      <img class="avatar" src="${(load(LS.PROFILE,{}))[b.authorName||'Me']?.avatar||`https://i.pravatar.cc/120?u=${encodeURIComponent(b.authorName||'Me')}`}" alt="">
+      <div style="min-width:0;flex:1"><strong>${esc(b.authorName||'Me')}</strong>
+        <div class="muted" style="font-size:12px">${new Date(b.createdAt).toLocaleString()}</div>
+      </div>
+    </div>
+    ${b.title?`<div class="b-title">${esc(b.title)}</div>`:''}
+    <div class="body" style="white-space:pre-wrap">${esc(b.content||'')}</div>
+    <div class="chips" id="tg-${b.id}"></div>
+    <div class="media" id="m-${b.id}"></div>
+    <div class="util" id="u-${b.id}"></div>
+    <div class="comments" id="c-${b.id}">
+      <div class="muted" style="font-size:12px">${(b.comments||[]).length} comment${(b.comments||[]).length===1?'':'s'}</div>
+      <div class="c-list"></div>
+      <div class="row" style="grid-template-columns:1fr 120px;gap:8px;margin-top:6px">
+        <input class="c-text" placeholder="Write a comment…">
+        <button class="btn sm primary c-add" type="button">Comment</button>
+      </div>
+    </div>`;
+  // tags
+  const tg=wrap.querySelector(`#tg-${b.id}`); (b.tags||[]).forEach(t=>tg.insertAdjacentHTML('beforeend',`<span class="chip">#${esc(t)}</span>`));
+  // media
+  const media=wrap.querySelector(`#m-${b.id}`); if(b.cover){ media.innerHTML=`<img src="${esc(b.cover)}" alt="">`; }
+  if(b.media && !b.cover){
+    if(b.media.type==='image') media.innerHTML=`<img src="${esc(b.media.src)}" alt="">`;
+    if(b.media.type==='video') media.innerHTML=`<video controls src="${esc(b.media.src)}"></video>`;
+    if(b.media.type==='embed') media.innerHTML=`<iframe src="${esc(b.media.src)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameborder="0" allowfullscreen></iframe>`;
+    if(b.media.type==='link') media.innerHTML=`<a href="${esc(b.media.src)}" target="_blank" class="chip" style="text-decoration:none">Open link</a>`;
+  }
+  // likes
+  b.likes=b.likes||[];
+  const u=wrap.querySelector(`#u-${b.id}`); const like=heartBtn(b.likes.includes('Me')); const cnt=document.createElement('span'); cnt.className='muted'; cnt.textContent=String(b.likes.length);
+  like.onclick=()=>{ const set=new Set(b.likes); set.has('Me')?set.delete('Me'):set.add('Me'); b.likes=Array.from(set); cnt.textContent=String(b.likes.length); like.classList.toggle('active',set.has('Me')); persist(b.id,{likes:b.likes}); };
+  u.append(like,cnt);
 
-        <div class="comments">
-          <div class="muted" style="margin-bottom:6px">${(b.comments||[]).length||0} comment${(b.comments||[]).length===1?'':'s'}</div>
-          <div class="c-list"></div>
-          <div class="c-two" style="margin-top:6px">
-            <input class="c-name" placeholder="Your name (blank = ${esc(getMeDisplayName())})">
-            <input class="c-text" placeholder="Write a comment…">
-          </div>
-          <div style="display:flex;justify-content:flex-end;margin-top:6px">
-            <button class="btn primary c-add">Comment</button>
-          </div>
-        </div>
-      </div>`;
-    // avatar
-    ensureAva(el.querySelector('.b-ava'), b.authorName||'Me');
-
-    // like
-    const btn = el.querySelector('.heart button'); const cnt = el.querySelector('.cnt');
-    btn.classList.toggle('active', (b.likes||[]).includes('Me'));
-    btn.onclick=()=>{ const set=new Set(b.likes||[]); set.has('Me')?set.delete('Me'):set.add('Me'); b.likes=Array.from(set); cnt.textContent=String(set.size); saveBlogs(); };
-
-    // comments
-    const cList = el.querySelector('.c-list');
-    function renderComments(){
-      cList.innerHTML='';
-      (b.comments||[]).forEach(c=>{
-        const row=document.createElement('div'); row.className='comment';
-        row.innerHTML=`<img class="b-ava" style="width:26px;height:26px" alt="${esc(c.userName||'Me')}"><div class="c-body"><div class="c-head"><span class="c-name">${esc(c.userName||'Me')}</span> • <span>${new Date(c.createdAt||nowISO()).toLocaleString()}</span></div><div>${esc(c.text||'')}</div></div>`;
-        ensureAva(row.querySelector('img'), c.userName||'Me');
-        cList.appendChild(row);
-      });
-    }
-    renderComments();
-    const addBtn = el.querySelector('.c-add');
-    const nameInp = el.querySelector('.c-name');
-    const textInp = el.querySelector('.c-text');
-    addBtn.onclick=()=>{
-      const nm=(nameInp.value||'').trim()||getMeDisplayName();
-      const tx=(textInp.value||'').trim();
-      if(!tx){ alert('Write a comment.'); return; }
-      (b.comments ||= []).push({ id:uid('c'), userName:nm, text:tx, createdAt:nowISO(), likes:[] });
-      saveBlogs();
-      try{
-        const arr=load(LS.NOTIF,[]); arr.unshift({id:uid('n'),text:`${nm} commented on “${b.title||'blog'}”.`,time:nowISO()}); save(LS.NOTIF,arr);
-      }catch{}
-      textInp.value=''; nameInp.value='';
-      renderComments();
-    };
-
-    list.appendChild(el);
-  });
+  // comments
+  const list=wrap.querySelector('.c-list'); const renderComments=()=>{ list.innerHTML=(b.comments||[]).map(c=>`
+    <div class="comment"><img class="c-avatar" src="https://i.pravatar.cc/100?u=${encodeURIComponent(c.userName||'Me')}" alt=""><div><div class="muted" style="font-size:12px"><strong>${esc(c.userName||'Me')}</strong> • ${new Date(c.time).toLocaleString()}</div><div style="white-space:pre-wrap">${esc(c.text||'')}</div></div></div>`).join(''); };
+  renderComments();
+  wrap.querySelector('.c-add').onclick=()=>{ const inp=wrap.querySelector('.c-text'); const text=(inp.value||'').trim(); if(!text) return;
+    (b.comments ||= []).push({id:uid('c'),userName:'Me',text,time:nowISO()}); inp.value=''; persist(b.id,{comments:b.comments}); renderComments();
+    const nf=load(LS.NOTIF,[]); nf.unshift({id:uid('n'),text:`New comment on “${b.title||'blog'}”`,time:nowISO()}); save(LS.NOTIF,nf);
+  };
+  return wrap;
+}
+function persist(id,patch){ const arr=getBlogs(); const i=arr.findIndex(x=>x.id===id); if(i>=0){ arr[i]={...arr[i],...patch}; setBlogs(arr); } }
+function renderFeed(){
+  const q=($('#search').value||'').toLowerCase();
+  const arr=getBlogs().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))
+    .filter(b=>!q || [b.title,b.content,b.authorName,(b.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
+  const box=$('#feedList'); box.innerHTML=''; $('#feedEmpty').style.display=arr.length?'none':'block';
+  arr.forEach(b=>box.appendChild(rowHtml(b)));
 }
 
-/* Publish */
-document.getElementById('postingAs').textContent = getMeDisplayName();
-document.getElementById('publishBtn').onclick=()=>{
-  const title=document.getElementById('bTitle').value.trim();
-  const content=document.getElementById('bBody').value.trim();
-  const url=(document.getElementById('bCoverUrl').value||'').trim();
-  if(!title && !content){ document.getElementById('postState').textContent='Add a title or content.'; return; }
-  const draft={ id:uid('blog'), title, content, cover: coverDataUrl || url, authorName:'Me', createdAt: nowISO(), likes:[], comments:[] };
-  document.getElementById('postState').textContent='Published ✓';
-  BLOGS.unshift(draft); saveBlogs();
-  document.getElementById('bTitle').value=''; document.getElementById('bBody').value=''; document.getElementById('bCoverUrl').value=''; coverDataUrl=''; visualizeDrop(false);
-  render();
+/* ===== publish ===== */
+$('#postingAs').textContent = (load(LS.PROFILE,{}))['Me']?.displayName || 'Me';
+$('#publishBtn').onclick=()=>{ const title=$('#bTitle').value.trim(); const body=$('#bBody').value.trim(); const url=$('#bCoverUrl').value.trim(); const tags=$('#bTags').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!title && !body){ $('#postState').textContent='Add a title or content.'; return; }
+  const media = url ? detectMedia(url) : null;
+  const blog={id:uid('blog'),title,content:body,authorName:'Me',createdAt:nowISO(),cover:coverDataUrl||((media&&media.type==='image')?media.src:''),media:(coverDataUrl?null:media),tags,likes:[],comments:[]};
+  const arr=getBlogs(); arr.unshift(blog); setBlogs(arr); $('#postState').textContent='Published ✓'; ['#bTitle','#bBody','#bCoverUrl','#bTags'].forEach(s=>$(s).value=''); coverDataUrl=''; $('#dropZone').textContent='Drop an image here or click Upload'; renderFeed();
+  if($('#bShareMain').checked){ const g=load(LS.GLOBAL,[]); g.unshift({id:uid('g'),title:blog.title,content:blog.content,authorName:blog.authorName,createdAt:blog.createdAt,media:blog.cover||null}); save(LS.GLOBAL,g);}
 };
-document.getElementById('search').addEventListener('input',render);
+$('#clearDraft').onclick=()=>{ ['#bTitle','#bBody','#bCoverUrl','#bTags'].forEach(s=>$(s).value=''); coverDataUrl=''; $('#dropZone').textContent='Drop an image here or click Upload'; $('#postState').textContent=''; };
+$('#search').addEventListener('input',renderFeed);
 
 /* Boot */
-render();
+renderFeed();
+</script>
+
+<!-- Messenger loader (same pattern as other pages) -->
+<script>
+(function () {
+  var FALLBACK='https://chatternet-backend-1.onrender.com';
+  var ls=localStorage.getItem('ct_api_base')||''; var base=(window.CT_API_BASE||ls||FALLBACK).replace(/\/+$/,'');
+  window.CT_API_BASE=base; if(!ls){try{localStorage.setItem('ct_api_base',base);}catch{}}
+  function chain(arr,cb){(function n(i){if(i>=arr.length){cb(false);return;}var s=document.createElement('script');s.src=arr[i];s.async=true;s.onload=function(){cb(true)};s.onerror=function(){s.remove();n(i+1)};(document.head||document.documentElement).appendChild(s);})(0);}
+  chain([base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'],function(ok){
+    if(ok && window.ChatternetMessenger?.open){ window.ctOpen=window.ctOpen||function(){window.ChatternetMessenger.open("")}; window.ctMessage=window.ctMessage||function(n){window.ChatternetMessenger.open(n||"")}; }
+  });
+})();
 </script>
 </body>
 </html>
