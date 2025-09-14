@@ -1,338 +1,269 @@
-// Chatternet backend — Express + Postgres sessions + JSON API
-// Fix: events table column `desc` -> `description`
+// Chatternet backend (Express + Postgres sessions)
+// Full drop-in server with Media + Posts endpoints
 
-const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
-const express = require('express');
-const cors = require('cors');
-const session = require('express-session');
-const PgSession = require('connect-pg-simple')(session);
-const { Pool } = require('pg');
-const bcrypt = require('bcryptjs');
+const path = require("path");
+const express = require("express");
+const cors = require("cors");
+const session = require("express-session");
+const PgSession = require("connect-pg-simple")(session);
+const { Pool } = require("pg");
+const bcrypt = require("bcryptjs");
+const compression = require("compression");
+const helmet = require("helmet");
 
-/* ===== env ===== */
 const {
   PORT = 10000,
   DATABASE_URL,
   PGSSLMODE,
-  SESSION_SECRET = 'change-me',
-  CT_FRONTEND_ORIGIN = '',
-  ALLOWED_ORIGINS = ''
+  SESSION_SECRET = "change-me",
+  CT_FRONTEND_ORIGIN = "",       // e.g. https://www.chatterfiends-movies.com
+  ALLOWED_ORIGINS = ""           // optional, comma-separated list
 } = process.env;
 
-const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
-const useSSL  = ((PGSSLMODE || '').toLowerCase() === 'require') || isProd;
+const isProd =
+  process.env.NODE_ENV === "production" || process.env.RENDER === "true";
 
-/* ===== db (optional for local dev) ===== */
-const pool = DATABASE_URL
-  ? new Pool({ connectionString: DATABASE_URL, ssl: useSSL ? { rejectUnauthorized: false } : false })
-  : null;
+// ---------- Postgres ----------
+const useSSL =
+  (PGSSLMODE && PGSSLMODE.toLowerCase() === "require") || isProd;
 
-/* -- ensure & migrate tables -- */
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: useSSL ? { rejectUnauthorized: false } : false
+});
+
+// Create minimal tables we need
 async function ensureTables() {
-  if (!pool) return;
-
+  // users
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS users(
+    CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
-      name      TEXT NOT NULL,
-      email     TEXT UNIQUE NOT NULL,
-      passhash  TEXT NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      passhash TEXT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT now()
-    )
+    );
   `);
 
+  // images (dev-friendly: we store a URL; can be data:… or https://…)
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS posts(
-      id UUID PRIMARY KEY,
-      title       TEXT,
-      content     TEXT,
-      media       TEXT,
+    CREATE TABLE IF NOT EXISTS images (
+      id BIGSERIAL PRIMARY KEY,
+      url TEXT NOT NULL,
+      kind TEXT DEFAULT 'image',
+      created_at TIMESTAMPTZ DEFAULT now(),
+      created_by TEXT
+    );
+  `);
+
+  // posts (used by Media “Post to Feed”)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS posts (
+      id BIGSERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      content TEXT,
+      media_url TEXT,
       author_name TEXT,
-      created_at  TIMESTAMPTZ DEFAULT now()
-    )
-  `);
-
-  // use "description" instead of reserved keyword "desc"
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS events(
-      id UUID PRIMARY KEY,
-      title      TEXT,
-      date       TEXT,
-      time       TEXT,
-      location   TEXT,
-      privacy    TEXT,
-      description TEXT,
-      img_src    TEXT,
-      creator    TEXT,
-      invites    JSONB DEFAULT '[]'::jsonb,
-      rsvp       JSONB DEFAULT '{"Going":[],"Maybe":[],"NotGoing":[]}'::jsonb,
-      discussion JSONB DEFAULT '[]'::jsonb,
-      likes      JSONB DEFAULT '[]'::jsonb,
       created_at TIMESTAMPTZ DEFAULT now()
-    )
+    );
   `);
-
-  // migrate old column name "desc" -> "description" if it exists
-  try {
-    const q = await pool.query(`
-      SELECT 1
-      FROM information_schema.columns
-      WHERE table_name='events' AND column_name='desc'
-      LIMIT 1
-    `);
-    if (q.rowCount) {
-      await pool.query(`ALTER TABLE events RENAME COLUMN "desc" TO description`);
-    }
-  } catch (_) { /* ignore */ }
 }
 
-/* ===== app ===== */
+// ---------- App ----------
 const app = express();
-app.set('trust proxy', 1);
+app.set("trust proxy", 1);
 
-/* ===== cors (credentials) ===== */
-const defaultAllowed = new Set([
-  CT_FRONTEND_ORIGIN.trim(),
-  'https://www.chatterfiends-movies.com',
-  'https://chatterfiends-movies.com',
-  'https://www.chatterfriends-movies.com',
-  'https://chatterfriends-movies.com',
-  `https://${(process.env.RENDER_EXTERNAL_HOSTNAME || '').trim()}`,
-  ...ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
-].filter(Boolean));
+// security + perf
+app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(compression());
 
-const allowedSuffixes = [
-  '.chatterfiends-movies.com',
-  '.chatterfriends-movies.com'
-];
+// JSON body (bigger limit for data: images from the Media page)
+app.use(express.json({ limit: "15mb" }));
 
-app.use(cors({
-  origin(origin, cb) {
-    if (!origin) return cb(null, true);
-    try {
-      const u = new URL(origin);
-      const host = (u.hostname || '').toLowerCase();
-      if (defaultAllowed.has(origin)) return cb(null, true);
-      if (allowedSuffixes.some(suf => host === suf.slice(1) || host.endsWith(suf))) return cb(null, true);
-      if (!isProd && /^https?:\/\/localhost(:\d+)?$/i.test(origin)) return cb(null, true);
-      return cb(new Error('CORS not allowed: ' + origin));
-    } catch { return cb(new Error('CORS: bad origin')); }
-  },
-  credentials: true
+// ---------- CORS (with credentials) ----------
+const allowedSet = new Set(
+  [
+    CT_FRONTEND_ORIGIN.trim(),
+    ...ALLOWED_ORIGINS.split(",").map(s => s.trim()).filter(Boolean),
+    // Render "same app" host (optional)
+    process.env.RENDER_EXTERNAL_HOSTNAME
+      ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}`
+      : ""
+  ].filter(Boolean)
+);
+
+app.use(
+  cors({
+    origin(origin, cb) {
+      // Same-origin (no Origin header) → allow
+      if (!origin) return cb(null, true);
+      // Exact matches in env
+      if (allowedSet.has(origin)) return cb(null, true);
+      // Local dev convenience
+      if (!isProd && /^https?:\/\/localhost(:\d+)?$/.test(origin)) {
+        return cb(null, true);
+      }
+      return cb(null, false);
+    },
+    credentials: true
+  })
+);
+
+// ---------- Sessions (Postgres store) ----------
+app.use(
+  session({
+    store: new PgSession({
+      pool,
+      tableName: "user_sessions",
+      createTableIfMissing: true
+    }),
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: true,        // Render is HTTPS → always true
+      sameSite: "none"     // required for cross-site XHR with credentials
+    }
+  })
+);
+
+// ---------- Static ----------
+app.use("/assets", express.static(path.join(__dirname, "assets"), {
+  maxAge: "7d",
+  immutable: true
 }));
+app.use(express.static(path.join(__dirname, "public")));
 
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: false, limit: '25mb' }));
+// ---------- Helpers ----------
+const userSafe = (row) =>
+  row ? { id: row.id, name: row.name, email: row.email, created_at: row.created_at } : null;
 
-/* ===== sessions ===== */
-const store = pool
-  ? new PgSession({ pool, tableName: 'user_sessions', createTableIfMissing: true })
-  : new session.MemoryStore();
+const nowISO = () => new Date().toISOString();
 
-app.use(session({
-  store,
-  secret: SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: isProd,
-    sameSite: 'none',            // cross-site cookie for your separate frontend
-    maxAge: 30 * 24 * 60 * 60 * 1000
+// ---------- Health ----------
+app.get("/ping", (_req, res) => res.json({ ok: true, time: nowISO() }));
+app.get("/healthz", (_req, res) => res.type("text").send("ok"));
+app.get("/api/health", (_req, res) => res.json({ ok: true, time: nowISO() }));
+app.get("/api/db/health", async (_req, res) => {
+  try {
+    await pool.query("select 1");
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
   }
-}));
-
-/* ===== static ===== */
-const UP = path.join(__dirname, 'uploads');
-if (!fs.existsSync(UP)) fs.mkdirSync(UP);
-app.use('/uploads', express.static(UP, { maxAge: '1y', immutable: true }));
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
-app.use(express.static(path.join(__dirname, 'public')));
-
-/* ===== helpers ===== */
-const uid = () => (crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex'));
-const fullUrl = (req, rel) => {
-  try { new URL(rel); return rel; } catch {}
-  const proto = req.headers['x-forwarded-proto'] || req.protocol;
-  const host  = req.headers['x-forwarded-host']  || req.headers.host;
-  return `${proto}://${host}${rel.startsWith('/') ? rel : `/${rel}`}`;
-};
-const mem = { posts: [], events: [] };
-
-/* ===== health ===== */
-app.get('/ping', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
-app.get('/healthz', (_req, res) => res.type('text').send('ok'));
-app.get('/api/health', (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
-app.get('/api/db/health', async (_req, res) => {
-  if (!pool) return res.json({ ok: true, db: 'disabled' });
-  try { await pool.query('select 1'); res.json({ ok: true }); }
-  catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
 });
 
-/* ===== auth (minimal) ===== */
-app.post('/api/signup', async (req, res) => {
+// ---------- Auth ----------
+app.post("/api/signup", async (req, res) => {
   try {
-    if (!pool) return res.status(501).json({ ok: false, error: 'DB not configured' });
     const { name, email, password } = req.body || {};
-    if (!name || !email || !password) return res.status(400).json({ ok: false, error: 'name, email, password required' });
-    const dupe = await pool.query('select 1 from users where email=$1', [email.toLowerCase()]);
-    if (dupe.rowCount) return res.status(409).json({ ok: false, error: 'email already registered' });
+    if (!name || !email || !password) {
+      return res.status(400).json({ ok: false, error: "name, email, password required" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ ok: false, error: "password must be at least 6 characters" });
+    }
+
+    const exists = await pool.query("SELECT id FROM users WHERE email=$1", [email.toLowerCase()]);
+    if (exists.rowCount) {
+      return res.status(409).json({ ok: false, error: "email already registered" });
+    }
+
     const hash = await bcrypt.hash(password, 10);
     const ins = await pool.query(
-      'insert into users(name,email,passhash) values($1,$2,$3) returning id,name,email,created_at',
+      "INSERT INTO users(name,email,passhash) VALUES($1,$2,$3) RETURNING id,name,email,created_at",
       [name, email.toLowerCase(), hash]
     );
+
     req.session.userId = ins.rows[0].id;
-    res.json({ ok: true, user: ins.rows[0] });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    res.json({ ok: true, user: userSafe(ins.rows[0]) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
-    if (!pool) return res.status(501).json({ ok: false, error: 'DB not configured' });
     const { email, password } = req.body || {};
-    const q = await pool.query('select * from users where email=$1', [email.toLowerCase()]);
-    if (!q.rowCount) return res.status(401).json({ ok: false, error: 'invalid credentials' });
+    if (!email || !password) {
+      return res.status(400).json({ ok: false, error: "email and password required" });
+    }
+    const q = await pool.query("SELECT * FROM users WHERE email=$1", [email.toLowerCase()]);
+    if (!q.rowCount) return res.status(401).json({ ok: false, error: "invalid credentials" });
+
     const u = q.rows[0];
     const ok = await bcrypt.compare(password, u.passhash);
-    if (!ok) return res.status(401).json({ ok: false, error: 'invalid credentials' });
+    if (!ok) return res.status(401).json({ ok: false, error: "invalid credentials" });
+
     req.session.userId = u.id;
-    res.json({ ok: true, user: { id: u.id, name: u.name, email: u.email, created_at: u.created_at } });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    res.json({ ok: true, user: userSafe(u) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
 });
 
-app.post('/api/logout', (req, res) => req.session.destroy(() => res.json({ ok: true })));
+app.post("/api/logout", (req, res) => {
+  req.session.destroy(() => res.json({ ok: true }));
+});
 
-/* ===== media ===== */
-app.post('/api/images', (req, res) => {
+app.get("/api/me", async (req, res) => {
   try {
-    const { data } = req.body || {};
-    if (!/^data:image\/[a-z0-9+.\-]+;base64,/i.test(data || ''))
-      return res.status(400).json({ ok: false, error: 'expected data:image/* base64' });
-    const [, meta, b64] = data.match(/^data:(image\/[a-z0-9+.\-]+);base64,(.*)$/i) || [];
-    const ext = (meta.split('/')[1] || 'png').toLowerCase().replace(/[^a-z0-9.]/g, '');
-    const filename = `${uid()}.${ext}`;
-    fs.writeFileSync(path.join(UP, filename), Buffer.from(b64, 'base64'));
-    res.json({ ok: true, url: fullUrl(req, `/uploads/${filename}`) });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    const id = req.session.userId;
+    if (!id) return res.json({ ok: true, user: null });
+    const q = await pool.query("SELECT id,name,email,created_at FROM users WHERE id=$1", [id]);
+    res.json({ ok: true, user: userSafe(q.rows[0]) });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
 });
 
-app.post('/api/posts', async (req, res) => {
+// ---------- Media: images & posts ----------
+// NOTE: For production, replace this with real storage (S3/Cloudflare Images).
+// Here we simply keep the URL (data:… or https:…) and return JSON.
+
+app.post("/api/images", async (req, res) => {
   try {
-    const row = {
-      id: uid(),
-      title: (req.body?.title || 'Media').slice(0, 200),
-      content: req.body?.content || '',
-      media: req.body?.media || '',
-      author_name: req.body?.authorName || 'Me'
-    };
-    if (pool) {
-      await pool.query(
-        'insert into posts(id,title,content,media,author_name) values($1,$2,$3,$4,$5)',
-        [row.id, row.title, row.content, row.media, row.author_name]
-      );
-    } else {
-      row.created_at = new Date().toISOString();
-      mem.posts.unshift(row);
-    }
-    res.json({ ok: true, post: row });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    const { kind = "image", data } = req.body || {};
+    if (!data) return res.status(400).json({ ok: false, error: "missing image data/url" });
+
+    const by = req.session.userId ? `user:${req.session.userId}` : "anonymous";
+    const ins = await pool.query(
+      "INSERT INTO images(url,kind,created_by) VALUES($1,$2,$3) RETURNING id,url,kind,created_at,created_by",
+      [String(data), String(kind || "image"), by]
+    );
+    res.json({ ok: true, url: ins.rows[0].url, image: ins.rows[0] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
 });
 
-app.get('/api/posts', async (_req, res) => {
+app.post("/api/posts", async (req, res) => {
   try {
-    if (pool) {
-      const q = await pool.query('select * from posts order by created_at desc');
-      return res.json({ ok: true, posts: q.rows });
-    }
-    res.json({ ok: true, posts: mem.posts });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    const { title = "Media", content = "", media = "", authorName = "Me" } = req.body || {};
+    const ins = await pool.query(
+      "INSERT INTO posts(title,content,media_url,author_name) VALUES($1,$2,$3,$4) RETURNING *",
+      [String(title), String(content), String(media), String(authorName)]
+    );
+    res.json({ ok: true, post: ins.rows[0] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
 });
 
-/* ===== events ===== */
-const normalizeEvent = (ev = {}) => ({
-  id: ev.id || uid(),
-  title: ev.title || 'Event',
-  date: ev.date || '',
-  time: ev.time || '',
-  location: ev.location || '',
-  privacy: ev.privacy || 'Public',
-  desc: ev.desc || ev.description || '',         // API returns "desc"
-  img_src: ev.img_src || ev.imgSrc || '',
-  creator: ev.creator || 'Me',
-  invites: Array.isArray(ev.invites) ? ev.invites : [],
-  rsvp: ev.rsvp && typeof ev.rsvp === 'object' ? ev.rsvp : { Going: [], Maybe: [], NotGoing: [] },
-  discussion: Array.isArray(ev.discussion) ? ev.discussion : [],
-  likes: Array.isArray(ev.likes) ? ev.likes : [],
-  created_at: ev.created_at || new Date().toISOString()
+// Optional helpers to inspect data (safe to keep)
+app.get("/api/posts", async (_req, res) => {
+  const q = await pool.query("SELECT * FROM posts ORDER BY id DESC LIMIT 100");
+  res.json({ ok: true, posts: q.rows });
+});
+app.get("/api/images", async (_req, res) => {
+  const q = await pool.query("SELECT * FROM images ORDER BY id DESC LIMIT 100");
+  res.json({ ok: true, images: q.rows });
 });
 
-app.get('/api/events', async (_req, res) => {
-  try {
-    if (pool) {
-      const q = await pool.query('select * from events order by created_at desc');
-      // map DB column "description" -> API field "desc"
-      return res.json({ ok: true, events: q.rows.map(r => normalizeEvent({ ...r, description: r.description })) });
-    }
-    res.json({ ok: true, events: mem.events.map(normalizeEvent) });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
-});
-
-app.post('/api/events', async (req, res) => {
-  try {
-    const ev = normalizeEvent(req.body || {});
-    if (pool) {
-      await pool.query(
-        `insert into events(id,title,date,time,location,privacy,description,img_src,creator,invites,rsvp,discussion,likes)
-         values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12::jsonb,$13::jsonb)`,
-        [ev.id, ev.title, ev.date, ev.time, ev.location, ev.privacy,
-         ev.desc, ev.img_src, ev.creator,
-         JSON.stringify(ev.invites), JSON.stringify(ev.rsvp),
-         JSON.stringify(ev.discussion), JSON.stringify(ev.likes)]
-      );
-    } else {
-      mem.events.unshift(ev);
-    }
-    res.json({ ok: true, event: ev });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
-});
-
-app.put('/api/events/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    const ev = normalizeEvent({ ...req.body, id });
-
-    if (pool) {
-      await pool.query(
-        `update events set title=$2,date=$3,time=$4,location=$5,privacy=$6,description=$7,img_src=$8,creator=$9,
-         invites=$10::jsonb,rsvp=$11::jsonb,discussion=$12::jsonb,likes=$13::jsonb where id=$1`,
-        [ev.id, ev.title, ev.date, ev.time, ev.location, ev.privacy,
-         ev.desc, ev.img_src, ev.creator,
-         JSON.stringify(ev.invites), JSON.stringify(ev.rsvp),
-         JSON.stringify(ev.discussion), JSON.stringify(ev.likes)]
-      );
-    } else {
-      const i = mem.events.findIndex(x => x.id === id);
-      if (i >= 0) mem.events[i] = ev; else mem.events.unshift(ev);
-    }
-    res.json({ ok: true, event: ev });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
-});
-
-app.delete('/api/events/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    if (pool) await pool.query('delete from events where id=$1', [id]);
-    else mem.events = mem.events.filter(e => e.id !== id);
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
-});
-
-/* ===== root helper ===== */
-app.get('/', (_req, res) => {
-  res.type('html').send(`<!doctype html>
+// ---------- Root ----------
+app.get("/", (_req, res) => {
+  res.type("html").send(`<!doctype html>
 <html><head><meta charset="utf-8"/><title>Chatternet backend ✓</title>
 <style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;padding:26px} a{display:block;margin:6px 0}</style>
 </head><body>
@@ -341,14 +272,25 @@ app.get('/', (_req, res) => {
   <li><a href="/healthz">/healthz</a></li>
   <li><a href="/api/health">/api/health</a></li>
   <li><a href="/api/db/health">/api/db/health</a></li>
+  <li><a href="/ping">/ping</a></li>
+  <li><a href="/api/images">/api/images</a></li>
   <li><a href="/api/posts">/api/posts</a></li>
-  <li><a href="/api/events">/api/events</a></li>
   <li><a href="/assets/messenger.js">/assets/messenger.js</a></li>
 </ul>
 </body></html>`);
 });
 
-/* ===== boot ===== */
+// 404 JSON for /api/*
+app.use("/api", (_req, res) => res.status(404).json({ ok: false, error: "not_found" }));
+
+// ---------- Start ----------
 ensureTables()
-  .then(() => app.listen(PORT, () => console.log('Chatternet backend listening on', PORT)))
-  .catch(e => { console.error('Failed to init tables:', e); process.exit(1); });
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log("Chatternet backend listening on", PORT);
+    });
+  })
+  .catch((e) => {
+    console.error("Failed to init tables:", e);
+    process.exit(1);
+  });
