@@ -5,183 +5,268 @@
 <title>Chatternet — Home</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  :root{ --brand:#3498db; --brand-2:#2980b9; --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; }
+  :root{
+    --brand:#0ea5e9; --brand-2:#0989c3;
+    --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2;
+    --blueTop:132px; --barH:52px; --navH:48px;
+    --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
+  }
   *{box-sizing:border-box}
   html,body{max-width:100%;overflow-x:hidden}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Segoe UI',Arial,sans-serif}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif}
 
-  /* Header */
-  .top-bar{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--brand);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-  .top-bar h2{margin:0;font-weight:800;letter-spacing:.2px}
-  .top-actions{display:flex;gap:8px;align-items:center}
-  .top-actions button{background:#fff;color:#000;border:none;padding:8px 10px;border-radius:10px;cursor:pointer}
-  .top-actions button:hover{background:#eef4ff}
-  .top-actions img{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
+  a{color:#2563eb;text-decoration:none}
 
-  /* Layout */
-  .wrap{max-width:1100px;margin:18px auto;padding:0 12px 28px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media (max-width:860px){ .wrap{grid-template-columns:1fr} }
-  .card{background:var(--card);border:1px solid rgba(0,0,0,.08);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.08);padding:14px}
-  .section-title{font-size:22px;font-weight:800;margin:0 0 12px}
+  /* ===== FIX: text spacing / ligatures (content area only) ===== */
+  .page, .page *{
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    font-kerning: normal !important;
+    font-variant-ligatures: none !important;
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    line-height: 1.45;
+  }
+
+  /* ===== Blue header (fixed under Weebly menu) ===== */
+  .top-bar{
+    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px; background:var(--brand); color:#fff;
+    border-bottom:1px solid rgba(255,255,255,.2)
+  }
+  .top-bar h2{margin:0;font-weight:800;font-size:18px}
+  .top-actions{display:flex;gap:10px;align-items:center}
+  .pillbtn{
+    height:36px;padding:0 12px;border-radius:999px;cursor:pointer;
+    border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff
+  }
+  .pillbtn:hover{background:rgba(255,255,255,.26)}
+  #myProfile{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
+
+  /* ===== App nav (fixed under blue bar) ===== */
+  nav.app-nav{
+    position:fixed; left:0; right:0; top:calc(var(--blueTop) + var(--barH));
+    z-index:1190; background:#fff; border-bottom:1px solid var(--line)
+  }
+  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+  nav.app-nav a{
+    display:inline-block;padding:8px 10px;border-radius:999px;
+    color:#111;background:#f3f4f6;text-decoration:none;font-weight:600
+  }
+  nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
+  nav.app-nav a:hover{background:#e5e7eb}
+
+  /* ===== Page ===== */
+  .page{max-width:1100px;margin:14px auto;padding:0 12px; padding-top:var(--pagePad)}
+  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
+  @media (max-width:860px){ .grid{grid-template-columns:1fr} }
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);padding:14px}
+  .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
   .pill{border:1px solid #d7d7d7;border-radius:999px;padding:8px 12px;background:#fff;text-decoration:none;color:#0f172a;cursor:pointer}
   .pill.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .pill.primary:hover{background:var(--brand-2)}
   .list{margin:8px 0 0;padding:0;list-style:none}
   .list li{display:flex;justify-content:space-between;align-items:center;border:1px solid #ececec;background:#fafafa;border-radius:12px;padding:12px;margin:8px 0}
-  .muted{color:#667085}
+  .muted{color:var(--muted)}
+
+  /* Hero */
+  .hero{background:linear-gradient(135deg,#eaf6ff,#f7fbff);border:1px solid #dfe9fb;border-radius:14px;padding:16px}
+  .hero p{margin:8px 0 0;color:#475569}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .chip{background:#f6f7fb;border:1px solid #e6e8f2;padding:6px 10px;border-radius:999px;font-size:12px}
+
+  /* Modals */
+  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000}
+  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 28px rgba(0,0,0,.35);padding:16px}
 </style>
+
+<!-- Offset calculator (matches Feed/Friends/Admin/Market) -->
+<script>
+(function(){
+  var GAP=12;
+  var MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
+  function pickMenuBottom(){
+    var bottoms=[];
+    for(var i=0;i<MENU_SELS.length;i++){
+      var el=document.querySelector(MENU_SELS[i]); if(!el) continue;
+      var r=el.getBoundingClientRect(), h=r.height, w=r.width;
+      var ok=h>=32 && h<=120 && r.top>-20 && r.top<180 && w>300;
+      if(ok) bottoms.push(Math.round(r.bottom));
+    }
+    var best=bottoms.length?Math.min.apply(null,bottoms):120;
+    if(best>200) best=120;
+    try{ var force=localStorage.getItem('ct_force_header_px'); if(force) best=parseInt(force,10)||best; }catch(_){}
+    return best;
+  }
+  function measure(el,fb){ if(!el) return fb; var r=el.getBoundingClientRect(); return Math.max(fb, Math.round(r.height)); }
+  function apply(){
+    var blueTop = pickMenuBottom() + GAP;
+    var barH = measure(document.querySelector('.top-bar'), 50);
+    var navH = measure(document.querySelector('nav.app-nav'), 46);
+    document.documentElement.style.setProperty('--blueTop', blueTop+'px');
+    document.documentElement.style.setProperty('--barH', barH+'px');
+    document.documentElement.style.setProperty('--navH', navH+'px');
+    document.documentElement.style.setProperty('--pagePad', (blueTop+barH+navH)+'px');
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', apply); } else { apply(); }
+  addEventListener('resize', apply, {passive:true});
+  addEventListener('orientationchange', apply, {passive:true});
+})();
+</script>
 </head>
 <body>
 
-<!-- Header -->
-<div class="top-bar">
+<!-- Blue Header -->
+<div class="top-bar" role="banner" aria-label="Page header">
   <h2>Home</h2>
   <div class="top-actions">
-    <button id="btnNotif">Notifications</button>
-    <button id="btnInbox">Inbox</button>
-    <button id="btnMsgs">Messages</button>
+    <button id="btnNotif" class="pillbtn" type="button">Notifications</button>
+    <button id="btnInbox" class="pillbtn" type="button">Inbox</button>
+    <button id="btnMsgs" class="pillbtn" type="button">Messages</button>
     <img id="myProfile" alt="Me" />
   </div>
 </div>
 
+<!-- App Nav -->
+<nav class="app-nav" aria-label="Site">
+  <div class="inner">
+    <a class="active" href="index.html" aria-current="page">Home</a>
+    <a href="feed.html">Feed</a>
+    <a href="friends.html">Friends</a>
+    <a href="chattermarket.html">Market</a>
+    <a href="groups.html">Groups</a>
+    <a href="events.html">Events</a>
+    <a href="media.html">Media</a>
+    <a href="dating.html">Dating</a>
+    <a href="blogs.html">Blogs</a>
+    <a href="polls.html">Polls</a>
+    <a href="music.html">Music</a>
+    <a href="messages.html">Messages</a>
+    <a href="profile.html">Profile</a>
+    <a href="admin.html">Admin</a>
+    <a href="settings.html">Settings</a>
+  </div>
+</nav>
+
 <!-- Notifications modal -->
-<div id="notifModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2000">
-  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+<div id="notifModal" class="modalbg" aria-hidden="true">
+  <div class="sheet">
     <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
     <div id="notifList"></div>
     <div class="row" style="margin-top:8px">
-      <button id="clearNotif" class="pill primary">Clear</button>
-      <button id="closeNotif" class="pill">Close</button>
+      <button id="clearNotif" class="pill primary" type="button">Clear</button>
+      <button id="closeNotif" class="pill" type="button">Close</button>
     </div>
   </div>
 </div>
 
 <!-- Inbox modal -->
-<div id="inboxModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2000">
-  <div class="card" style="max-width:520px;width:92%;max-height:80vh;overflow:auto">
+<div id="inboxModal" class="modalbg" aria-hidden="true">
+  <div class="sheet">
     <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
     <div id="inboxList"></div>
     <div class="row" style="margin-top:8px">
-      <button id="closeInbox" class="pill">Close</button>
+      <button id="closeInbox" class="pill" type="button">Close</button>
     </div>
   </div>
 </div>
 
-<div class="wrap">
-  <!-- Welcome -->
-  <section class="card">
-    <h3 class="section-title">Welcome back, <span id="meName">Me</span></h3>
-    <div class="row">
-      <a class="pill" href="profile.html">Profile</a>
-      <a class="pill" href="settings.html">Settings</a>
-    </div>
-  </section>
+<!-- Page -->
+<div class="page">
+  <div class="grid">
+    <!-- Hero / About Chatternet -->
+    <section class="card hero">
+      <h3 class="section-title">Welcome to Chatternet</h3>
+      <p><strong>Chatternet</strong> is your all-in-one social home: a fast timeline for sharing life, a friendly space for groups and events, a lightweight marketplace for quick trades, and a messenger that’s always one click away. It’s simple, fast, and yours—built to feel like a familiar feed but powerful enough to run a community.</p>
+      <div class="chips" aria-label="Highlights">
+        <span class="chip">Real-time messenger</span>
+        <span class="chip">Feed & groups</span>
+        <span class="chip">Chatter Market</span>
+        <span class="chip">Events & RSVPs</span>
+        <span class="chip">Media & blogs</span>
+        <span class="chip">Flexible privacy</span>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <a class="pill primary" href="feed.html">Open Feed</a>
+        <a class="pill" href="friends.html">Find Friends</a>
+        <a class="pill" href="chattermarket.html">Browse Market</a>
+        <a class="pill" href="profile.html">Edit Profile</a>
+      </div>
+    </section>
 
-  <!-- Quick Links -->
-  <section class="card">
-    <h3 class="section-title">Quick Links</h3>
-    <ul class="list">
-      <li><span>Feed</span><a class="pill" href="feed.html">Open</a></li>
-      <li><span>Friends</span><a class="pill" href="friends.html">Open</a></li>
-      <li><span>Chatter Market</span><a class="pill" href="chattermarket.html">Open</a></li>
-      <li><span>Groups</span><a class="pill" href="groups.html">Open</a></li>
-      <li><span>Events</span><a class="pill" href="events.html">Open</a></li>
-      <li><span>Media</span><a class="pill" href="media.html">Open</a></li>
-      <li><span>Dating</span><a class="pill" href="dating.html">Open</a></li>
-      <li><span>Blogs</span><a class="pill" href="blogs.html">Open</a></li>
-      <li><span>Polls</span><a class="pill" href="polls.html">Open</a></li>
-      <li><span>Music</span><a class="pill" href="music.html">Open</a></li>
-      <li><span>Messages (full page)</span><a class="pill" href="messages.html">Open</a></li>
-    </ul>
-  </section>
+    <!-- Quick Links -->
+    <section class="card">
+      <h3 class="section-title">Quick Links</h3>
+      <ul class="list">
+        <li><span>Feed</span><a class="pill" href="feed.html">Open</a></li>
+        <li><span>Friends</span><a class="pill" href="friends.html">Open</a></li>
+        <li><span>Chatter Market</span><a class="pill" href="chattermarket.html">Open</a></li>
+        <li><span>Groups</span><a class="pill" href="groups.html">Open</a></li>
+        <li><span>Events</span><a class="pill" href="events.html">Open</a></li>
+        <li><span>Media</span><a class="pill" href="media.html">Open</a></li>
+        <li><span>Dating</span><a class="pill" href="dating.html">Open</a></li>
+        <li><span>Blogs</span><a class="pill" href="blogs.html">Open</a></li>
+        <li><span>Polls</span><a class="pill" href="polls.html">Open</a></li>
+        <li><span>Music</span><a class="pill" href="music.html">Open</a></li>
+        <li><span>Messages (full page)</span><a class="pill" href="messages.html">Open</a></li>
+        <li><span>Admin</span><a class="pill" href="admin.html">Open</a></li>
+        <li><span>Settings</span><a class="pill" href="settings.html">Open</a></li>
+      </ul>
+    </section>
+  </div>
 </div>
 
-<!-- Robust messenger loader (works with Render, /assets, or root) -->
+<!-- Messenger loader -->
 <script>
 (function(){
   "use strict";
-  // Remember your backend base if you’ve set it previously
-  window.CT_API_BASE = window.CT_API_BASE || localStorage.getItem('ct_api_base') || '';
+  var FALLBACK='https://chatternet-backend-1.onrender.com';
+  var ls=localStorage.getItem('ct_api_base')||'';
+  var base=(window.CT_API_BASE||ls||FALLBACK).replace(/\/+$/,'');
+  window.CT_API_BASE=base; if(!ls){ try{ localStorage.setItem('ct_api_base', base); }catch(_){} }
 
-  function tryLoad(urls, cb){
-    (function next(i){
-      if(i>=urls.length){ cb(false); return; }
-      var s=document.createElement('script');
-      s.src=urls[i]; s.async=true;
-      s.onload=function(){ cb(true); };
-      s.onerror=function(){ s.remove(); next(i+1); };
-      (document.head||document.documentElement).appendChild(s);
-    })(0);
-  }
+  function chain(arr,done){ (function next(i){ if(i>=arr.length){ done(false); return; }
+    var s=document.createElement('script'); s.src=arr[i]; s.async=true;
+    s.onload=function(){ done(true) }; s.onerror=function(){ s.remove(); next(i+1); };
+    (document.head||document.documentElement).appendChild(s);
+  })(0);}
 
-  var base = (localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
-  var candidates = [
-    base + '/assets/messenger.js',
-    '/assets/messenger.js',
-    'assets/messenger.js',
-    '/messenger.js',
-    'messenger.js'
-  ];
-
-  tryLoad(candidates, function(ok){
-    // Provide ctOpen/ctMessage if the overlay exposes a compatible API
-    if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open === 'function'){
-      window.ctOpen    = window.ctOpen    || function(){ window.ChatternetMessenger.open(); };
-      window.ctMessage = window.ctMessage || function(){ window.ChatternetMessenger.open(); };
+  var CAND=[ base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
+  chain(CAND,function(ok){
+    if(ok && window.ChatternetMessenger?.open){
+      window.ctOpen    = window.ctOpen    || function(){ window.ChatternetMessenger.open(""); };
+      window.ctMessage = window.ctMessage || function(n){ window.ChatternetMessenger.open(n||""); };
     }
   });
 
-  // Intercept any click to messages.html to open overlay when available
   document.addEventListener('click', function(e){
-    var a = e.target.closest && e.target.closest('a[href*="messages.html"]');
-    if(!a) return;
-    if(window.ctOpen || (window.ChatternetMessenger && window.ChatternetMessenger.open)){
-      e.preventDefault();
-      (window.ctOpen || window.ChatternetMessenger.open)();
-    }
+    var a=e.target.closest && e.target.closest('a[href*="messages.html"]'); if(!a) return;
+    if(window.ctOpen || window.ChatternetMessenger?.open){ e.preventDefault(); (window.ctOpen || window.ChatternetMessenger.open)(""); }
   }, true);
 })();
 </script>
 
 <script>
-/* ===== helpers + storage ===== */
+/* ===== minimal profile + modals ===== */
 const $=s=>document.querySelector(s);
-const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}}; 
-const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
+const save=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
 const LS={ PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1' };
 
-/* avatar + name */
-function getAvatar(){
-  const p=load(LS.PROFILE,{})['Me'];
-  return (p&&(p.avatar||p.avatarUrl||p.photo)) || 'https://i.pravatar.cc/100?u=me';
-}
-function getName(){
-  const p=load(LS.PROFILE,{})['Me'];
-  return (p&&p.displayName&&p.displayName.trim())?p.displayName.trim():'Me';
-}
+function getAvatar(){ const p=(load(LS.PROFILE,{}))['Me']; return (p&&(p.avatar||p.avatarUrl||p.photo)) || 'https://i.pravatar.cc/100?u=me'; }
 
-/* Header wiring */
 (function(){
-  const img=$('#myProfile'); 
-  if(img){ img.src=getAvatar(); img.alt='Me'; img.onclick=()=>location.href='profile.html'; }
+  const img=$('#myProfile'); if(img){ img.src=getAvatar(); img.alt='Me'; img.referrerPolicy='no-referrer'; img.onclick=()=>location.href='profile.html'; }
 
   const notifModal=$('#notifModal'), inboxModal=$('#inboxModal');
-
-  function rNotif(){ 
-    const arr=load(LS.NOTIF,[]); 
-    const box=$('#notifList'); 
-    box.innerHTML=arr.length
-      ? arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
-      : 'No notifications yet.'; 
-  }
-  function rInbox(){ 
-    const arr=load(LS.INBOX,[]); 
-    const box=$('#inboxList'); 
-    box.innerHTML=arr.length
-      ? arr.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${(n.text||'')}</div>`).join('')
-      : 'Inbox is empty.'; 
-  }
+  function rNotif(){ const a=load(LS.NOTIF,[]); $('#notifList').innerHTML=a.length?a.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${n.text||''}</div>`).join(''):'No notifications yet.'; }
+  function rInbox(){ const a=load(LS.INBOX,[]); $('#inboxList').innerHTML=a.length?a.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${n.text||''}</div>`).join(''):'Inbox is empty.'; }
 
   $('#btnNotif').onclick=()=>{ rNotif(); notifModal.style.display='flex'; };
   $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rNotif(); };
@@ -190,24 +275,8 @@ function getName(){
   $('#btnInbox').onclick=()=>{ rInbox(); inboxModal.style.display='flex'; };
   $('#closeInbox').onclick=()=>{ inboxModal.style.display='none'; };
 
-  // Header Messages -> overlay (safe fallback)
-  $('#btnMsgs').onclick=(e)=>{
-    e.preventDefault(); e.stopPropagation();
-    if (window.ctOpen) return window.ctOpen();
-    if (window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-    // fallback to full page if overlay not available
-    location.href='messages.html';
-  };
+  $('#btnMsgs').onclick=(e)=>{ e.preventDefault(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); location.href='messages.html'; };
 })();
-
-/* Welcome name + live refresh */
-$('#meName').textContent=getName();
-window.addEventListener('storage',e=>{
-  if(e.key===LS.PROFILE){
-    $('#myProfile').src=getAvatar();
-    $('#meName').textContent=getName();
-  }
-});
 </script>
 </body>
 </html>
