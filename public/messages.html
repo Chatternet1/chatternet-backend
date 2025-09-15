@@ -5,57 +5,47 @@
 <title>Chatternet — Messages</title>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
+<!-- Hard-set API base once (and persist) -->
+<script>
+  (function(){
+    var HARD="https://chatternet-backend-1.onrender.com";
+    try{ localStorage.setItem("CT_API_BASE",HARD); localStorage.setItem("ct_api_base",HARD); }catch(_){}
+    window.CT_API_BASE = HARD;
+  })();
+</script>
+
 <style>
   :root{
-    /* Layout vars set by positioner below */
-    --blueTop:132px;     /* distance from site menu bottom to blue bar */
-    --barH:52px;         /* measured height of blue bar */
-    --navH:48px;         /* measured height of chip nav */
-    --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
-
-    /* Theme */
+    --blueTop:132px; --barH:52px; --navH:48px; --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
     --brand:#0ea5e9; --brand-2:#0989c3;
     --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);
-    font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif}
-
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif}
   a{color:#2563eb;text-decoration:none}
 
-  /* ===== Fixed blue bar (base stack) ===== */
-  .top-bar{
-    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 14px; height:var(--barH);
-    background:var(--brand); color:#fff; border-bottom:1px solid rgba(255,255,255,.2);
-    box-shadow:0 2px 8px rgba(0,0,0,.12);
-  }
+  /* Blue bar */
+  .top-bar{position:fixed;left:0;right:0;top:var(--blueTop);z-index:1200;display:flex;align-items:center;justify-content:space-between;padding:10px 14px;height:var(--barH);background:var(--brand);color:#fff;border-bottom:1px solid rgba(255,255,255,.2);box-shadow:0 2px 8px rgba(0,0,0,.12)}
   .top-bar h2{margin:0;font-weight:800;font-size:18px;letter-spacing:.2px}
   .top-actions{display:flex;gap:10px;align-items:center}
-  .pillbtn{
-    height:36px;padding:0 12px;border-radius:999px;cursor:pointer;
-    border:1px solid rgba(255,255,255,.7);background:#fff;color:#0b3a67;font-weight:600
-  }
+  .pillbtn{height:36px;padding:0 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.7);background:#fff;color:#0b3a67;font-weight:600}
   .pillbtn:hover{background:#eef4ff}
   #myProfile{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
 
-  /* ===== Chip nav (identical across app) ===== */
+  /* Chip nav */
   nav.app-nav{position:fixed;left:0;right:0;top:calc(var(--blueTop) + var(--barH));z-index:1190;background:#fff;border-bottom:1px solid var(--line)}
   nav.app-nav .inner{max-width:1180px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
   nav.app-nav a{display:inline-block;padding:8px 10px;border-radius:999px;background:#f3f4f6;color:#111;font-weight:600;text-decoration:none}
   nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
   nav.app-nav a:hover{background:#e5e7eb}
 
-  /* ===== Page ===== */
+  /* Page */
   .page{max-width:1180px;margin:14px auto;padding:0 12px;padding-top:var(--pagePad)}
-
   .cols{display:grid;grid-template-columns:340px 1fr;gap:14px}
   @media (max-width:980px){.cols{grid-template-columns:1fr}}
-
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);padding:0}
 
-  /* Left: threads list */
+  /* Threads (left) */
   .list-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
   .list-head input{flex:1;padding:10px;border:1px solid #d7d7d7;border-radius:10px;font-size:14px}
   .threads{padding:6px}
@@ -68,7 +58,7 @@
   .t-last{font-size:13px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .t-time{font-size:12px;color:#64748b}
 
-  /* Right: chat */
+  /* Chat (right) */
   .chat{display:flex;flex-direction:column;min-height:520px;height:64vh}
   .chat-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center}
   .chat-head .ava{width:40px;height:40px}
@@ -85,21 +75,20 @@
   .btn{padding:10px 14px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;cursor:pointer}
   .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
   .btn.primary:hover{background:var(--brand-2)}
-
   .empty{color:#6b7280;text-align:center;padding:16px}
 
-  /* Modals (support both .modalbg and .modal-bg) */
+  /* Modals */
   .modalbg,.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2000}
   .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
   .notif-item{padding:10px;border:1px solid #eee;border-radius:10px;background:#fafafa;margin:8px 0}
 
-  /* Error overlay (never blank) */
+  /* Error overlay */
   #errOverlay{position:fixed;inset:0;display:none;align-items:flex-start;justify-content:center;background:rgba(0,0,0,.55);z-index:3000}
   #errPanel{margin-top:24px;background:#fff;color:#111;border-radius:12px;max-width:900px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
   #errPanel pre{white-space:pre-wrap;overflow:auto;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;max-height:50vh}
 </style>
 
-<!-- Positioner: measure site menu -> set --blueTop/--barH/--navH/--pagePad -->
+<!-- Positioner (keeps bars pinned under your site menu) -->
 <script>
 (function(){
   var GAP=12, MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
@@ -117,7 +106,7 @@
 </head>
 <body>
 
-<!-- ===== Blue bar ===== -->
+<!-- Blue bar -->
 <div class="top-bar">
   <h2>Messages</h2>
   <div class="top-actions">
@@ -128,7 +117,7 @@
   </div>
 </div>
 
-<!-- ===== Chip nav ===== -->
+<!-- Chip nav -->
 <nav class="app-nav" aria-label="Site">
   <div class="inner">
     <a href="index.html">Home</a>
@@ -148,10 +137,9 @@
   </div>
 </nav>
 
-<!-- ===== Page ===== -->
+<!-- Page -->
 <div class="page">
   <div class="cols">
-
     <!-- Threads -->
     <section class="card">
       <div class="list-head">
@@ -182,11 +170,10 @@
         </div>
       </div>
     </section>
-
   </div>
 </div>
 
-<!-- Notifications Modal -->
+<!-- Notifications -->
 <div class="modalbg" id="notifBg">
   <div class="sheet">
     <h3 style="margin:0 0 10px">Notifications</h3>
@@ -197,7 +184,7 @@
     </div>
   </div>
 </div>
-<!-- Inbox Modal -->
+<!-- Inbox -->
 <div class="modalbg" id="inboxBg">
   <div class="sheet">
     <h3 style="margin:0 0 10px">Inbox</h3>
@@ -219,7 +206,7 @@
 </div></div>
 
 <script>
-/* ===== never-blank overlay ===== */
+/* never-blank overlay */
 (function(){
   const show=(msg)=>{ const o=document.getElementById('errOverlay'); const t=document.getElementById('errText'); if(!o||!t) return; t.textContent=String(msg||'Unknown error'); o.style.display='flex'; };
   window.addEventListener('error',e=>show(e.error? (e.error.stack||e.error.message||e.message) : e.message));
@@ -228,7 +215,7 @@
 </script>
 
 <script>
-/* ===== API base (optional) + remote shim ===== */
+/* ===== API base (optional) + remote shim (FIXED: no bare `Api` refs) ===== */
 const API_BASE=(function(){
   try{
     const win=(window.CT_API_BASE||window.ct_api_base||'');
@@ -237,42 +224,34 @@ const API_BASE=(function(){
     const v=win||lc||uc;
     if(v){ const j=typeof v==='string'?v:JSON.stringify(v); return (typeof v==='string')?v:JSON.parse(j); }
   }catch{}
-  return 'https://chatternet-backend-1.onrender.com/api';
+  return 'https://chatternet-backend-1.onrender.com';
 })();
 async function api(path,opts={}) {
-  const r=await fetch(API_BASE+path,{headers:{'Content-Type':'application/json'},...opts});
+  const r=await fetch(String(API_BASE).replace(/\/+$/,'')+path,{headers:{'Content-Type':'application/json'},credentials:'include',...opts});
   const t=await r.text(); let j=null; try{ j=t?JSON.parse(t):null; }catch{}
   if(!r.ok) throw new Error((j && (j.error||j.message)) || t || 'Request failed');
   return j;
 }
-/* Prefer window.Api.messages if present; otherwise stay local-only. */
 const RemoteDM = {
   available(){
-    return !!(window.Api && Api.messages && typeof Api.messages.list==='function' && typeof Api.messages.send==='function');
+    const A = window.Api || {};
+    return !!(A.messages && typeof A.messages.list==='function' && typeof A.messages.send==='function');
   },
   async list(withName){
     if(!this.available()) return null;
-    try{ return await Api.messages.list({ with: withName }); }catch{ return null; }
+    try{ return await window.Api.messages.list({ with: withName }); }catch{ return null; }
   },
   async send(to,text){
     if(!this.available()) return null;
-    try{ return await Api.messages.send({ to, text }); }catch{ return null; }
+    try{ return await window.Api.messages.send({ to, text }); }catch{ return null; }
   }
 };
 
-/* ===== Keys / helpers (shared) ===== */
-const LS={
-  USERS:'ct_users_v3',
-  PROFILE:'ct_profile_data_v1',
-  VIEW:'ct_profile_view_v1',
-  NOTIF:'ct_notifications_v1',
-  INBOX:'ct_inbox_v1',
-  MSGS:'ct_messages_v3',
-  OUTBOX:'ct_messages_outbox_v1'
-};
+/* ===== Keys / helpers ===== */
+const LS={USERS:'ct_users_v3',PROFILE:'ct_profile_data_v1',VIEW:'ct_profile_view_v1',NOTIF:'ct_notifications_v1',INBOX:'ct_inbox_v1',MSGS:'ct_messages_v3',OUTBOX:'ct_messages_outbox_v1'};
 const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
 const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;}}; 
-const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}}; 
 const uid=(p='id')=>`${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,7)}`;
 const nowISO=()=>new Date().toISOString();
 const esc=s=>String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;");
@@ -281,13 +260,7 @@ function addNotif(text){const arr=load(LS.NOTIF,[]);arr.unshift({id:uid('n'),tex
 function addInbox(text){const arr=load(LS.INBOX,[]);arr.unshift({id:uid('m'),text,time:nowISO()});save(LS.INBOX,arr);}
 
 /* ===== Seed users + bots ===== */
-const BOTS=[
-  {name:'Bill Thomas',u:'bill.thomas'},{name:'Kate White',u:'kate.white'},
-  {name:'Michael Reed',u:'michael.reed'},{name:'Olivia Perez',u:'olivia.perez'},
-  {name:'David Carter',u:'david.carter'},{name:'Emily Johnson',u:'emily.johnson'},
-  {name:'Jason Brooks',u:'jason.brooks'},{name:'Sophia Turner',u:'sophia.turner'},
-  {name:'Daniel Foster',u:'daniel.foster'},{name:'Grace Lee',u:'grace.lee'}
-];
+const BOTS=[{name:'Bill Thomas',u:'bill.thomas'},{name:'Kate White',u:'kate.white'},{name:'Michael Reed',u:'michael.reed'},{name:'Olivia Perez',u:'olivia.perez'},{name:'David Carter',u:'david.carter'},{name:'Emily Johnson',u:'emily.johnson'},{name:'Jason Brooks',u:'jason.brooks'},{name:'Sophia Turner',u:'sophia.turner'},{name:'Daniel Foster',u:'daniel.foster'},{name:'Grace Lee',u:'grace.lee'}];
 (function seedUsers(){
   let users=load(LS.USERS,null);
   if(!users){
@@ -303,21 +276,19 @@ const BOTS=[
 const Users=load(LS.USERS,[]);
 const userByName=n=>Users.find(u=>u.name===n)||Users[0]||{name:'Me',avatar:'https://i.pravatar.cc/100?u=me'};
 
-/* ===== Header wiring (base stack) ===== */
+/* ===== Header wiring ===== */
 function meDisplay(){ const p=load(LS.PROFILE,{})['Me']; return (p && p.displayName && p.displayName.trim())?p.displayName.trim():'Me'; }
 function meAvatar(){ const arr=load(LS.USERS,[]); const me=arr.find(u=>u.name==='Me'); return (me&&me.avatar)?me.avatar:'https://i.pravatar.cc/100?u=me'; }
 (function wireHeader(){
   const img=$('#myProfile'); if(img){ img.referrerPolicy='no-referrer'; img.loading='lazy'; img.src=meAvatar(); img.alt=meDisplay(); img.onclick=()=>goToProfile('Me'); }
   $('#btnMsgs')?.addEventListener('click',(e)=>{ e.preventDefault(); if(window.ctOpen) return ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(""); location.href='messages.html'; });
 
-  // Notifications
   const notifBg=$('#notifBg'), notifList=$('#notifList');
   function renderNotif(){ const arr=load(LS.NOTIF,[]); notifList.innerHTML=''; if(!arr.length){notifList.innerHTML='<div class="notif-item">No notifications yet.</div>';return;} arr.forEach(n=>{const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}`; notifList.appendChild(d);});}
   $('#btnNotif')?.addEventListener('click',()=>{ renderNotif(); notifBg.style.display='flex'; });
   $('#clearNotif')?.addEventListener('click',()=>{ save(LS.NOTIF,[]); renderNotif(); });
   $('#closeNotif')?.addEventListener('click',()=>{ notifBg.style.display='none'; });
 
-  // Inbox
   const inboxBg=$('#inboxBg'), inboxList=$('#inboxList');
   function renderInbox(){ const arr=load(LS.INBOX,[]); inboxList.innerHTML=''; if(!arr.length){inboxList.innerHTML='<div class="notif-item">Inbox is empty.</div>';return;} arr.forEach(n=>{const d=document.createElement('div'); d.className='notif-item'; d.innerHTML=`<strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text)}`; inboxList.appendChild(d);});}
   $('#btnInbox')?.addEventListener('click',()=>{ renderInbox(); inboxBg.style.display='flex'; });
@@ -326,9 +297,7 @@ function meAvatar(){ const arr=load(LS.USERS,[]); const me=arr.find(u=>u.name===
   document.addEventListener('click',e=>{ const t=e.target.closest('[data-profile-name]'); if(t){ goToProfile(t.getAttribute('data-profile-name')); } });
 })();
 
-/* ===== Local message store + outbox =====
-   Shape: { id, a:'Me', b:'Name', text, timeISO, pending?:true, origin:'local'|'remote' }
-*/
+/* ===== Local message store ===== */
 const DM = {
   all(){ return load(LS.MSGS,[]); },
   save(arr){ save(LS.MSGS,arr); },
@@ -337,8 +306,8 @@ const DM = {
   listThreadNames(){
     const set=new Set();
     this.all().forEach(m=>{ if(m.a!=='Me') set.add(m.a); if(m.b!=='Me') set.add(m.b); });
-    Users.forEach(u=>{ if(u.name!=='Me') set.add(u.name); }); // keep bots visible
-    return Array.from(set);
+    Users.forEach(u=>{ if(u.name!=='Me') set.add(u.name); });
+    return Array.from(set).filter(n=>n!=='Me');
   },
   listWith(name){
     return this.all().filter(m=> (m.a==='Me'&&m.b===name) || (m.a===name&&m.b==='Me'))
@@ -356,12 +325,9 @@ const DM = {
   }
 };
 
-/* ===== Bots (fun replies) ===== */
+/* ===== Bots ===== */
 const BOT_NAMES = new Set(BOTS.map(b=>b.name));
-const BOT_LINES = [
-  "Sounds good □", "Let me check on that.", "Nice!", "I agree.", "Haha true □",
-  "What's your take?", "I’ll get back to you.", "Interesting point.", "Totally!", "Thanks for sharing."
-];
+const BOT_LINES = ["Sounds good □","Let me check on that.","Nice!","I agree.","Haha true □","What's your take?","I’ll get back to you.","Interesting point.","Totally!","Thanks for sharing."];
 function randomBotLine(){ return BOT_LINES[Math.floor(Math.random()*BOT_LINES.length)]; }
 function maybeBotReply(peer){
   if(!BOT_NAMES.has(peer)) return;
@@ -391,14 +357,7 @@ async function pullRemote(withName){
     const list=await RemoteDM.list(withName || null);
     if(!Array.isArray(list)) return false;
     list.forEach(r=>{
-      const msg={
-        id:String(r.id||uid('rm')),
-        a: r.from==='Me'?'Me':(r.from||withName||''),
-        b: r.to==='Me'?'Me':(r.to||'Me'),
-        text: r.text||'',
-        timeISO: r.createdAt || nowISO(),
-        origin:'remote'
-      };
+      const msg={ id:String(r.id||uid('rm')), a: r.from==='Me'?'Me':(r.from||withName||''), b: r.to==='Me'?'Me':(r.to||'Me'), text: r.text||'', timeISO: r.createdAt || nowISO(), origin:'remote' };
       DM.addLocal(msg);
     });
     return true;
@@ -406,11 +365,15 @@ async function pullRemote(withName){
 }
 
 /* ===== UI state ===== */
-let ACTIVE=''; // name of peer
+let ACTIVE='';
 const threadsEl=$('#threads'), threadsEmpty=$('#threadsEmpty');
 const chatName=$('#chatName'), chatHint=$('#chatHint'), chatAva=$('#chatAva');
 const chatBody=$('#chatBody'), composer=$('#composer');
 
+function mostRecentTime(name){
+  const msgs=DM.listWith(name); const last=msgs[msgs.length-1];
+  return last ? new Date(last.timeISO).getTime() : 0;
+}
 function threadRow(name){
   const u=userByName(name);
   const msgs=DM.listWith(name);
@@ -426,22 +389,20 @@ function threadRow(name){
   row.onclick=()=>openChat(name);
   return row;
 }
-
 function renderThreads(){
   const q=($('#search').value||'').toLowerCase();
   const names=DM.listThreadNames().filter(n=>n.toLowerCase().includes(q));
+  names.sort((a,b)=> mostRecentTime(b) - mostRecentTime(a) || a.localeCompare(b));
   threadsEl.innerHTML='';
   if(!names.length){ threadsEmpty.style.display='block'; return; }
   threadsEmpty.style.display='none';
-  names.sort((a,b)=>a.localeCompare(b)).forEach(n=>threadsEl.appendChild(threadRow(n)));
+  names.forEach(n=>threadsEl.appendChild(threadRow(n));
 }
-
 function dayLabel(dateISO){
   const d=new Date(dateISO), today=new Date(); const yest=new Date(Date.now()-86400000);
   const dStr=d.toDateString(), tStr=today.toDateString(), yStr=yest.toDateString();
   return dStr===tStr?'Today': dStr===yStr?'Yesterday' : d.toLocaleDateString();
 }
-
 function messageBubble(m){
   const me = (m.a==='Me');
   const d=document.createElement('div'); d.className='msg'+(me?' me':'');
@@ -449,7 +410,6 @@ function messageBubble(m){
   d.innerHTML=`<div class="bubble">${esc(m.text||'')}</div><div class="m-time">${new Date(m.timeISO).toLocaleTimeString()}${pending}</div>`;
   return d;
 }
-
 function renderChat(name){
   const u=userByName(name);
   chatAva.src=u.avatar; chatAva.alt=name;
@@ -465,14 +425,12 @@ function renderChat(name){
   });
   chatBody.scrollTop=chatBody.scrollHeight;
 }
-
 function openChat(name){
   ACTIVE=name;
   renderThreads();
   renderChat(name);
   $('#viewProfile').onclick=()=>goToProfile(name);
   composer.focus();
-  // Try pulling remote messages for this peer
   pullRemote(name).then(updated=>{ if(updated){ renderChat(name); renderThreads(); }});
 }
 
@@ -480,8 +438,7 @@ $('#search').addEventListener('input',renderThreads);
 $('#newChat').onclick=()=>{
   const name = prompt('Start a chat with… (exact name)', '');
   if(!name) return;
-  const u=userByName(name);
-  if(!u){ alert('User not found on this device.'); return; }
+  if(!Users.find(u=>u.name===name)){ alert('User not found on this device.'); return; }
   openChat(name);
 };
 
@@ -490,51 +447,36 @@ async function sendMessage(){
   if(!ACTIVE){ alert('Pick someone to chat with.'); return; }
   if(!text){ return; }
 
-  // Local optimistic add
   const localId=uid('m');
   const localMsg={ id:localId, a:'Me', b:ACTIVE, text, timeISO:nowISO(), pending:true, origin:'local' };
   DM.addLocal(localMsg);
 
-  // Queue for remote
   const box=DM.outbox(); box.push({ localId, to:ACTIVE, text }); DM.saveOutbox(box);
 
   composer.value=''; renderChat(ACTIVE); renderThreads();
   addInbox(`New message to ${ACTIVE}: "${text.slice(0,80)}${text.length>80?'…':''}"`);
 
-  // Try immediate send
   if(RemoteDM.available()){
     try{ await RemoteDM.send(ACTIVE,text); DM.markDelivered(localId); if(ACTIVE){ renderChat(ACTIVE); } }
-    catch{/* keep pending; will retry via syncOutbox */}
+    catch{/* keep pending */}
   } else {
-    // Bot reply for demo
     maybeBotReply(ACTIVE);
   }
 }
 $('#sendBtn').onclick=sendMessage;
-composer.addEventListener('keydown',e=>{
-  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }
-});
+composer.addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); }});
 
-/* ===== Boot ===== */
+/* Boot */
 (function boot(){
-  // header link
-  $('#btnMsgs').onclick=(e)=>{ e.preventDefault(); if(window.ctOpen) return ctOpen(); location.href='messages.html'; };
-
+  $('#btnMsgs').onclick=(e)=>{ e.preventDefault(); if(window.ctOpen) return ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(""); location.href='messages.html'; };
   renderThreads();
-  // open ?with=
-  const qs=new URLSearchParams(location.search);
-  const withName=qs.get('with');
-  if(withName && userByName(withName)){ openChat(withName); }
-
-  // periodic sync (only affects remote-enabled installs)
-  setInterval(async ()=>{
-    await syncOutbox();
-    if(ACTIVE){ const updated = await pullRemote(ACTIVE); if(updated) { renderChat(ACTIVE); renderThreads(); } }
-  }, 8000);
+  const qs=new URLSearchParams(location.search); const withName=qs.get('with');
+  if(withName && Users.find(u=>u.name===withName)){ openChat(withName); }
+  setInterval(async ()=>{ await syncOutbox(); if(ACTIVE){ const updated = await pullRemote(ACTIVE); if(updated){ renderChat(ACTIVE); renderThreads(); } } }, 8000);
 })();
 </script>
 
-<!-- ===== Inline BASE GATE (device-only lock) ===== -->
+<!-- Inline BASE GATE (device-only) -->
 <style>
   .gate-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:4000}
   .gate{width:min(520px,92vw);background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:16px}
@@ -569,32 +511,37 @@ composer.addEventListener('keydown',e=>{
   function isLoggedIn(){ const s=load(LS_SESS,null), accs=load(LS_ACC,{}); return !!(s && accs[s.user]); }
   function setSession(user){ const sess={user,time:new Date().toISOString()}; save(LS_SESS,sess); save(LS_SESS_V1,sess); window.dispatchEvent(new CustomEvent('ct:login',{detail:sess})); }
   function clearSession(){ localStorage.removeItem(LS_SESS); localStorage.removeItem(LS_SESS_V1); window.dispatchEvent(new Event('ct:logout')); }
-  const Gate={
-    open(){ $('#ctGate').style.display='flex'; $('#ctGate').setAttribute('aria-hidden','false'); setTimeout(()=>$('#gateEmail')?.focus(),0); },
-    close(){ $('#ctGate').style.display='none'; $('#ctGate').setAttribute('aria-hidden','true'); $('#gateErr').style.display='none'; },
-    require(){ if(isLoggedIn()) return true; Gate.open(); return false; },
-    logout(){ clearSession(); Gate.open(); }
-  };
-  window.Gate=Gate;
-  window.Auth = window.Auth || {};
-  window.Auth.isLoggedIn = isLoggedIn;
-  window.Auth.require = () => Gate.require();
+  const Gate={ open(){ $('#ctGate').style.display='flex'; $('#ctGate').setAttribute('aria-hidden','false'); setTimeout(()=>$('#gateEmail')?.focus(),0); },
+               close(){ $('#ctGate').style.display='none'; $('#ctGate').setAttribute('aria-hidden','true'); $('#gateErr').style.display='none'; },
+               require(){ if(isLoggedIn()) return true; Gate.open(); return false; },
+               logout(){ clearSession(); Gate.open(); } };
+  window.Gate=Gate; window.Auth = window.Auth || {}; window.Auth.isLoggedIn = isLoggedIn; window.Auth.require = () => Gate.require();
 
   let signup=false;
   $('#gateMode').onclick=()=>{ signup=!signup; $('#gateMode').textContent = signup?'Use login':'Use sign up'; $('#ctGateTitle').textContent = signup?'Create account':'Welcome back'; };
-  $('#gateSubmit').onclick=()=>{
-    const email=($('#gateEmail').value||'').trim().toLowerCase();
-    const pass =($('#gatePass').value||'').trim();
+  $('#gateSubmit').onclick=()=>{ const email=($('#gateEmail').value||'').trim().toLowerCase(); const pass =($('#gatePass').value||'').trim();
     if(!email || !pass){ $('#gateErr').textContent='Enter email & password.'; $('#gateErr').style.display='block'; return; }
     const acc=load(LS_ACC,{}); const key='Me';
     if(signup || !acc[key]){ acc[key]={email,password:pass}; save(LS_ACC,acc); setSession(key); Gate.close(); return; }
     if(acc[key] && acc[key].password===pass){ setSession(key); Gate.close(); } else { $('#gateErr').textContent='Invalid email or password.'; $('#gateErr').style.display='block'; }
   };
-
   if(!window.CT_GATE_DISABLE) Gate.require();
 })();
 </script>
-<!-- ===== /Inline BASE GATE ===== -->
+
+<!-- Messenger overlay autoloader: backend -> local fallbacks -->
+<script>
+(function(){
+  var base=(localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+  var urls=[ base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
+  (function next(i){
+    if(i>=urls.length) return;
+    var s=document.createElement('script'); s.src=urls[i]; s.async=true;
+    s.onerror=function(){ s.remove(); next(i+1); };
+    (document.head||document.documentElement).appendChild(s);
+  })(0);
+})();
+</script>
 
 </body>
 </html>
