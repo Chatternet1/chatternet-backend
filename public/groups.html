@@ -542,7 +542,7 @@ function postHtml(p, isPinnedStrip=false){
     ${media}
     <div class="row" style="margin-top:6px;align-items:center">
       <button class="btn sm" data-act="like">❤️ ${p.likes||0}</button>
-      <button class="btn sm" data-act="toggle">💬 ${cmts.length}</button>
+      <button class="btn sm" data-act="toggle">□ ${cmts.length}</button>
       ${p.author==='Me'?'<button class="btn sm danger" data-act="del">Delete</button>':''}
     </div>
     <div data-role="cmts" style="display:none;margin-top:8px">
