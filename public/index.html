@@ -4,21 +4,25 @@
 <meta charset="UTF-8" />
 <title>Chatternet — Home</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+
 <style>
   :root{
+    /* Brand + layout */
     --brand:#0ea5e9; --brand-2:#0989c3;
     --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2;
     --blueTop:132px; --barH:52px; --navH:48px;
     --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
+
+    /* Pill kit */
+    --pill-bg:#f3f4f6; --pill-bg-hover:#e5e7eb; --pill-ink:#0f172a; --pill-line:#e6eaf2;
+    --pill-primary:#0ea5e9; --pill-primary-2:#0989c3;
   }
   *{box-sizing:border-box}
-  html,body{max-width:100%;overflow-x:hidden}
-  body{margin:0;background:var(--bg);color:var(--ink);
-       font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif}
-
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+       font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif; max-width:100%; overflow-x:hidden}
   a{color:#2563eb;text-decoration:none}
 
-  /* ===== FIX: text spacing / ligatures (content area only) ===== */
+  /* Content typography sanity */
   .page, .page *{
     letter-spacing: normal !important;
     word-spacing: normal !important;
@@ -30,9 +34,9 @@
     line-height: 1.45;
   }
 
-  /* ===== Blue header (fixed under Weebly menu) ===== */
+  /* ===== Fixed blue header ===== */
   .top-bar{
-    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
+    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1250;
     display:flex; justify-content:space-between; align-items:center;
     padding:10px 14px; background:var(--brand); color:#fff;
     border-bottom:1px solid rgba(255,255,255,.2)
@@ -46,12 +50,14 @@
   .pillbtn:hover{background:rgba(255,255,255,.26)}
   #myProfile{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
 
-  /* ===== App nav (fixed under blue bar) ===== */
+  /* ===== Fixed site nav under the blue bar ===== */
   nav.app-nav{
     position:fixed; left:0; right:0; top:calc(var(--blueTop) + var(--barH));
     z-index:1190; background:#fff; border-bottom:1px solid var(--line)
   }
-  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+  nav.app-nav .inner{
+    max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px; justify-content:center;
+  }
   nav.app-nav a{
     display:inline-block;padding:8px 10px;border-radius:999px;
     color:#111;background:#f3f4f6;text-decoration:none;font-weight:600
@@ -59,48 +65,74 @@
   nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
   nav.app-nav a:hover{background:#e5e7eb}
 
-  /* ===== Page ===== */
+  /* ===== Base pill kit (unifies all CTA chips) ===== */
+  .pill, .btn,
+  .pillbar a, .pillbar button {
+    display:inline-flex; align-items:center; justify-content:center;
+    height:36px; padding:0 12px; border-radius:999px;
+    border:1px solid var(--pill-line);
+    background:var(--pill-bg); color:var(--pill-ink);
+    font-weight:600; text-decoration:none; cursor:pointer; line-height:1;
+    white-space:nowrap;
+  }
+  .pill:hover, .btn:hover,
+  .pillbar a:hover, .pillbar button:hover { background:var(--pill-bg-hover); }
+  .pill.primary, .btn.primary,
+  .pillbar .primary { background:var(--pill-primary); border-color:var(--pill-primary); color:#fff; }
+  .pill.primary:hover, .btn.primary:hover,
+  .pillbar .primary:hover { background:var(--pill-primary-2); }
+  .pill.small, .btn.small, .pillbar .small { height:32px; padding:0 10px; font-size:13px; }
+  .pillbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
+
+  /* ===== Page layout ===== */
   .page{max-width:1100px;margin:14px auto;padding:0 12px; padding-top:var(--pagePad)}
   .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
-  @media (max-width:860px){ .grid{grid-template-columns:1fr} }
+  @media (max-width:960px){ .grid{grid-template-columns:1fr} }
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);padding:14px}
   .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
+  .muted{color:var(--muted)}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-  .pill{border:1px solid #d7d7d7;border-radius:999px;padding:8px 12px;background:#fff;text-decoration:none;color:#0f172a;cursor:pointer}
-  .pill.primary{background:var(--brand);border-color:var(--brand);color:#fff}
-  .pill.primary:hover{background:var(--brand-2)}
-  .list{margin:8px 0 0;padding:0;list-style:none}
-  .list li{display:flex;justify-content:space-between;align-items:center;border:1px solid #ececec;background:#fafafa;border-radius:12px;padding:12px;margin:8px 0}
-  .muted{color:var(--muted)}
-
-  /* Hero */
-  .hero{background:linear-gradient(135deg,#eaf6ff,#f7fbff);border:1px solid #dfe9fb;border-radius:14px;padding:16px}
+  /* Hero / welcome */
+  .hero{padding:16px;background:linear-gradient(135deg,#eaf6ff,#f7fbff);border:1px solid #dfe9fb;border-radius:14px}
   .hero p{margin:8px 0 0;color:#475569}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
   .chip{background:#f6f7fb;border:1px solid #e6e8f2;padding:6px 10px;border-radius:999px;font-size:12px}
+
+  /* Feed preview */
+  .post{border:1px solid #e6eaf2;border-radius:12px;padding:12px;margin:10px 0}
+  .post .head{display:flex;gap:10px;align-items:center}
+  .post .ava{width:36px;height:36px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
+  .post .author{font-weight:700}
+  .post .time{font-size:12px;color:#6b7280}
+  .post .txt{white-space:pre-wrap;margin-top:6px}
+
+  /* People you may know */
+  .person{display:flex;gap:10px;align-items:center}
+  .person .picon{width:34px;height:34px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
 
   /* Modals */
   .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000}
   .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 28px rgba(0,0,0,.35);padding:16px}
 </style>
 
-<!-- Offset calculator (matches Feed/Friends/Admin/Market) -->
+<!-- Offset calculator (keeps blue bar + app nav perfectly placed under your Weebly/GitHub header) -->
 <script>
 (function(){
   var GAP=12;
   var MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
+
   function pickMenuBottom(){
     var bottoms=[];
     for(var i=0;i<MENU_SELS.length;i++){
       var el=document.querySelector(MENU_SELS[i]); if(!el) continue;
       var r=el.getBoundingClientRect(), h=r.height, w=r.width;
-      var ok=h>=32 && h<=120 && r.top>-20 && r.top<180 && w>300;
+      var ok=h>=32 && h<=140 && r.top>-20 && r.top<200 && w>300;
       if(ok) bottoms.push(Math.round(r.bottom));
     }
     var best=bottoms.length?Math.min.apply(null,bottoms):120;
-    if(best>200) best=120;
+    if(best>240) best=120;
     try{ var force=localStorage.getItem('ct_force_header_px'); if(force) best=parseInt(force,10)||best; }catch(_){}
     return best;
   }
@@ -109,14 +141,16 @@
     var blueTop = pickMenuBottom() + GAP;
     var barH = measure(document.querySelector('.top-bar'), 50);
     var navH = measure(document.querySelector('nav.app-nav'), 46);
-    document.documentElement.style.setProperty('--blueTop', blueTop+'px');
-    document.documentElement.style.setProperty('--barH', barH+'px');
-    document.documentElement.style.setProperty('--navH', navH+'px');
-    document.documentElement.style.setProperty('--pagePad', (blueTop+barH+navH)+'px');
+    var root=document.documentElement;
+    root.style.setProperty('--blueTop', blueTop+'px');
+    root.style.setProperty('--barH', barH+'px');
+    root.style.setProperty('--navH', navH+'px');
+    root.style.setProperty('--pagePad', (blueTop+barH+navH)+'px');
   }
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', apply); } else { apply(); }
   addEventListener('resize', apply, {passive:true});
   addEventListener('orientationchange', apply, {passive:true});
+  setTimeout(apply, 0); setTimeout(apply, 250); setTimeout(apply, 800);
 })();
 </script>
 </head>
@@ -149,7 +183,6 @@
     <a href="music.html">Music</a>
     <a href="messages.html">Messages</a>
     <a href="profile.html">Profile</a>
-    <a href="admin.html">Admin</a>
     <a href="settings.html">Settings</a>
   </div>
 </nav>
@@ -160,8 +193,8 @@
     <h3 class="section-title" style="margin:0 0 10px">Notifications</h3>
     <div id="notifList"></div>
     <div class="row" style="margin-top:8px">
-      <button id="clearNotif" class="pill primary" type="button">Clear</button>
-      <button id="closeNotif" class="pill" type="button">Close</button>
+      <button id="clearNotif" class="pill primary small" type="button">Clear</button>
+      <button id="closeNotif" class="pill small" type="button">Close</button>
     </div>
   </div>
 </div>
@@ -172,7 +205,7 @@
     <h3 class="section-title" style="margin:0 0 10px">Inbox</h3>
     <div id="inboxList"></div>
     <div class="row" style="margin-top:8px">
-      <button id="closeInbox" class="pill" type="button">Close</button>
+      <button id="closeInbox" class="pill small" type="button">Close</button>
     </div>
   </div>
 </div>
@@ -180,49 +213,66 @@
 <!-- Page -->
 <div class="page">
   <div class="grid">
-    <!-- Hero / About Chatternet -->
-    <section class="card hero">
-      <h3 class="section-title">Welcome to Chatternet</h3>
-      <p><strong>Chatternet</strong> is your all-in-one social home: a fast timeline for sharing life, a friendly space for groups and events, a lightweight marketplace for quick trades, and a messenger that’s always one click away. It’s simple, fast, and yours—built to feel like a familiar feed but powerful enough to run a community.</p>
-      <div class="chips" aria-label="Highlights">
-        <span class="chip">Real-time messenger</span>
-        <span class="chip">Feed & groups</span>
-        <span class="chip">Chatter Market</span>
-        <span class="chip">Events & RSVPs</span>
-        <span class="chip">Media & blogs</span>
-        <span class="chip">Flexible privacy</span>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <a class="pill primary" href="feed.html">Open Feed</a>
-        <a class="pill" href="friends.html">Find Friends</a>
-        <a class="pill" href="chattermarket.html">Browse Market</a>
-        <a class="pill" href="profile.html">Edit Profile</a>
-      </div>
-    </section>
+    <!-- LEFT -->
+    <main>
+      <!-- Welcome / hero -->
+      <section class="card hero">
+        <div class="row" style="gap:12px; align-items:center">
+          <img id="meAvaHero" alt="" style="width:46px;height:46px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover">
+          <div style="min-width:0">
+            <div class="section-title" style="margin:0;font-size:18px">Welcome back, chatterfriends!</div>
+            <div class="muted">Here’s what’s new from your network.</div>
+          </div>
+        </div>
 
-    <!-- Quick Links -->
-    <section class="card">
-      <h3 class="section-title">Quick Links</h3>
-      <ul class="list">
-        <li><span>Feed</span><a class="pill" href="feed.html">Open</a></li>
-        <li><span>Friends</span><a class="pill" href="friends.html">Open</a></li>
-        <li><span>Chatter Market</span><a class="pill" href="chattermarket.html">Open</a></li>
-        <li><span>Groups</span><a class="pill" href="groups.html">Open</a></li>
-        <li><span>Events</span><a class="pill" href="events.html">Open</a></li>
-        <li><span>Media</span><a class="pill" href="media.html">Open</a></li>
-        <li><span>Dating</span><a class="pill" href="dating.html">Open</a></li>
-        <li><span>Blogs</span><a class="pill" href="blogs.html">Open</a></li>
-        <li><span>Polls</span><a class="pill" href="polls.html">Open</a></li>
-        <li><span>Music</span><a class="pill" href="music.html">Open</a></li>
-        <li><span>Messages (full page)</span><a class="pill" href="messages.html">Open</a></li>
-        <li><span>Admin</span><a class="pill" href="admin.html">Open</a></li>
-        <li><span>Settings</span><a class="pill" href="settings.html">Open</a></li>
-      </ul>
-    </section>
+        <div class="pillbar" style="margin-top:10px">
+          <a class="pill primary small" href="feed.html#compose">Write a post</a>
+          <a class="pill small" href="friends.html">Find friends</a>
+          <a class="pill small" href="media.html">Upload media</a>
+        </div>
+
+        <div class="chips" aria-label="Highlights" style="margin-top:10px">
+          <span class="chip">Real-time messenger</span>
+          <span class="chip">Feed & groups</span>
+          <span class="chip">Chatter Market</span>
+          <span class="chip">Events & RSVPs</span>
+          <span class="chip">Media & blogs</span>
+          <span class="chip">Flexible privacy</span>
+        </div>
+      </section>
+
+      <!-- Latest posts preview -->
+      <section class="card">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <strong>Latest posts</strong>
+          <a class="pill small" href="feed.html">Open Feed</a>
+        </div>
+        <div id="homeFeed"></div>
+      </section>
+    </main>
+
+    <!-- RIGHT -->
+    <aside>
+      <section class="card">
+        <div class="row" style="justify-content:space-between">
+          <strong>People you may know</strong>
+        </div>
+        <div id="suggestions" style="display:flex;flex-direction:column;gap:10px;margin-top:8px"></div>
+      </section>
+
+      <section class="card">
+        <strong>Quick links</strong>
+        <div class="pillbar" style="margin-top:10px">
+          <a class="pill small" href="profile.html">My profile</a>
+          <a class="pill small" href="messages.html">Messages</a>
+          <a class="pill small" href="settings.html">Settings</a>
+        </div>
+      </section>
+    </aside>
   </div>
 </div>
 
-<!-- Messenger loader -->
+<!-- Messenger loader (overlay if available, else go to messages.html) -->
 <script>
 (function(){
   "use strict";
@@ -245,6 +295,7 @@
     }
   });
 
+  // Make every "Messages" link/buttons open overlay if available
   document.addEventListener('click', function(e){
     var a=e.target.closest && e.target.closest('a[href*="messages.html"]'); if(!a) return;
     if(window.ctOpen || window.ChatternetMessenger?.open){ e.preventDefault(); (window.ctOpen || window.ChatternetMessenger.open)(""); }
@@ -252,31 +303,128 @@
 })();
 </script>
 
+<!-- Page logic (profile/avatar, modals, suggestions, latest posts) -->
 <script>
-/* ===== minimal profile + modals ===== */
 const $=s=>document.querySelector(s);
 const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
 const save=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
-const LS={ PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1' };
+const LS={ PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1', USERS:'ct_users_v3' };
+const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'me')}`;
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const timeAgo=(iso)=>{ const s=(Date.now()-new Date(iso).getTime())/1000; if(s<60)return Math.floor(s)+'s'; if(s<3600)return Math.floor(s/60)+'m'; if(s<86400)return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; };
+const nowISO=()=>new Date().toISOString();
 
-function getAvatar(){ const p=(load(LS.PROFILE,{}))['Me']; return (p&&(p.avatar||p.avatarUrl||p.photo)) || 'https://i.pravatar.cc/100?u=me'; }
+/* Header + modals */
+(function header(){
+  const p=(load(LS.PROFILE,{}))['Me']||{};
+  const ava=p.avatar||p.avatarUrl||face('Me');
+  $('#myProfile').src=ava; $('#myProfile').referrerPolicy='no-referrer'; $('#myProfile').onclick=()=>location.href='profile.html';
+  $('#meAvaHero').src=ava; $('#meAvaHero').referrerPolicy='no-referrer';
 
-(function(){
-  const img=$('#myProfile'); if(img){ img.src=getAvatar(); img.alt='Me'; img.referrerPolicy='no-referrer'; img.onclick=()=>location.href='profile.html'; }
+  const nM=$('#notifModal'), iM=$('#inboxModal');
+  const rN=()=>{ const a=load(LS.NOTIF,[]); $('#notifList').innerHTML=a.length?a.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; };
+  const rI=()=>{ const a=load(LS.INBOX,[]); $('#inboxList').innerHTML=a.length?a.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; };
 
-  const notifModal=$('#notifModal'), inboxModal=$('#inboxModal');
-  function rNotif(){ const a=load(LS.NOTIF,[]); $('#notifList').innerHTML=a.length?a.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${n.text||''}</div>`).join(''):'No notifications yet.'; }
-  function rInbox(){ const a=load(LS.INBOX,[]); $('#inboxList').innerHTML=a.length?a.map(n=>`<div class="muted" style="margin:6px 0"><strong>${new Date(n.time).toLocaleString()}</strong><br>${n.text||''}</div>`).join(''):'Inbox is empty.'; }
+  $('#btnNotif').onclick=()=>{ rN(); nM.style.display='flex'; };
+  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); };
+  $('#closeNotif').onclick=()=>{ nM.style.display='none'; };
 
-  $('#btnNotif').onclick=()=>{ rNotif(); notifModal.style.display='flex'; };
-  $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rNotif(); };
-  $('#closeNotif').onclick=()=>{ notifModal.style.display='none'; };
+  $('#btnInbox').onclick=()=>{ rI(); iM.style.display='flex'; };
+  $('#closeInbox').onclick=()=>{ iM.style.display='none'; };
 
-  $('#btnInbox').onclick=()=>{ rInbox(); inboxModal.style.display='flex'; };
-  $('#closeInbox').onclick=()=>{ inboxModal.style.display='none'; };
-
+  // Messages button always opens overlay if present
   $('#btnMsgs').onclick=(e)=>{ e.preventDefault(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); location.href='messages.html'; };
 })();
+
+/* People you may know */
+(function suggestions(){
+  let u = load(LS.USERS,[]);
+  if(!u || !u.length){
+    // Seed a friendly list if empty
+    u = ['Chatternet','Bill Thomas','Kate White','Michael Reed','Olivia Perez','David Carter','Grace Lee','Ava Morgan','Noah Walker','Mason Hill']
+      .map(n=>({name:n, avatar:face(n)}));
+    u.unshift({name:'Me',avatar:face('Me')});
+    save(LS.USERS,u);
+  }
+  const box=$('#suggestions');
+  const list=u.filter(x=>x.name!=='Me').slice(0,6);
+  box.innerHTML = list.map(x=>`
+    <div class="person">
+      <img class="picon" src="${x.avatar||face(x.name)}" alt="">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600">${esc(x.name)}</div>
+        <div class="muted" style="font-size:12px">@${esc(x.name.toLowerCase().replace(/\s+/g,'.'))}</div>
+      </div>
+      <button class="pill small">Message</button>
+    </div>`).join('');
+
+  // Message buttons open overlay if present
+  box.addEventListener('click',(e)=>{
+    const b=e.target.closest('button'); if(!b) return;
+    if(window.ctOpen) return window.ctOpen();
+    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+    location.href='messages.html';
+  });
+})();
+
+/* Latest posts preview (supports multiple feed keys) */
+(function feedPreview(){
+  const FEED_KEYS=['ct_feed_posts_v7','ct_feed_posts_v1','ct_feed_posts']; // try newest first
+  let posts=null, k=null;
+  for(const key of FEED_KEYS){ const v=load(key,null); if(Array.isArray(v) && v.length){ posts=v; k=key; break; } }
+  if(!posts){
+    // Minimal seed so Home shows something even on fresh devices
+    posts=[
+      {id:'p1',author:'Chatternet',avatar:face('Chatternet'),content:'What a sunny day in Horsham ☀️ Walking the dog later!',createdAt:nowISO()},
+      {id:'p2',author:'Bill Thomas',avatar:face('Bill Thomas'),content:'Cooking pasta tonight. Any favorite sauces?',createdAt:nowISO()},
+      {id:'p3',author:'Me',avatar:face('Me'),content:'Hello, world! First post on Chatternet ◻️',createdAt:nowISO()}
+    ];
+    save('ct_feed_posts_v7',posts);
+  }
+  const box=$('#homeFeed');
+  const html = posts.slice(0,6).map(p=>`
+    <article class="post">
+      <div class="head">
+        <img class="ava" src="${p.avatar||face(p.author)}" alt="">
+        <div style="min-width:0">
+          <div class="author">${esc(p.author||'—')}</div>
+          <div class="time">${timeAgo(p.createdAt||p.time||Date.now())} ago</div>
+        </div>
+      </div>
+      <div class="txt">${esc(p.content||p.text||'')}</div>
+    </article>`).join('');
+  box.innerHTML = html || '<div class="muted">No posts yet. Visit the Feed to share something.</div>';
+})();
 </script>
+
+<!-- Auto-pill patcher: makes all contextual chips match your nav pill style -->
+<script>
+(function(){
+  function pillify(el, opts){ opts=opts||{}; if(!el) return;
+    if(!el.classList.contains('pill') && !el.classList.contains('btn')){ el.classList.add('pill','small'); }
+    if(opts.primary) el.classList.add('primary');
+  }
+
+  // Hero CTAs
+  document.querySelectorAll('.hero .pillbar a, .hero .row a, .hero .row button')
+    .forEach(el=>pillify(el, {primary:/write a post/i.test(el.textContent)}));
+
+  // "Open Feed"
+  document.querySelectorAll('a').forEach(a=>{ if(/open feed/i.test(a.textContent||'')) pillify(a); });
+
+  // Quick links & right column actions
+  document.querySelectorAll('.card .pillbar a, .card .pillbar button, .card .row a, .card .row button')
+    .forEach(el=>pillify(el));
+
+  // Any lone “Message” buttons
+  document.querySelectorAll('button, a').forEach(el=>{
+    if(/^message$/i.test((el.textContent||'').trim())) pillify(el);
+  });
+
+  // Ensure common containers are spaced nicely
+  document.querySelectorAll('.hero .row, .pillbar').forEach(c=>c.classList.add('pillbar'));
+})();
+</script>
+
 </body>
 </html>
