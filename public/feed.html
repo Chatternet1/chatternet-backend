@@ -10,6 +10,11 @@
     --barH: 52px;            /* blue bar height */
     --navH: 48px;            /* app nav height */
     --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
+
+    /* brand blues */
+    --barBlue:#0ea5e9;                /* top bar */
+    --navBlueBg: rgba(14,165,233,.12);/* soft backdrop under pills */
+    --navBlueLine: rgba(14,165,233,.25);
   }
   html,body{
     margin:0;padding:0;background:#f5f7fb;color:#0f172a;
@@ -23,7 +28,7 @@
   .top-bar{
     position:fixed; left:0; right:0; top:var(--blueTop); z-index:1250;
     display:flex; align-items:center; justify-content:space-between;
-    padding:10px 14px; background:#0ea5e9; color:#fff;
+    padding:10px 14px; background:var(--barBlue); color:#fff;
     border-bottom:1px solid rgba(255,255,255,.2);
   }
   .top-bar h2{margin:0;font-size:18px;font-weight:700}
@@ -35,21 +40,28 @@
   .pillbtn:hover{background:rgba(255,255,255,.26)}
   #meAvatar{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.7);object-fit:cover;cursor:pointer}
 
-  /* App nav (fixed under blue bar) */
+  /* App nav (fixed under blue bar) — centered, blue backdrop */
   nav.app-nav{
     position:fixed; left:0; right:0; top:calc(var(--blueTop) + var(--barH));
-    z-index:1190; background:#fff; border-bottom:1px solid #e6eaf2;
+    z-index:1190;
+    background:var(--navBlueBg);
+    border-bottom:1px solid var(--navBlueLine);
     visibility:visible !important;
     font-family: Arial, "Segoe UI", system-ui, -apple-system, sans-serif;
   }
-  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+  nav.app-nav .inner{
+    max-width:1100px;margin:0 auto;
+    display:flex;gap:10px;flex-wrap:wrap;
+    padding:8px 12px;
+    justify-content:center;                 /* ⟵ center the pills */
+  }
   nav.app-nav a{
     display:inline-block !important; padding:8px 10px !important; border-radius:999px !important;
-    color:#111 !important; background:#f3f4f6 !important; text-decoration:none !important;
-    line-height:1 !important; font-weight:500 !important;
+    color:#111 !important; background:#ffffff !important; text-decoration:none !important;
+    line-height:1 !important; font-weight:600 !important; border:1px solid #e6eaf2 !important;
   }
-  nav.app-nav a.active{background:#dbeafe !important; color:#1e3a8a !important}
-  nav.app-nav a:hover{background:#e5e7eb !important}
+  nav.app-nav a.active{background:#e8f1ff !important; color:#0b3a67 !important; border-color:#cfe0ff !important}
+  nav.app-nav a:hover{background:#f6f9ff !important}
 
   /* Layout below bars */
   .page{
@@ -107,7 +119,7 @@
 </style>
 
 <script>
-/* ===== Positioner: uses footer/ct-layout vars, then forces tops with !important ===== */
+/* ===== Positioner: keeps bars under your site header, centers pills ===== */
 (function(){
   var GAP=12;
   var MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
@@ -139,7 +151,6 @@
   }
 
   function apply(){
-    // Prefer ct-layout’s --ct-bluebar-top; else derive from --ct-header-bottom; else measure
     var blueVar=getVar('--ct-bluebar-top');
     var headerVar=getVar('--ct-header-bottom');
     var baseTop = blueVar!=null ? blueVar :
@@ -148,19 +159,16 @@
     var bar=document.querySelector('.top-bar');
     var nav=document.querySelector('nav.app-nav');
 
-    // Place bar first, measure, then place nav
     if(bar) bar.style.top=baseTop+'px';
     var barH=h(bar,52);
     var navTop=baseTop + barH;
 
-    // Update CSS vars for padding/consistency
     var root=document.documentElement;
     root.style.setProperty('--blueTop', baseTop+'px');
     root.style.setProperty('--barH', barH+'px');
     root.style.setProperty('--navH', h(nav,46)+'px');
     root.style.setProperty('--pagePad', (baseTop+barH+h(nav,46))+'px');
 
-    // Hard override with !important so nothing can flip the order
     forceCSS(baseTop, navTop);
   }
 
@@ -315,7 +323,7 @@ const setPosts = a=>save(LS.FEED,a);
 (function seedFeed(){
   let p=posts(); if(p && p.length) return;
   const take = load(LS.USERS,[]).filter(x=>x.name!=='Me').slice(0,5).map(x=>x.name);
-  const demo=[ {a:take[0]||'Grace Lee',t:"What a sunny day in Horsham ☀️ Walking the dog later!"}, {a:take[1]||'Liam Adams',t:"Cooking pasta tonight. Any favorite sauces?"}, {a:'Me',t:"Hello, world! First post on Chatternet □"}, {a:take[2]||'Ava Morgan',t:"Finished a great documentary—recommendations welcome."}, {a:take[3]||'Noah Walker',t:"Gym done ✅ Coffee time."} ];
+  const demo=[ {a:take[0]||'Grace Lee',t:"What a sunny day in Horsham ☀️ Walking the dog later!"}, {a:take[1]||'Liam Adams',t:"Cooking pasta tonight. Any favorite sauces?"}, {a:'Me',t:"Hello, world! First post on Chatternet 🌐"}, {a:take[2]||'Ava Morgan',t:"Finished a great documentary—recommendations welcome."}, {a:take[3]||'Noah Walker',t:"Gym done ✅ Coffee time."} ];
   p = demo.map(d=>({id:'p_'+Math.random().toString(36).slice(2),author:d.a,avatar:face(d.a),text:d.t,time:nowISO(),likes:Math.floor(Math.random()*15),comments:0,cmts:[],img:null}));
   setPosts(p);
 })();
@@ -365,7 +373,7 @@ function postHtml(p){
     <div class="row">
       <button class="btn" data-act="like">❤️ Like</button>
       <span class="pill" data-role="counts">${counts}</span>
-      <button class="btn" data-act="toggleComments">□ Comment</button>
+      <button class="btn" data-act="toggleComments">💬 Comment</button>
       <button class="btn warn" data-act="delete">Delete</button>
     </div>
 
