@@ -6,19 +6,22 @@
 <title>Feed — Chatternet</title>
 <style>
   :root{
-    --blueTop: 132px;   /* set precisely by script */
-    --barH: 52px;       /* measured height of blue bar */
-    --navH: 48px;       /* measured height of app nav */
+    --blueTop: 132px;        /* fallback; script overwrites */
+    --barH: 52px;            /* blue bar height */
+    --navH: 48px;            /* app nav height */
     --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
   }
-  html,body{margin:0;padding:0;background:#f5f7fb;color:#0f172a;
-    font:14px/1.45 "Segoe UI", Arial, system-ui, -apple-system, sans-serif}
+  html,body{
+    margin:0;padding:0;background:#f5f7fb;color:#0f172a;
+    font:14px/1.45 Arial, "Segoe UI", system-ui, -apple-system, sans-serif;
+    overflow-y:auto !important;
+  }
   a{color:#2563eb;text-decoration:none}
   *{box-sizing:border-box}
 
-  /* Fixed blue bar (no scrolling) */
+  /* Blue bar (fixed) */
   .top-bar{
-    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1200;
+    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1250;
     display:flex; align-items:center; justify-content:space-between;
     padding:10px 14px; background:#0ea5e9; color:#fff;
     border-bottom:1px solid rgba(255,255,255,.2);
@@ -32,12 +35,12 @@
   .pillbtn:hover{background:rgba(255,255,255,.26)}
   #meAvatar{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.7);object-fit:cover;cursor:pointer}
 
-  /* App nav — fixed under blue bar (always visible) */
+  /* App nav (fixed under blue bar) */
   nav.app-nav{
-    position:fixed; left:0; right:0;
-    top:calc(var(--blueTop) + var(--barH));
+    position:fixed; left:0; right:0; top:calc(var(--blueTop) + var(--barH));
     z-index:1190; background:#fff; border-bottom:1px solid #e6eaf2;
     visibility:visible !important;
+    font-family: Arial, "Segoe UI", system-ui, -apple-system, sans-serif;
   }
   nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
   nav.app-nav a{
@@ -48,7 +51,7 @@
   nav.app-nav a.active{background:#dbeafe !important; color:#1e3a8a !important}
   nav.app-nav a:hover{background:#e5e7eb !important}
 
-  /* Page: pad = menu->blue gap + blue height + nav height */
+  /* Layout below bars */
   .page{
     max-width:1100px;margin:14px auto;padding:0 12px;
     display:grid;grid-template-columns:1fr 320px;gap:14px;
@@ -104,39 +107,66 @@
 </style>
 
 <script>
-/* ==== Positioner (measures real heights; picks nearest menu) ==== */
+/* ===== Positioner: uses footer/ct-layout vars, then forces tops with !important ===== */
 (function(){
-  var GAP = 12;
-  var MENU_SELS = [
-    '.wsite-nav','.wsite-menu-default','.wsite-menus',
-    '.w-nav','.nav-wrapper','.navbar',
-    '.siteHeader .nav','.desktop-nav','.top-nav',
-    'nav[role="navigation"]','.site-navigation'
-  ];
-  function pickMenuBottom(){
+  var GAP=12;
+  var MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
+
+  function getVar(pxName){
+    var v=getComputedStyle(document.documentElement).getPropertyValue(pxName)||'';
+    var n=parseInt(v,10); return isFinite(n)&&n>0?n:null;
+  }
+  function pickMenuBottomFallback(){
     var bottoms=[];
     for(var i=0;i<MENU_SELS.length;i++){
       var el=document.querySelector(MENU_SELS[i]); if(!el) continue;
       var r=el.getBoundingClientRect(), h=r.height, w=r.width;
-      var plausible = h>=32 && h<=120 && r.top>-20 && r.top<180 && w>300;
+      var plausible=h>=32 && h<=180 && r.top>-40 && r.top<220 && w>300;
       if(plausible) bottoms.push(Math.round(r.bottom));
     }
-    var best = bottoms.length ? Math.min.apply(null,bottoms) : 120;
-    if(best>200) best=120;
-    try{ var force=localStorage.getItem('ct_force_header_px'); if(force) best=parseInt(force,10)||best; }catch(e){}
+    var best=bottoms.length?Math.min.apply(null,bottoms):120;
+    if(best>260) best=120;
+    try{var force=localStorage.getItem('ct_force_header_px'); if(force) best=parseInt(force,10)||best;}catch(_){}
     return best;
   }
-  function measure(el, fallback){ if(!el) return fallback; var r=el.getBoundingClientRect(); return Math.max(fallback, Math.round(r.height)); }
-  function apply(){
-    var blueTop = pickMenuBottom() + GAP;
-    var barH = measure(document.querySelector('.top-bar'), 50);
-    var navH = measure(document.querySelector('nav.app-nav'), 46);
-    document.documentElement.style.setProperty('--blueTop', blueTop+'px');
-    document.documentElement.style.setProperty('--barH', barH+'px');
-    document.documentElement.style.setProperty('--navH', navH+'px');
-    document.documentElement.style.setProperty('--pagePad', (blueTop+barH+navH)+'px');
+  function h(el,fb){ if(!el) return fb; var r=el.getBoundingClientRect(); return Math.max(fb, Math.round(r.height||fb)); }
+
+  var styleTag=null;
+  function forceCSS(barTop, navTop){
+    var css=".top-bar{top:"+barTop+"px !important} nav.app-nav{top:"+navTop+"px !important}";
+    if(!styleTag){ styleTag=document.createElement('style'); styleTag.id='ct-force-tops'; document.head.appendChild(styleTag); }
+    styleTag.textContent=css;
   }
-  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', apply); } else { apply(); }
+
+  function apply(){
+    // Prefer ct-layout’s --ct-bluebar-top; else derive from --ct-header-bottom; else measure
+    var blueVar=getVar('--ct-bluebar-top');
+    var headerVar=getVar('--ct-header-bottom');
+    var baseTop = blueVar!=null ? blueVar :
+                  headerVar!=null ? (headerVar + GAP) : pickMenuBottomFallback() + GAP;
+
+    var bar=document.querySelector('.top-bar');
+    var nav=document.querySelector('nav.app-nav');
+
+    // Place bar first, measure, then place nav
+    if(bar) bar.style.top=baseTop+'px';
+    var barH=h(bar,52);
+    var navTop=baseTop + barH;
+
+    // Update CSS vars for padding/consistency
+    var root=document.documentElement;
+    root.style.setProperty('--blueTop', baseTop+'px');
+    root.style.setProperty('--barH', barH+'px');
+    root.style.setProperty('--navH', h(nav,46)+'px');
+    root.style.setProperty('--pagePad', (baseTop+barH+h(nav,46))+'px');
+
+    // Hard override with !important so nothing can flip the order
+    forceCSS(baseTop, navTop);
+  }
+
+  var run=function(){ apply(); setTimeout(apply,100); setTimeout(apply,500); };
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', run); } else { run(); }
+  addEventListener('load', function(){ setTimeout(apply,800); }, {once:true});
   addEventListener('resize', apply, {passive:true});
   addEventListener('orientationchange', apply, {passive:true});
 })();
@@ -177,8 +207,6 @@
 
 <!-- Page -->
 <div class="page">
-
-  <!-- Main column -->
   <main>
     <!-- Composer -->
     <section class="card">
@@ -201,7 +229,6 @@
     <section id="feedList" class="feed"></section>
   </main>
 
-  <!-- Right column -->
   <aside class="side">
     <div class="card section">
       <div class="row" style="justify-content:space-between">
