@@ -16,13 +16,27 @@
     --navBlueBg: rgba(14,165,233,.12);/* soft backdrop under pills */
     --navBlueLine: rgba(14,165,233,.25);
   }
+
   html,body{
     margin:0;padding:0;background:#f5f7fb;color:#0f172a;
     font:14px/1.45 Arial, "Segoe UI", system-ui, -apple-system, sans-serif;
-    overflow-y:auto !important;
+    text-size-adjust:100%;
   }
   a{color:#2563eb;text-decoration:none}
   *{box-sizing:border-box}
+
+  /* ===== Typography reset (kills Weebly's ligature/kerning overrides) ===== */
+  .top-bar, .top-bar *, nav.app-nav, nav.app-nav *, .page, .page *{
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    font-kerning: normal !important;
+    font-variant-ligatures: none !important;
+    font-feature-settings: "kern" 1, "liga" 0, "clig" 0 !important;
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    line-height: 1.45;
+  }
 
   /* Blue bar (fixed) */
   .top-bar{
@@ -31,7 +45,7 @@
     padding:10px 14px; background:var(--barBlue); color:#fff;
     border-bottom:1px solid rgba(255,255,255,.2);
   }
-  .top-bar h2{margin:0;font-size:18px;font-weight:700}
+  .top-bar h2{margin:0;font-size:18px;font-weight:800;letter-spacing:.2px}
   .top-actions{display:flex;gap:10px;align-items:center}
   .pillbtn{
     height:36px;padding:0 12px;border-radius:999px;cursor:pointer;
@@ -53,7 +67,7 @@
     max-width:1100px;margin:0 auto;
     display:flex;gap:10px;flex-wrap:wrap;
     padding:8px 12px;
-    justify-content:center;                 /* ⟵ center the pills */
+    justify-content:center;
   }
   nav.app-nav a{
     display:inline-block !important; padding:8px 10px !important; border-radius:999px !important;
@@ -91,7 +105,7 @@
   .post{border:1px solid #e6eaf2;border-radius:14px;padding:12px}
   .post .head{display:flex;gap:10px;align-items:center;margin-bottom:8px}
   .post .pava{width:40px;height:40px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
-  .post .author{font-weight:600}
+  .post .author{font-weight:700}
   .post .time{font-size:12px;color:#6b7280}
   .post .txt{white-space:pre-wrap;margin:6px 0 8px}
   .post .img{width:100%;border-radius:12px;border:1px solid #eee;margin:8px 0;display:block}
@@ -118,63 +132,45 @@
   .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
 </style>
 
+<!-- Positioner: keeps bars under the Weebly header -->
 <script>
-/* ===== Positioner: keeps bars under your site header, centers pills ===== */
 (function(){
   var GAP=12;
   var MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
 
-  function getVar(pxName){
-    var v=getComputedStyle(document.documentElement).getPropertyValue(pxName)||'';
-    var n=parseInt(v,10); return isFinite(n)&&n>0?n:null;
-  }
-  function pickMenuBottomFallback(){
+  function pickMenuBottom(){
     var bottoms=[];
     for(var i=0;i<MENU_SELS.length;i++){
       var el=document.querySelector(MENU_SELS[i]); if(!el) continue;
       var r=el.getBoundingClientRect(), h=r.height, w=r.width;
-      var plausible=h>=32 && h<=180 && r.top>-40 && r.top<220 && w>300;
-      if(plausible) bottoms.push(Math.round(r.bottom));
+      var ok=h>=32 && h<=180 && r.top>-40 && r.top<220 && w>300;
+      if(ok) bottoms.push(Math.round(r.bottom));
     }
     var best=bottoms.length?Math.min.apply(null,bottoms):120;
     if(best>260) best=120;
-    try{var force=localStorage.getItem('ct_force_header_px'); if(force) best=parseInt(force,10)||best;}catch(_){}
-    return best;
+    try{ var force=localStorage.getItem('ct_force_header_px'); if(force) best=parseInt(force,10)||best; }catch(_){}
+    return best + GAP;
   }
-  function h(el,fb){ if(!el) return fb; var r=el.getBoundingClientRect(); return Math.max(fb, Math.round(r.height||fb)); }
-
-  var styleTag=null;
-  function forceCSS(barTop, navTop){
-    var css=".top-bar{top:"+barTop+"px !important} nav.app-nav{top:"+navTop+"px !important}";
-    if(!styleTag){ styleTag=document.createElement('style'); styleTag.id='ct-force-tops'; document.head.appendChild(styleTag); }
-    styleTag.textContent=css;
-  }
+  function measure(el,fb){ if(!el) return fb; var r=el.getBoundingClientRect(); return Math.max(fb, Math.round(r.height||fb)); }
 
   function apply(){
-    var blueVar=getVar('--ct-bluebar-top');
-    var headerVar=getVar('--ct-header-bottom');
-    var baseTop = blueVar!=null ? blueVar :
-                  headerVar!=null ? (headerVar + GAP) : pickMenuBottomFallback() + GAP;
-
+    var baseTop = pickMenuBottom();
     var bar=document.querySelector('.top-bar');
     var nav=document.querySelector('nav.app-nav');
 
     if(bar) bar.style.top=baseTop+'px';
-    var barH=h(bar,52);
-    var navTop=baseTop + barH;
+    var barH=measure(bar,52);
+    var navH=measure(nav,46);
 
     var root=document.documentElement;
     root.style.setProperty('--blueTop', baseTop+'px');
     root.style.setProperty('--barH', barH+'px');
-    root.style.setProperty('--navH', h(nav,46)+'px');
-    root.style.setProperty('--pagePad', (baseTop+barH+h(nav,46))+'px');
-
-    forceCSS(baseTop, navTop);
+    root.style.setProperty('--navH', navH+'px');
+    root.style.setProperty('--pagePad', (baseTop+barH+navH)+'px');
   }
 
-  var run=function(){ apply(); setTimeout(apply,100); setTimeout(apply,500); };
+  var run=function(){ apply(); setTimeout(apply,120); setTimeout(apply,600); };
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', run); } else { run(); }
-  addEventListener('load', function(){ setTimeout(apply,800); }, {once:true});
   addEventListener('resize', apply, {passive:true});
   addEventListener('orientationchange', apply, {passive:true});
 })();
@@ -280,7 +276,13 @@
 
 <script>
 /* ===== Store & helpers ===== */
-const LS={ USERS:'ct_users_v3', PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1', FEED:'ct_feed_posts_v1' };
+const LS={
+  USERS:'ct_users_v3',
+  PROFILE:'ct_profile_data_v1',
+  NOTIF:'ct_notifications_v1',
+  INBOX:'ct_inbox_v1',
+  FEED:'ct_feed_posts_v7'   /* unified with Settings page */
+};
 const $=s=>document.querySelector(s);
 const load=(k,f)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;} };
 const save=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
@@ -288,12 +290,16 @@ const nowISO=()=>new Date().toISOString();
 const face=n=>`https://i.pravatar.cc/200?u=${encodeURIComponent(n||'me')}`;
 const timeAgo=(iso)=>{ const s=(Date.now()-new Date(iso).getTime())/1000; if(s<60)return Math.floor(s)+'s'; if(s<3600)return Math.floor(s/60)+'m'; if(s<86400)return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; };
 
-/* ===== Header wiring & overlay button ===== */
+/* ===== Header wiring ===== */
 (function header(){
   const prof=(load(LS.PROFILE,{}))['Me']||{};
   const me=$('#meAvatar'); if(me){ me.referrerPolicy='no-referrer'; me.loading='lazy'; me.src=prof.avatar||face('Me'); me.alt='Me'; me.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{}; location.href='profile.html'; }; }
   const me2=$('#meAvatar2'); if(me2){ me2.referrerPolicy='no-referrer'; me2.loading='lazy'; me2.src=prof.avatar||face('Me'); }
-  document.getElementById('btnMsgs').onclick = (e)=>{ e.preventDefault(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); if(window.ctOpen) return window.ctOpen(); location.href='messages.html'; };
+  document.getElementById('btnMsgs').onclick = (e)=>{ e.preventDefault();
+    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
+    if(window.ctOpen) return window.ctOpen();
+    location.href='messages.html';
+  };
 
   const nbg=document.getElementById('notifBg'), ibg=document.getElementById('inboxBg');
   function rN(){ const arr=load(LS.NOTIF,[]); document.getElementById('notifList').innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${n.text||''}</div>`).join(''):'No notifications yet.'; }
@@ -311,26 +317,41 @@ const timeAgo=(iso)=>{ const s=(Date.now()-new Date(iso).getTime())/1000; if(s<6
   const WANT = ['Chatternet','Bill Thomas','Kate White','Michael Reed','Olivia Perez','David Carter','Grace Lee','Liam Adams','Ava Morgan','Noah Walker','Sophia Turner','Mason Hill'];
   const names = new Set(u.map(x=>x && x.name).filter(Boolean));
   if(!names.has('Me')) u.unshift({name:'Me',avatar:face('Me')});
-  if(u.filter(x=>x.name!=='Me').length < 8){ WANT.forEach(n=>{ if(!names.has(n)){ u.push({name:n, avatar:face(n)}); names.add(n);} }); }
+  if(u.filter(x=>x.name!=='Me').length < 8){
+    WANT.forEach(n=>{ if(!names.has(n)){ u.push({name:n, avatar:face(n)}); names.add(n);} });
+  }
   save(LS.USERS, u);
 })();
 
-/* ===== Feed store ===== */
-const posts = ()=>load(LS.FEED,[]);
+/* ===== Feed store (migrates old key if present) ===== */
+function posts(){
+  const current = load(LS.FEED, null);
+  if(current) return current;
+  const legacy = load('ct_feed_posts_v1', []);
+  if(legacy && legacy.length){ save(LS.FEED, legacy); }
+  return load(LS.FEED, []);
+}
 const setPosts = a=>save(LS.FEED,a);
 
 /* Seed initial demo posts */
 (function seedFeed(){
   let p=posts(); if(p && p.length) return;
   const take = load(LS.USERS,[]).filter(x=>x.name!=='Me').slice(0,5).map(x=>x.name);
-  const demo=[ {a:take[0]||'Grace Lee',t:"What a sunny day in Horsham ☀️ Walking the dog later!"}, {a:take[1]||'Liam Adams',t:"Cooking pasta tonight. Any favorite sauces?"}, {a:'Me',t:"Hello, world! First post on Chatternet 🌐"}, {a:take[2]||'Ava Morgan',t:"Finished a great documentary—recommendations welcome."}, {a:take[3]||'Noah Walker',t:"Gym done ✅ Coffee time."} ];
+  const demo=[
+    {a:take[0]||'Grace Lee',t:"What a sunny day in Horsham ☀️ Walking the dog later!"},
+    {a:take[1]||'Liam Adams',t:"Cooking pasta tonight. Any favorite sauces?"},
+    {a:'Me',t:"Hello, world! First post on Chatternet 🌐"},
+    {a:take[2]||'Ava Morgan',t:"Finished a great documentary—recommendations welcome."},
+    {a:take[3]||'Noah Walker',t:"Gym done ✅ Coffee time."}
+  ];
   p = demo.map(d=>({id:'p_'+Math.random().toString(36).slice(2),author:d.a,avatar:face(d.a),text:d.t,time:nowISO(),likes:Math.floor(Math.random()*15),comments:0,cmts:[],img:null}));
   setPosts(p);
 })();
 
 /* ===== Composer ===== */
 document.getElementById('btnPost').onclick=()=>{
-  const txt=(document.getElementById('composerText').value||'').trim(), img=(document.getElementById('imgUrl').value||'').trim();
+  const txt=(document.getElementById('composerText').value||'').trim(),
+        img=(document.getElementById('imgUrl').value||'').trim();
   if(!txt && !img) return;
   const me='Me', p=posts();
   p.unshift({id:'p_'+Math.random().toString(36).slice(2),author:me,avatar:face(me),text:txt,time:nowISO(),likes:0,comments:0,cmts:[],img:img||null});
@@ -449,7 +470,7 @@ document.getElementById('feedList').addEventListener('keydown',(e)=>{
     <div class="person">
       <img class="picon" src="${x.avatar||face(x.name)}" alt="">
       <div style="flex:1;min-width:0">
-        <div style="font-weight:600">${x.name}</div>
+        <div style="font-weight:700">${x.name}</div>
         <div class="muted" style="font-size:12px">@${x.name.toLowerCase().replace(/\s+/g,'.')}</div>
       </div>
       <button class="btn" data-add="${x.name}">Add</button>
@@ -468,6 +489,35 @@ document.getElementById('feedList').addEventListener('keydown',(e)=>{
 document.getElementById('qaToFriends').onclick=()=>location.href='friends.html';
 document.getElementById('qaToMessages').onclick=()=>{ if(window.ChatternetMessenger?.open) ChatternetMessenger.open(); else if(window.ctOpen) ctOpen(); else location.href='messages.html'; };
 document.getElementById('qaClearFeed').onclick=()=>{ save(LS.FEED,[]); renderFeed(); };
+</script>
+
+<!-- Universal messenger loader (keeps your Render base) -->
+<script>
+(function(){
+  "use strict";
+  var BASE=(window.CT_API_BASE || localStorage.getItem('ct_api_base') || 'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+  window.CT_API_BASE = BASE; try{ localStorage.setItem('ct_api_base', BASE); }catch{}
+  function tryLoad(list, done){
+    (function next(i){ if(i>=list.length){ done(false); return; }
+      var s=document.createElement('script'); s.src=list[i]; s.async=true;
+      s.onload=function(){ done(true); }; s.onerror=function(){ s.remove(); next(i+1); };
+      (document.head||document.documentElement).appendChild(s);
+    })(0);
+  }
+  var paths=[ BASE+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
+  tryLoad(paths, function(ok){
+    if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
+      window.ctOpen    = window.ctOpen    || function(){ window.ChatternetMessenger.open(); };
+      window.ctMessage = window.ctMessage || function(){ window.ChatternetMessenger.open(); };
+    }
+  });
+  document.addEventListener('click', function(e){
+    var a=e.target.closest && e.target.closest('a[href*="messages.html"]'); if(!a) return;
+    if(window.ctOpen || (window.ChatternetMessenger && window.ChatternetMessenger.open)){
+      e.preventDefault(); (window.ctOpen || window.ChatternetMessenger.open)();
+    }
+  }, true);
+})();
 </script>
 
 </body>
