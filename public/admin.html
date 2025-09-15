@@ -24,7 +24,8 @@
     --navH: 48px;       /* app nav height */
     --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
 
-    --brand:#3498db; --brand-2:#2980b9;
+    /* unified theme */
+    --brand:#0ea5e9; --brand-2:#0989c3;
     --bg:#f5f7fb; --ink:#0f172a; --muted:#667085; --line:#e6eaf2; --card:#fff;
   }
   html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
@@ -56,7 +57,7 @@
     z-index:1190; background:#fff; border-bottom:1px solid #e6eaf2;
     visibility:visible !important;
   }
-  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px}
+  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;justify-content:center}
   nav.app-nav a{
     display:inline-block !important; padding:8px 10px !important; border-radius:999px !important;
     color:#111 !important; background:#f3f4f6 !important; text-decoration:none !important;
@@ -174,6 +175,7 @@
     <a href="music.html">Music</a>
     <a href="messages.html">Messages</a>
     <a href="profile.html">Profile</a>
+    <a class="active" href="admin.html" aria-current="page">Admin</a>
     <a href="settings.html">Settings</a>
   </div>
 </nav>
@@ -262,6 +264,19 @@
     <div id="inboxList"></div>
     <div class="row" style="margin-top:8px">
       <button id="closeInbox" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW: Add user modal (fixes missing markup) -->
+<div class="modalbg" id="addUserBg" aria-hidden="true">
+  <div class="sheet">
+    <h3 style="margin:0 0 10px">Add user</h3>
+    <div class="row"><input id="addUserName" placeholder="Display name"></div>
+    <div class="row"><input id="addUserAvatar" placeholder="Avatar URL (optional)"></div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="addUserClose">Cancel</button>
+      <button class="btn primary" id="addUserGo">Add</button>
     </div>
   </div>
 </div>
