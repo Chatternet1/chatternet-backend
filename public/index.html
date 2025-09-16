@@ -7,13 +7,11 @@
 
 <style>
   :root{
-    /* Brand + layout */
     --brand:#0ea5e9; --brand-2:#0989c3;
     --bg:#f5f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --line:#e6eaf2;
     --blueTop:132px; --barH:52px; --navH:48px;
     --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
 
-    /* Pill kit */
     --pill-bg:#f3f4f6; --pill-bg-hover:#e5e7eb; --pill-ink:#0f172a; --pill-line:#e6eaf2;
     --pill-primary:#0ea5e9; --pill-primary-2:#0989c3;
   }
@@ -22,79 +20,47 @@
        font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif; max-width:100%; overflow-x:hidden}
   a{color:#2563eb;text-decoration:none}
 
-  /* Content typography sanity */
-  .page, .page *{
-    letter-spacing: normal !important;
-    word-spacing: normal !important;
-    font-kerning: normal !important;
-    font-variant-ligatures: none !important;
-    text-rendering: optimizeLegibility !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
-    line-height: 1.45;
-  }
+  .page, .page *{letter-spacing:normal!important;word-spacing:normal!important;font-kerning:normal!important;
+    font-variant-ligatures:none!important;text-rendering:optimizeLegibility!important;-webkit-font-smoothing:antialiased!important;
+    -moz-osx-font-smoothing:grayscale!important;line-height:1.45}
 
   /* ===== Fixed blue header ===== */
-  .top-bar{
-    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1250;
-    display:flex; justify-content:space-between; align-items:center;
-    padding:10px 14px; background:var(--brand); color:#fff;
-    border-bottom:1px solid rgba(255,255,255,.2)
-  }
+  .top-bar{position:fixed;left:0;right:0;top:var(--blueTop);z-index:1250;display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;background:var(--brand);color:#fff;border-bottom:1px solid rgba(255,255,255,.2)}
   .top-bar h2{margin:0;font-weight:800;font-size:18px}
   .top-actions{display:flex;gap:10px;align-items:center}
-  .pillbtn{
-    height:36px;padding:0 12px;border-radius:999px;cursor:pointer;
-    border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff
-  }
+  .pillbtn{height:36px;padding:0 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.7);
+    background:rgba(255,255,255,.15);color:#fff}
   .pillbtn:hover{background:rgba(255,255,255,.26)}
   #myProfile{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;cursor:pointer}
 
-  /* ===== Fixed site nav under the blue bar ===== */
-  nav.app-nav{
-    position:fixed; left:0; right:0; top:calc(var(--blueTop) + var(--barH));
-    z-index:1190; background:#fff; border-bottom:1px solid var(--line)
-  }
-  nav.app-nav .inner{
-    max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px; justify-content:center;
-  }
-  nav.app-nav a{
-    display:inline-block;padding:8px 10px;border-radius:999px;
-    color:#111;background:#f3f4f6;text-decoration:none;font-weight:600
-  }
+  /* ===== Fixed site nav ===== */
+  nav.app-nav{position:fixed;left:0;right:0;top:calc(var(--blueTop) + var(--barH));z-index:1190;background:#fff;border-bottom:1px solid var(--line)}
+  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;justify-content:center;}
+  nav.app-nav a{display:inline-block;padding:8px 10px;border-radius:999px;color:#111;background:#f3f4f6;text-decoration:none;font-weight:600}
   nav.app-nav a.active{background:#dbeafe;color:#1e3a8a}
   nav.app-nav a:hover{background:#e5e7eb}
 
-  /* ===== Base pill kit (unifies all CTA chips) ===== */
-  .pill, .btn,
-  .pillbar a, .pillbar button {
-    display:inline-flex; align-items:center; justify-content:center;
-    height:36px; padding:0 12px; border-radius:999px;
-    border:1px solid var(--pill-line);
-    background:var(--pill-bg); color:var(--pill-ink);
-    font-weight:600; text-decoration:none; cursor:pointer; line-height:1;
-    white-space:nowrap;
-  }
-  .pill:hover, .btn:hover,
-  .pillbar a:hover, .pillbar button:hover { background:var(--pill-bg-hover); }
-  .pill.primary, .btn.primary,
-  .pillbar .primary { background:var(--pill-primary); border-color:var(--pill-primary); color:#fff; }
-  .pill.primary:hover, .btn.primary:hover,
-  .pillbar .primary:hover { background:var(--pill-primary-2); }
-  .pill.small, .btn.small, .pillbar .small { height:32px; padding:0 10px; font-size:13px; }
-  .pillbar{ display:flex; gap:10px; flex-wrap:wrap; align-items:center }
+  /* ===== Pill kit ===== */
+  .pill,.btn,.pillbar a,.pillbar button{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 12px;border-radius:999px;
+    border:1px solid var(--pill-line);background:var(--pill-bg);color:var(--pill-ink);font-weight:600;text-decoration:none;cursor:pointer;line-height:1;white-space:nowrap}
+  .pill:hover,.btn:hover,.pillbar a:hover,.pillbar button:hover{background:var(--pill-bg-hover)}
+  .pill.primary,.btn.primary,.pillbar .primary{background:var(--pill-primary);border-color:var(--pill-primary);color:#fff}
+  .pill.primary:hover,.btn.primary:hover,.pillbar .primary:hover{background:var(--pill-primary-2)}
+  .pill.small,.btn.small,.pillbar .small{height:32px;padding:0 10px;font-size:13px}
+  .pillbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
   /* ===== Page layout ===== */
-  .page{max-width:1100px;margin:14px auto;padding:0 12px; padding-top:var(--pagePad)}
+  .page{max-width:1100px;margin:14px auto;padding:0 12px;padding-top:var(--pagePad)}
   .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
-  @media (max-width:960px){ .grid{grid-template-columns:1fr} }
+  @media (max-width:960px){.grid{grid-template-columns:1fr}}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 16px rgba(0,0,0,.05);padding:14px}
   .section-title{font-size:22px;font-weight:800;margin:0 0 10px}
   .muted{color:var(--muted)}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-  /* Hero / welcome */
+  /* Hero */
   .hero{padding:16px;background:linear-gradient(135deg,#eaf6ff,#f7fbff);border:1px solid #dfe9fb;border-radius:14px}
   .hero p{margin:8px 0 0;color:#475569}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
@@ -111,46 +77,23 @@
   /* People you may know */
   .person{display:flex;gap:10px;align-items:center}
   .person .picon{width:34px;height:34px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
+  .tag{display:inline-block;padding:2px 6px;border-radius:999px;border:1px solid #e5e7eb;background:#f3f4f6;font-size:11px;margin-left:6px}
 
   /* Modals */
   .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000}
   .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 28px rgba(0,0,0,.35);padding:16px}
 </style>
 
-<!-- Offset calculator (keeps blue bar + app nav perfectly placed under your Weebly/GitHub header) -->
+<!-- Positioner -->
 <script>
 (function(){
-  var GAP=12;
-  var MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
-
-  function pickMenuBottom(){
-    var bottoms=[];
-    for(var i=0;i<MENU_SELS.length;i++){
-      var el=document.querySelector(MENU_SELS[i]); if(!el) continue;
-      var r=el.getBoundingClientRect(), h=r.height, w=r.width;
-      var ok=h>=32 && h<=140 && r.top>-20 && r.top<200 && w>300;
-      if(ok) bottoms.push(Math.round(r.bottom));
-    }
-    var best=bottoms.length?Math.min.apply(null,bottoms):120;
-    if(best>240) best=120;
-    try{ var force=localStorage.getItem('ct_force_header_px'); if(force) best=parseInt(force,10)||best; }catch(_){}
-    return best;
-  }
-  function measure(el,fb){ if(!el) return fb; var r=el.getBoundingClientRect(); return Math.max(fb, Math.round(r.height)); }
-  function apply(){
-    var blueTop = pickMenuBottom() + GAP;
-    var barH = measure(document.querySelector('.top-bar'), 50);
-    var navH = measure(document.querySelector('nav.app-nav'), 46);
-    var root=document.documentElement;
-    root.style.setProperty('--blueTop', blueTop+'px');
-    root.style.setProperty('--barH', barH+'px');
-    root.style.setProperty('--navH', navH+'px');
-    root.style.setProperty('--pagePad', (blueTop+barH+navH)+'px');
-  }
-  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', apply); } else { apply(); }
-  addEventListener('resize', apply, {passive:true});
-  addEventListener('orientationchange', apply, {passive:true});
-  setTimeout(apply, 0); setTimeout(apply, 250); setTimeout(apply, 800);
+  var GAP=12, MENU=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
+  function pickMenuBottom(){var a=[];for(var i=0;i<MENU.length;i++){var el=document.querySelector(MENU[i]);if(!el)continue;var r=el.getBoundingClientRect(),h=r.height,w=r.width;var ok=h>=32&&h<=140&&r.top>-20&&r.top<200&&w>300;if(ok)a.push(Math.round(r.bottom));}var best=a.length?Math.min.apply(null,a):120;if(best>240)best=120;try{var f=localStorage.getItem('ct_force_header_px');if(f)best=parseInt(f,10)||best;}catch(_){}return best;}
+  function measure(el,fb){if(!el)return fb;var r=el.getBoundingClientRect();return Math.max(fb,Math.round(r.height));}
+  function apply(){var blueTop=pickMenuBottom()+GAP,barH=measure(document.querySelector('.top-bar'),50),navH=measure(document.querySelector('nav.app-nav'),46);var root=document.documentElement;root.style.setProperty('--blueTop',blueTop+'px');root.style.setProperty('--barH',barH+'px');root.style.setProperty('--navH',navH+'px');root.style.setProperty('--pagePad',(blueTop+barH+navH)+'px');}
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply);}else{apply();}
+  addEventListener('resize',apply,{passive:true}); addEventListener('orientationchange',apply,{passive:true});
+  setTimeout(apply,0); setTimeout(apply,250); setTimeout(apply,800);
 })();
 </script>
 </head>
@@ -162,12 +105,13 @@
   <div class="top-actions">
     <button id="btnNotif" class="pillbtn" type="button">Notifications</button>
     <button id="btnInbox" class="pillbtn" type="button">Inbox</button>
+    <!-- This button opens the OVERLAY -->
     <button id="btnMsgs" class="pillbtn" type="button">Messages</button>
     <img id="myProfile" alt="Me" />
   </div>
 </div>
 
-<!-- App Nav -->
+<!-- App Nav (chip “Messages” navigates to messages.html – no overlay hijack) -->
 <nav class="app-nav" aria-label="Site">
   <div class="inner">
     <a class="active" href="index.html" aria-current="page">Home</a>
@@ -180,8 +124,9 @@
     <a href="dating.html">Dating</a>
     <a href="blogs.html">Blogs</a>
     <a href="polls.html">Polls</a>
-    <a href="music.html">Music</a>
+    <!-- LEAVE THIS LINK ALONE: full page -->
     <a href="messages.html">Messages</a>
+    <a href="music.html">Music</a>
     <a href="profile.html">Profile</a>
     <a href="settings.html">Settings</a>
   </div>
@@ -215,7 +160,6 @@
   <div class="grid">
     <!-- LEFT -->
     <main>
-      <!-- Welcome / hero -->
       <section class="card hero">
         <div class="row" style="gap:12px; align-items:center">
           <img id="meAvaHero" alt="" style="width:46px;height:46px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover">
@@ -241,7 +185,6 @@
         </div>
       </section>
 
-      <!-- Latest posts preview -->
       <section class="card">
         <div class="row" style="justify-content:space-between;align-items:center">
           <strong>Latest posts</strong>
@@ -264,6 +207,7 @@
         <strong>Quick links</strong>
         <div class="pillbar" style="margin-top:10px">
           <a class="pill small" href="profile.html">My profile</a>
+          <!-- This quick link goes to page as well -->
           <a class="pill small" href="messages.html">Messages</a>
           <a class="pill small" href="settings.html">Settings</a>
         </div>
@@ -272,7 +216,7 @@
   </div>
 </div>
 
-<!-- Messenger loader (overlay if available, else go to messages.html) -->
+<!-- Messenger loader (overlay is available when you click the top-right button or explicit “Message” buttons) -->
 <script>
 (function(){
   "use strict";
@@ -281,34 +225,26 @@
   var base=(window.CT_API_BASE||ls||FALLBACK).replace(/\/+$/,'');
   window.CT_API_BASE=base; if(!ls){ try{ localStorage.setItem('ct_api_base', base); }catch(_){} }
 
-  function chain(arr,done){ (function next(i){ if(i>=arr.length){ done(false); return; }
-    var s=document.createElement('script'); s.src=arr[i]; s.async=true;
-    s.onload=function(){ done(true) }; s.onerror=function(){ s.remove(); next(i+1); };
-    (document.head||document.documentElement).appendChild(s);
-  })(0);}
-
+  function chain(arr,done){(function n(i){if(i>=arr.length){done(false);return}var s=document.createElement('script');s.src=arr[i];s.async=true;s.onload=function(){done(true)};s.onerror=function(){s.remove();n(i+1)};(document.head||document.documentElement).appendChild(s)})(0)}
   var CAND=[ base+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
   chain(CAND,function(ok){
-    if(ok && window.ChatternetMessenger?.open){
+    if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
       window.ctOpen    = window.ctOpen    || function(){ window.ChatternetMessenger.open(""); };
       window.ctMessage = window.ctMessage || function(n){ window.ChatternetMessenger.open(n||""); };
     }
   });
 
-  // Make every "Messages" link/buttons open overlay if available
-  document.addEventListener('click', function(e){
-    var a=e.target.closest && e.target.closest('a[href*="messages.html"]'); if(!a) return;
-    if(window.ctOpen || window.ChatternetMessenger?.open){ e.preventDefault(); (window.ctOpen || window.ChatternetMessenger.open)(""); }
-  }, true);
+  // IMPORTANT: Do NOT hijack the chip-nav “Messages” link anymore.
+  // We only wire the top-right button and explicit message buttons below.
 })();
 </script>
 
-<!-- Page logic (profile/avatar, modals, suggestions, latest posts) -->
+<!-- Page logic -->
 <script>
 const $=s=>document.querySelector(s);
 const load=(k,f)=>{ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):f; }catch{ return f; } };
 const save=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
-const LS={ PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1', USERS:'ct_users_v3' };
+const LS={ PROFILE:'ct_profile_data_v1', NOTIF:'ct_notifications_v1', INBOX:'ct_inbox_v1', USERS:'ct_users_v3', FRIENDS:'ct_bot_friends_v1' };
 const face=n=>`https://i.pravatar.cc/120?u=${encodeURIComponent(n||'me')}`;
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const timeAgo=(iso)=>{ const s=(Date.now()-new Date(iso).getTime())/1000; if(s<60)return Math.floor(s)+'s'; if(s<3600)return Math.floor(s/60)+'m'; if(s<86400)return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; };
@@ -332,52 +268,64 @@ const nowISO=()=>new Date().toISOString();
   $('#btnInbox').onclick=()=>{ rI(); iM.style.display='flex'; };
   $('#closeInbox').onclick=()=>{ iM.style.display='none'; };
 
-  // Messages button always opens overlay if present
+  // Top-right “Messages” button opens overlay if available; otherwise go to page.
   $('#btnMsgs').onclick=(e)=>{ e.preventDefault(); if(window.ctOpen) return window.ctOpen(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(); location.href='messages.html'; };
 })();
 
-/* People you may know */
+/* People you may know (always show users) */
 (function suggestions(){
+  // Pull users; if missing/only “Me”, seed a friendly set
   let u = load(LS.USERS,[]);
-  if(!u || !u.length){
-    // Seed a friendly list if empty
-    u = ['Chatternet','Bill Thomas','Kate White','Michael Reed','Olivia Perez','David Carter','Grace Lee','Ava Morgan','Noah Walker','Mason Hill']
-      .map(n=>({name:n, avatar:face(n)}));
+  if(!u || u.length<=1){
+    u = [
+      'Ava Morgan','Amelia Ross','Grace Lee','Bill Thomas','Kate White','Michael Reed','Olivia Perez','David Carter','Noah Walker','Mason Hill'
+    ].map(n=>({name:n, avatar:face(n)}));
     u.unshift({name:'Me',avatar:face('Me')});
     save(LS.USERS,u);
   }
+  const friends = new Set(load(LS.FRIENDS,[])); // if you store friends here
+  const list=u.filter(x=>x.name!=='Me');
   const box=$('#suggestions');
-  const list=u.filter(x=>x.name!=='Me').slice(0,6);
-  box.innerHTML = list.map(x=>`
+
+  box.innerHTML = list.slice(0,8).map(x=>`
     <div class="person">
-      <img class="picon" src="${x.avatar||face(x.name)}" alt="">
+      <img class="picon" src="${x.avatar||face(x.name)}" alt="" referrerpolicy="no-referrer">
       <div style="flex:1;min-width:0">
-        <div style="font-weight:600">${esc(x.name)}</div>
+        <div style="font-weight:600">${esc(x.name)}${friends.has(x.name)?'<span class="tag">Friend</span>':''}</div>
         <div class="muted" style="font-size:12px">@${esc(x.name.toLowerCase().replace(/\s+/g,'.'))}</div>
       </div>
-      <button class="pill small">Message</button>
+      <div class="pillbar">
+        <button class="pill small js-message" data-name="${esc(x.name)}">Message</button>
+        <a class="pill small" data-profile-name="${esc(x.name)}" href="profile.html">View</a>
+      </div>
     </div>`).join('');
 
-  // Message buttons open overlay if present
+  // Message buttons -> overlay (targeted; does NOT hijack nav link)
   box.addEventListener('click',(e)=>{
-    const b=e.target.closest('button'); if(!b) return;
-    if(window.ctOpen) return window.ctOpen();
-    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-    location.href='messages.html';
+    const b=e.target.closest('.js-message'); if(!b) return;
+    const who=b.getAttribute('data-name')||'';
+    if(window.ctMessage) return window.ctMessage(who);
+    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(who);
+    // fallback
+    location.href='messages.html?with='+encodeURIComponent(who);
+  });
+
+  // View profile shortcuts (respect your existing profile page logic)
+  box.addEventListener('click',(e)=>{
+    const a=e.target.closest('[data-profile-name]'); if(!a) return;
+    try{ localStorage.setItem('ct_profile_view_v1', JSON.stringify({name:a.getAttribute('data-profile-name')})); }catch(_){}
   });
 })();
 
-/* Latest posts preview (supports multiple feed keys) */
+/* Latest posts preview */
 (function feedPreview(){
-  const FEED_KEYS=['ct_feed_posts_v7','ct_feed_posts_v1','ct_feed_posts']; // try newest first
-  let posts=null, k=null;
-  for(const key of FEED_KEYS){ const v=load(key,null); if(Array.isArray(v) && v.length){ posts=v; k=key; break; } }
+  const FEED_KEYS=['ct_feed_posts_v7','ct_feed_posts_v1','ct_feed_posts'];
+  let posts=null; for(const k of FEED_KEYS){ const v=load(k,null); if(Array.isArray(v)&&v.length){ posts=v; break; } }
   if(!posts){
-    // Minimal seed so Home shows something even on fresh devices
     posts=[
-      {id:'p1',author:'Chatternet',avatar:face('Chatternet'),content:'What a sunny day in Horsham ☀️ Walking the dog later!',createdAt:nowISO()},
-      {id:'p2',author:'Bill Thomas',avatar:face('Bill Thomas'),content:'Cooking pasta tonight. Any favorite sauces?',createdAt:nowISO()},
-      {id:'p3',author:'Me',avatar:face('Me'),content:'Hello, world! First post on Chatternet ◻️',createdAt:nowISO()}
+      {id:'p1',author:'Chatternet',avatar:face('Chatternet'),content:'What a sunny day ☀️',createdAt:nowISO()},
+      {id:'p2',author:'Amelia Ross',avatar:face('Amelia Ross'),content:'Coffee then gym?',createdAt:nowISO()},
+      {id:'p3',author:'Me',avatar:face('Me'),content:'Hello, world!',createdAt:nowISO()}
     ];
     save('ct_feed_posts_v7',posts);
   }
@@ -385,7 +333,7 @@ const nowISO=()=>new Date().toISOString();
   const html = posts.slice(0,6).map(p=>`
     <article class="post">
       <div class="head">
-        <img class="ava" src="${p.avatar||face(p.author)}" alt="">
+        <img class="ava" src="${p.avatar||face(p.author)}" alt="" referrerpolicy="no-referrer">
         <div style="min-width:0">
           <div class="author">${esc(p.author||'—')}</div>
           <div class="time">${timeAgo(p.createdAt||p.time||Date.now())} ago</div>
@@ -397,32 +345,12 @@ const nowISO=()=>new Date().toISOString();
 })();
 </script>
 
-<!-- Auto-pill patcher: makes all contextual chips match your nav pill style -->
+<!-- Auto-pill polish -->
 <script>
 (function(){
-  function pillify(el, opts){ opts=opts||{}; if(!el) return;
-    if(!el.classList.contains('pill') && !el.classList.contains('btn')){ el.classList.add('pill','small'); }
-    if(opts.primary) el.classList.add('primary');
-  }
-
-  // Hero CTAs
-  document.querySelectorAll('.hero .pillbar a, .hero .row a, .hero .row button')
-    .forEach(el=>pillify(el, {primary:/write a post/i.test(el.textContent)}));
-
-  // "Open Feed"
-  document.querySelectorAll('a').forEach(a=>{ if(/open feed/i.test(a.textContent||'')) pillify(a); });
-
-  // Quick links & right column actions
-  document.querySelectorAll('.card .pillbar a, .card .pillbar button, .card .row a, .card .row button')
-    .forEach(el=>pillify(el));
-
-  // Any lone “Message” buttons
-  document.querySelectorAll('button, a').forEach(el=>{
-    if(/^message$/i.test((el.textContent||'').trim())) pillify(el);
-  });
-
-  // Ensure common containers are spaced nicely
-  document.querySelectorAll('.hero .row, .pillbar').forEach(c=>c.classList.add('pillbar'));
+  function pillify(el,opts){opts=opts||{};if(!el)return;if(!el.classList.contains('pill')&&!el.classList.contains('btn'))el.classList.add('pill','small');if(opts.primary)el.classList.add('primary')}
+  document.querySelectorAll('.hero .pillbar a,.hero .row a,.hero .row button').forEach(el=>pillify(el,{primary:/write a post/i.test(el.textContent)}));
+  document.querySelectorAll('.card .pillbar a,.card .pillbar button,.card .row a,.card .row button').forEach(el=>pillify(el));
 })();
 </script>
 
