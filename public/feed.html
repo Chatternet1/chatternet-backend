@@ -6,88 +6,42 @@
 <title>Feed — Chatternet</title>
 <style>
   :root{
-    --blueTop: 132px;        /* fallback; script overwrites */
-    --barH: 52px;            /* blue bar height */
-    --navH: 48px;            /* app nav height */
+    --blueTop:132px; --barH:52px; --navH:48px;
     --pagePad: calc(var(--blueTop) + var(--barH) + var(--navH));
+    --barBlue:#0ea5e9; --navBlueBg:rgba(14,165,233,.12); --navBlueLine:rgba(14,165,233,.25);
+  }
+  html,body{margin:0;background:#f5f7fb;color:#0f172a;font:14px/1.45 Arial,"Segoe UI",system-ui,-apple-system,sans-serif}
+  a{color:#2563eb;text-decoration:none} *{box-sizing:border-box}
 
-    /* brand blues */
-    --barBlue:#0ea5e9;                /* top bar */
-    --navBlueBg: rgba(14,165,233,.12);/* soft backdrop under pills */
-    --navBlueLine: rgba(14,165,233,.25);
+  .top-bar,.top-bar *,nav.app-nav,nav.app-nav *,.page,.page *{
+    letter-spacing:normal!important;word-spacing:normal!important;font-kerning:normal!important;
+    font-variant-ligatures:none!important;text-rendering:optimizeLegibility!important;
+    -webkit-font-smoothing:antialiased!important;-moz-osx-font-smoothing:grayscale!important;line-height:1.45
   }
 
-  html,body{
-    margin:0;padding:0;background:#f5f7fb;color:#0f172a;
-    font:14px/1.45 Arial, "Segoe UI", system-ui, -apple-system, sans-serif;
-    text-size-adjust:100%;
-  }
-  a{color:#2563eb;text-decoration:none}
-  *{box-sizing:border-box}
-
-  /* ===== Typography reset (kills Weebly's ligature/kerning overrides) ===== */
-  .top-bar, .top-bar *, nav.app-nav, nav.app-nav *, .page, .page *{
-    letter-spacing: normal !important;
-    word-spacing: normal !important;
-    font-kerning: normal !important;
-    font-variant-ligatures: none !important;
-    font-feature-settings: "kern" 1, "liga" 0, "clig" 0 !important;
-    text-rendering: optimizeLegibility !important;
-    -webkit-font-smoothing: antialiased !important;
-    -moz-osx-font-smoothing: grayscale !important;
-    line-height: 1.45;
-  }
-
-  /* Blue bar (fixed) */
-  .top-bar{
-    position:fixed; left:0; right:0; top:var(--blueTop); z-index:1250;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 14px; background:var(--barBlue); color:#fff;
-    border-bottom:1px solid rgba(255,255,255,.2);
-  }
+  /* Blue bar */
+  .top-bar{position:fixed;left:0;right:0;top:var(--blueTop);z-index:1250;display:flex;align-items:center;justify-content:space-between;
+    padding:10px 14px;background:var(--barBlue);color:#fff;border-bottom:1px solid rgba(255,255,255,.2)}
   .top-bar h2{margin:0;font-size:18px;font-weight:800;letter-spacing:.2px}
   .top-actions{display:flex;gap:10px;align-items:center}
-  .pillbtn{
-    height:36px;padding:0 12px;border-radius:999px;cursor:pointer;
-    border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff
-  }
+  .pillbtn{height:36px;padding:0 12px;border-radius:999px;cursor:pointer;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff}
   .pillbtn:hover{background:rgba(255,255,255,.26)}
   #meAvatar{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,.7);object-fit:cover;cursor:pointer}
 
-  /* App nav (fixed under blue bar) — centered, blue backdrop */
-  nav.app-nav{
-    position:fixed; left:0; right:0; top:calc(var(--blueTop) + var(--barH));
-    z-index:1190;
-    background:var(--navBlueBg);
-    border-bottom:1px solid var(--navBlueLine);
-    visibility:visible !important;
-    font-family: Arial, "Segoe UI", system-ui, -apple-system, sans-serif;
-  }
-  nav.app-nav .inner{
-    max-width:1100px;margin:0 auto;
-    display:flex;gap:10px;flex-wrap:wrap;
-    padding:8px 12px;
-    justify-content:center;
-  }
-  nav.app-nav a{
-    display:inline-block !important; padding:8px 10px !important; border-radius:999px !important;
-    color:#111 !important; background:#ffffff !important; text-decoration:none !important;
-    line-height:1 !important; font-weight:600 !important; border:1px solid #e6eaf2 !important;
-  }
-  nav.app-nav a.active{background:#e8f1ff !important; color:#0b3a67 !important; border-color:#cfe0ff !important}
-  nav.app-nav a:hover{background:#f6f9ff !important}
+  /* App nav */
+  nav.app-nav{position:fixed;left:0;right:0;top:calc(var(--blueTop) + var(--barH));z-index:1190;background:var(--navBlueBg);border-bottom:1px solid var(--navBlueLine)}
+  nav.app-nav .inner{max-width:1100px;margin:0 auto;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;justify-content:center}
+  nav.app-nav a{display:inline-block!important;padding:8px 10px!important;border-radius:999px!important;color:#111!important;background:#fff!important;
+    text-decoration:none!important;line-height:1!important;font-weight:600!important;border:1px solid #e6eaf2!important}
+  nav.app-nav a.active{background:#e8f1ff!important;color:#0b3a67!important;border-color:#cfe0ff!important}
+  nav.app-nav a:hover{background:#f6f9ff!important}
 
-  /* Layout below bars */
-  .page{
-    max-width:1100px;margin:14px auto;padding:0 12px;
-    display:grid;grid-template-columns:1fr 320px;gap:14px;
-    padding-top: var(--pagePad);
-  }
-  @media (max-width:1020px){ .page{grid-template-columns:1fr} }
-
+  /* Layout */
+  .page{max-width:1100px;margin:14px auto;padding:0 12px;padding-top:var(--pagePad);
+    display:grid;grid-template-columns:1fr 320px;gap:14px}
+  @media (max-width:1020px){.page{grid-template-columns:1fr}}
   .card{background:#fff;border:1px solid #e6eaf2;border-radius:14px;padding:14px;box-shadow:0 4px 12px rgba(15,23,42,.03)}
-  .row{display:flex;gap:8px;align-items:center}
-  .muted{color:#6b7280}
+  .row{display:flex;gap:8px;align-items:center}.muted{color:#6b7280}
 
   /* Composer */
   .who{display:flex;gap:10px;align-items:center;margin-bottom:10px}
@@ -95,18 +49,15 @@
   .composer{min-height:130px;width:100%;resize:vertical;padding:12px;border:1px solid #d7d7d7;border-radius:12px;outline:none}
   .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
   .btn{padding:8px 12px;border:1px solid #d7d7d7;border-radius:999px;background:#fff;cursor:pointer}
-  .btn.primary{background:#3b82f6;border-color:#3b82f6;color:#fff}
-  .btn.warn{border-color:#ef4444;color:#b91c1c}
-  .input{padding:8px 10px;border:1px solid #d7d7d7;border-radius:10px;min-width:0}
-  .input.url{flex:1 1 220px}
+  .btn.primary{background:#3b82f6;border-color:#3b82f6;color:#fff}.btn.warn{border-color:#ef4444;color:#b91c1c}
+  .input{padding:8px 10px;border:1px solid #d7d7d7;border-radius:10px;min-width:0}.input.url{flex:1 1 220px}
 
   /* Feed */
   .feed{display:flex;flex-direction:column;gap:10px}
   .post{border:1px solid #e6eaf2;border-radius:14px;padding:12px}
   .post .head{display:flex;gap:10px;align-items:center;margin-bottom:8px}
   .post .pava{width:40px;height:40px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
-  .post .author{font-weight:700}
-  .post .time{font-size:12px;color:#6b7280}
+  .post .author{font-weight:700}.post .time{font-size:12px;color:#6b7280}
   .post .txt{white-space:pre-wrap;margin:6px 0 8px}
   .post .img{width:100%;border-radius:12px;border:1px solid #eee;margin:8px 0;display:block}
   .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid #e6eaf2;background:#f8fafc;border-radius:999px;padding:4px 10px;font-size:12px}
@@ -126,70 +77,40 @@
   .people{display:flex;flex-direction:column;gap:8px}
   .person{display:flex;gap:8px;align-items:center}
   .person .picon{width:34px;height:34px;border-radius:999px;border:1px solid #e4e4e7;object-fit:cover}
-
-  /* Modals */
-  .modalbg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:4000}
-  .sheet{background:#fff;border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3);padding:16px}
+  .tag{display:inline-block;padding:2px 6px;border-radius:999px;border:1px solid #e5e7eb;background:#f3f4f6;font-size:11px;margin-left:6px}
 </style>
 
-<!-- Positioner: keeps bars under the Weebly header -->
+<!-- Positioner -->
 <script>
 (function(){
-  var GAP=12;
-  var MENU_SELS=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
-
-  function pickMenuBottom(){
-    var bottoms=[];
-    for(var i=0;i<MENU_SELS.length;i++){
-      var el=document.querySelector(MENU_SELS[i]); if(!el) continue;
-      var r=el.getBoundingClientRect(), h=r.height, w=r.width;
-      var ok=h>=32 && h<=180 && r.top>-40 && r.top<220 && w>300;
-      if(ok) bottoms.push(Math.round(r.bottom));
-    }
-    var best=bottoms.length?Math.min.apply(null,bottoms):120;
-    if(best>260) best=120;
-    try{ var force=localStorage.getItem('ct_force_header_px'); if(force) best=parseInt(force,10)||best; }catch(_){}
-    return best + GAP;
-  }
-  function measure(el,fb){ if(!el) return fb; var r=el.getBoundingClientRect(); return Math.max(fb, Math.round(r.height||fb)); }
-
-  function apply(){
-    var baseTop = pickMenuBottom();
-    var bar=document.querySelector('.top-bar');
-    var nav=document.querySelector('nav.app-nav');
-
-    if(bar) bar.style.top=baseTop+'px';
-    var barH=measure(bar,52);
-    var navH=measure(nav,46);
-
-    var root=document.documentElement;
-    root.style.setProperty('--blueTop', baseTop+'px');
-    root.style.setProperty('--barH', barH+'px');
-    root.style.setProperty('--navH', navH+'px');
-    root.style.setProperty('--pagePad', (baseTop+barH+navH)+'px');
-  }
-
-  var run=function(){ apply(); setTimeout(apply,120); setTimeout(apply,600); };
-  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', run); } else { run(); }
-  addEventListener('resize', apply, {passive:true});
-  addEventListener('orientationchange', apply, {passive:true});
+  var GAP=12, MENU=['.wsite-nav','.wsite-menu-default','.wsite-menus','.w-nav','.nav-wrapper','.navbar','.siteHeader .nav','.desktop-nav','.top-nav','nav[role="navigation"]','.site-navigation'];
+  function pickMenuBottom(){var a=[];for(var i=0;i<MENU.length;i++){var el=document.querySelector(MENU[i]);if(!el)continue;var r=el.getBoundingClientRect(),h=r.height,w=r.width;var ok=h>=32&&h<=180&&r.top>-40&&r.top<220&&w>300;if(ok)a.push(Math.round(r.bottom));}var best=a.length?Math.min.apply(null,a):120;if(best>260)best=120;try{var f=localStorage.getItem('ct_force_header_px');if(f)best=parseInt(f,10)||best;}catch(_){ }return best+GAP;}
+  function measure(el,fb){if(!el)return fb;var r=el.getBoundingClientRect();return Math.max(fb,Math.round(r.height||fb));}
+  function apply(){var baseTop=pickMenuBottom();var bar=document.querySelector('.top-bar');var nav=document.querySelector('nav.app-nav');
+    if(bar) bar.style.top=baseTop+'px';var barH=measure(bar,52),navH=measure(nav,46);
+    var root=document.documentElement;root.style.setProperty('--blueTop',baseTop+'px');root.style.setProperty('--barH',barH+'px');
+    root.style.setProperty('--navH',navH+'px');root.style.setProperty('--pagePad',(baseTop+barH+navH)+'px');}
+  var run=function(){apply();setTimeout(apply,120);setTimeout(apply,600);};
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',run);}else{run();}
+  addEventListener('resize',apply,{passive:true});addEventListener('orientationchange',apply,{passive:true});
 })();
 </script>
 </head>
 <body>
 
-<!-- Fixed blue bar -->
+<!-- Blue bar -->
 <div class="top-bar" role="banner" aria-label="Page header">
   <h2>Feed</h2>
   <div class="top-actions">
     <button id="btnNotif" class="pillbtn">Notifications</button>
     <button id="btnInbox" class="pillbtn">Inbox</button>
+    <!-- This button opens the overlay -->
     <button id="btnMsgs" class="pillbtn">Messages</button>
     <img id="meAvatar" alt="My Profile" title="My Profile" />
   </div>
 </div>
 
-<!-- Fixed App Nav (under blue bar) -->
+<!-- App nav (chip “Messages” navigates to the page) -->
 <nav class="app-nav" aria-label="Site">
   <div class="inner">
     <a href="index.html">Home</a>
@@ -275,114 +196,132 @@
 </div>
 
 <script>
-/* ===== Store & helpers ===== */
-const LS={
-  USERS:'ct_users_v3',
-  PROFILE:'ct_profile_data_v1',
-  NOTIF:'ct_notifications_v1',
-  INBOX:'ct_inbox_v1',
-  FEED:'ct_feed_posts_v7'   /* unified with Settings page */
-};
+/* ===== Shared store & helpers ===== */
+const LS={USERS:'ct_users_v3',PROFILE:'ct_profile_data_v1',NOTIF:'ct_notifications_v1',INBOX:'ct_inbox_v1',FEED:'ct_feed_posts_v7'};
 const $=s=>document.querySelector(s);
 const load=(k,f)=>{ try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch{return f;} };
 const save=(k,v)=>{ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} };
 const nowISO=()=>new Date().toISOString();
 const face=n=>`https://i.pravatar.cc/200?u=${encodeURIComponent(n||'me')}`;
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const timeAgo=(iso)=>{ const s=(Date.now()-new Date(iso).getTime())/1000; if(s<60)return Math.floor(s)+'s'; if(s<3600)return Math.floor(s/60)+'m'; if(s<86400)return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; };
 
 /* ===== Header wiring ===== */
 (function header(){
   const prof=(load(LS.PROFILE,{}))['Me']||{};
-  const me=$('#meAvatar'); if(me){ me.referrerPolicy='no-referrer'; me.loading='lazy'; me.src=prof.avatar||face('Me'); me.alt='Me'; me.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{}; location.href='profile.html'; }; }
-  const me2=$('#meAvatar2'); if(me2){ me2.referrerPolicy='no-referrer'; me2.loading='lazy'; me2.src=prof.avatar||face('Me'); }
-  document.getElementById('btnMsgs').onclick = (e)=>{ e.preventDefault();
-    if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open();
-    if(window.ctOpen) return window.ctOpen();
-    location.href='messages.html';
-  };
+  const me=$('#meAvatar'); if(me){ me.referrerPolicy='no-referrer'; me.src=prof.avatar||face('Me'); me.onclick=()=>{ try{localStorage.setItem('ct_profile_view_v1',JSON.stringify({name:'Me'}));}catch{}; location.href='profile.html'; }; }
+  const me2=$('#meAvatar2'); if(me2){ me2.referrerPolicy='no-referrer'; me2.src=prof.avatar||face('Me'); }
+  document.getElementById('btnMsgs').onclick=(e)=>{ e.preventDefault(); if(window.ChatternetMessenger?.open) return window.ChatternetMessenger.open(""); if(window.ctOpen) return window.ctOpen(); location.href='messages.html'; };
 
-  const nbg=document.getElementById('notifBg'), ibg=document.getElementById('inboxBg');
-  function rN(){ const arr=load(LS.NOTIF,[]); document.getElementById('notifList').innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${n.text||''}</div>`).join(''):'No notifications yet.'; }
-  function rI(){ const arr=load(LS.INBOX,[]); document.getElementById('inboxList').innerHTML=arr.length?arr.map(n=>`<div class="pill" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${n.text||''}</div>`).join(''):'Inbox is empty.'; }
-  document.getElementById('btnNotif').onclick=()=>{ rN(); nbg.style.display='flex'; };
-  document.getElementById('clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); };
-  document.getElementById('closeNotif').onclick=()=>{ nbg.style.display='none'; };
-  document.getElementById('btnInbox').onclick=()=>{ rI(); ibg.style.display='flex'; };
-  document.getElementById('closeInbox').onclick=()=>{ ibg.style.display='none'; };
+  const nbg=$('#notifBg'), ibg=$('#inboxBg');
+  function rN(){ const a=load(LS.NOTIF,[]); $('#notifList').innerHTML=a.length?a.map(n=>`<div class="pill" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'No notifications yet.'; }
+  function rI(){ const a=load(LS.INBOX,[]); $('#inboxList').innerHTML=a.length?a.map(n=>`<div class="pill" style="display:block;margin:4px 0">${new Date(n.time).toLocaleString()} — ${esc(n.text||'')}</div>`).join(''):'Inbox is empty.'; }
+  $('#btnNotif').onclick=()=>{ rN(); nbg.style.display='flex'; }; $('#clearNotif').onclick=()=>{ save(LS.NOTIF,[]); rN(); }; $('#closeNotif').onclick=()=>{ nbg.style.display='none'; };
+  $('#btnInbox').onclick=()=>{ rI(); ibg.style.display='flex'; }; $('#closeInbox').onclick=()=>{ ibg.style.display='none'; };
 })();
 
-/* ===== Seed users ===== */
+/* ===== Users (seed if needed so people always show) ===== */
 (function seedUsers(){
-  let u = load(LS.USERS, []);
-  const WANT = ['Chatternet','Bill Thomas','Kate White','Michael Reed','Olivia Perez','David Carter','Grace Lee','Liam Adams','Ava Morgan','Noah Walker','Sophia Turner','Mason Hill'];
-  const names = new Set(u.map(x=>x && x.name).filter(Boolean));
-  if(!names.has('Me')) u.unshift({name:'Me',avatar:face('Me')});
-  if(u.filter(x=>x.name!=='Me').length < 8){
-    WANT.forEach(n=>{ if(!names.has(n)){ u.push({name:n, avatar:face(n)}); names.add(n);} });
+  let u=load(LS.USERS,[]);
+  if(!u || u.length<=1){
+    const names=['Amelia Ross','Grace Lee','Bill Thomas','Kate White','Michael Reed','Olivia Perez','David Carter','Ava Morgan','Noah Walker','Mason Hill'];
+    u=[{name:'Me',avatar:face('Me')}, ...names.map(n=>({name:n,avatar:face(n)}))];
+    save(LS.USERS,u);
+  } else if(!u.find(x=>x.name==='Me')) {
+    u.unshift({name:'Me',avatar:face('Me')}); save(LS.USERS,u);
   }
-  save(LS.USERS, u);
 })();
 
-/* ===== Feed store (migrates old key if present) ===== */
-function posts(){
-  const current = load(LS.FEED, null);
-  if(current) return current;
-  const legacy = load('ct_feed_posts_v1', []);
-  if(legacy && legacy.length){ save(LS.FEED, legacy); }
-  return load(LS.FEED, []);
+/* ===== Remote feed (Render backend, with graceful fallback) ===== */
+const API_BASE=(function(){ const ls=localStorage.getItem('ct_api_base')||''; const w=window.CT_API_BASE||ls||'https://chatternet-backend-1.onrender.com'; return w.replace(/\/+$/,''); })();
+async function j(method, path, body){
+  const r=await fetch(API_BASE+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,credentials:'include'});
+  const t=await r.text(); let d=null; try{ d=t?JSON.parse(t):null; }catch(_){}
+  if(!r.ok) throw new Error((d&&d.error)||t||('HTTP '+r.status));
+  return d;
 }
-const setPosts = a=>save(LS.FEED,a);
+const RemoteFeed={
+  async list(){ try{ return await j('GET','/api/feed'); }catch(_){ return null; } },
+  async create(text,imageUrl){ try{ return await j('POST','/api/feed',{text,imageUrl}); }catch(_){ return null; } },
+  async like(id){ try{ return await j('POST',`/api/feed/${encodeURIComponent(id)}/like`,{}); }catch(_){ return null; } },
+  async comment(id,text){ try{ return await j('POST',`/api/feed/${encodeURIComponent(id)}/comments`,{text}); }catch(_){ return null; } }
+};
 
-/* Seed initial demo posts */
+/* ===== Local feed store ===== */
+function posts(){ return load(LS.FEED,[]); }
+const setPosts=a=>save(LS.FEED,a);
+function ensureCmts(p){ if(!Array.isArray(p.cmts)) p.cmts=[]; if(typeof p.comments!=='number') p.comments=p.cmts.length; }
+
+/* Seed demo if truly empty (only used when remote has nothing and device is fresh) */
 (function seedFeed(){
   let p=posts(); if(p && p.length) return;
-  const take = load(LS.USERS,[]).filter(x=>x.name!=='Me').slice(0,5).map(x=>x.name);
+  const take=load(LS.USERS,[]).filter(x=>x.name!=='Me').slice(0,5).map(x=>x.name);
   const demo=[
-    {a:take[0]||'Grace Lee',t:"What a sunny day in Horsham ☀️ Walking the dog later!"},
-    {a:take[1]||'Liam Adams',t:"Cooking pasta tonight. Any favorite sauces?"},
-    {a:'Me',t:"Hello, world! First post on Chatternet 🌐"},
+    {a:take[0]||'Grace Lee',t:"What a sunny day ☀️ Walking the dog later!"},
+    {a:take[1]||'Amelia Ross',t:"Cooking pasta tonight. Any favorite sauces?"},
+    {a:'Me',t:"Hello, world! First post on Chatternet ◻️"},
     {a:take[2]||'Ava Morgan',t:"Finished a great documentary—recommendations welcome."},
     {a:take[3]||'Noah Walker',t:"Gym done ✅ Coffee time."}
-  ];
-  p = demo.map(d=>({id:'p_'+Math.random().toString(36).slice(2),author:d.a,avatar:face(d.a),text:d.t,time:nowISO(),likes:Math.floor(Math.random()*15),comments:0,cmts:[],img:null}));
-  setPosts(p);
+  ].map(d=>({id:'local_'+Math.random().toString(36).slice(2),author:d.a,avatar:face(d.a),text:d.t,time:nowISO(),likes:Math.floor(Math.random()*15),cmts:[],img:null}));
+  setPosts(demo);
+})();
+
+/* Pull remote, merge into local so real users’ posts appear */
+(async function syncFromServer(){
+  const remote = await RemoteFeed.list();
+  if(!Array.isArray(remote)) { renderFeed(); return; }
+  const mapped = remote.map(r=>({
+    id:String(r.id),
+    author:r.authorName||r.author||'—',
+    avatar:r.authorAvatar||face(r.authorName||r.author||'—'),
+    text:r.text||'',
+    time:r.createdAt||nowISO(),
+    likes:typeof r.likes==='number'?r.likes:(r.likeCount||0),
+    img:r.imageUrl||null,
+    cmts:(Array.isArray(r.comments)?r.comments:[]).map(c=>({author:c.authorName||c.author||'—',avatar:c.authorAvatar||face(c.authorName||c.author||'—'),text:c.text||'',time:c.createdAt||nowISO()}))
+  }));
+  // merge by id (drop duplicates), keep newest first
+  const local = posts();
+  const byId=new Map(); [...mapped,...local].forEach(p=>{ byId.set(p.id,p); });
+  const merged=[...byId.values()].sort((a,b)=>new Date(b.time)-new Date(a.time));
+  setPosts(merged);
+  renderFeed();
 })();
 
 /* ===== Composer ===== */
-document.getElementById('btnPost').onclick=()=>{
-  const txt=(document.getElementById('composerText').value||'').trim(),
-        img=(document.getElementById('imgUrl').value||'').trim();
+$('#btnPost').onclick=async()=>{
+  const txt=($('#composerText').value||'').trim(), img=($('#imgUrl').value||'').trim();
   if(!txt && !img) return;
-  const me='Me', p=posts();
-  p.unshift({id:'p_'+Math.random().toString(36).slice(2),author:me,avatar:face(me),text:txt,time:nowISO(),likes:0,comments:0,cmts:[],img:img||null});
-  setPosts(p); document.getElementById('composerText').value=''; document.getElementById('imgUrl').value=''; renderFeed();
+  const me='Me';
+  const localId='local_'+Math.random().toString(36).slice(2);
+  const p=posts();
+  p.unshift({id:localId,author:me,avatar:face(me),text:txt,time:nowISO(),likes:0,cmts:[],img:img||null});
+  setPosts(p); $('#composerText').value=''; $('#imgUrl').value=''; renderFeed();
+
+  // Try remote create; if succeeds, swap id so later likes/comments hit the real one
+  const created = await RemoteFeed.create(txt,img||null);
+  if(created && created.id){
+    const arr=posts(); const idx=arr.findIndex(x=>x.id===localId);
+    if(idx>-1){ arr[idx].id=String(created.id); setPosts(arr); }
+  }
 };
-document.getElementById('btnClear').onclick=()=>{ document.getElementById('composerText').value=''; document.getElementById('imgUrl').value=''; };
+$('#btnClear').onclick=()=>{ $('#composerText').value=''; $('#imgUrl').value=''; };
 
-/* ===== Utilities ===== */
-const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function ensureCmts(p){ if(!Array.isArray(p.cmts)) p.cmts=[]; if(typeof p.comments!=='number') p.comments=p.cmts.length; }
-
-/* ===== Render feed (with comments UI) ===== */
-function cmtHtml(c){
-  return `
-    <div class="cmt-item">
-      <img class="cmt-ava" src="${esc(c.avatar||face(c.author))}" alt="">
-      <div class="cmt-bubble">
-        <div class="cmt-meta"><strong>${esc(c.author||'Me')}</strong> • ${timeAgo(c.time)} ago</div>
-        <div>${esc(c.text)}</div>
-      </div>
+/* ===== Render feed ===== */
+function cmtHtml(c){ return `
+  <div class="cmt-item">
+    <img class="cmt-ava" src="${esc(c.avatar||face(c.author))}" alt="" referrerpolicy="no-referrer">
+    <div class="cmt-bubble">
+      <div class="cmt-meta"><strong>${esc(c.author||'Me')}</strong> • ${timeAgo(c.time)} ago</div>
+      <div>${esc(c.text||'')}</div>
     </div>
-  `;
-}
+  </div>`; }
 function postHtml(p){
   ensureCmts(p);
-  const counts = `${p.likes} likes • ${p.cmts.length} comments`;
-  const cmtsList = p.cmts.map(cmtHtml).join('');
   return `
-  <article class="post" data-id="${p.id}">
+  <article class="post" data-id="${esc(p.id)}">
     <div class="head">
-      <img class="pava" src="${p.avatar||face(p.author)}" alt="">
+      <img class="pava" src="${esc(p.avatar||face(p.author))}" alt="" referrerpolicy="no-referrer">
       <div style="min-width:0;flex:1">
         <div class="author">${esc(p.author)}</div>
         <div class="time">${timeAgo(p.time)} ago</div>
@@ -390,133 +329,105 @@ function postHtml(p){
       <button class="btn" data-act="message" data-name="${esc(p.author)}">Message</button>
     </div>
     <div class="txt">${esc(p.text)}</div>
-    ${p.img?`<img class="img" src="${esc(p.img)}" alt="">`:``}
+    ${p.img?`<img class="img" src="${esc(p.img)}" alt="">`:''}
     <div class="row">
       <button class="btn" data-act="like">❤️ Like</button>
-      <span class="pill" data-role="counts">${counts}</span>
+      <span class="pill" data-role="counts">${p.likes} likes • ${p.cmts.length} comments</span>
       <button class="btn" data-act="toggleComments">💬 Comment</button>
       <button class="btn warn" data-act="delete">Delete</button>
     </div>
-
     <div class="cmts" data-role="cmts" hidden>
-      <div data-role="list">${cmtsList || '<div class="muted">Be the first to comment.</div>'}</div>
+      <div data-role="list">${p.cmts.length?p.cmts.map(cmtHtml).join(''):'<div class="muted">Be the first to comment.</div>'}</div>
       <div class="cmt-form">
         <input class="cmt-input" type="text" placeholder="Write a comment…" data-role="input"/>
         <button class="cmt-send" data-act="sendComment">Post</button>
       </div>
     </div>
-  </article>`;
-}
-function renderFeed(){
-  const box=document.getElementById('feedList'), p=posts();
-  p.forEach(ensureCmts); setPosts(p);
-  box.innerHTML = p.length ? p.map(postHtml).join('') : '<div class="card muted">No posts yet. Say hello using the composer above.</div>';
-}
+  </article>`; }
+function renderFeed(){ const box=$('#feedList'); const p=posts(); p.forEach(ensureCmts); setPosts(p);
+  box.innerHTML = p.length ? p.map(postHtml).join('') : '<div class="card muted">No posts yet. Say hello using the composer above.</div>'; }
 renderFeed();
 
 /* ===== Post actions ===== */
-document.getElementById('feedList').addEventListener('click',(e)=>{
+$('#feedList').addEventListener('click',async(e)=>{
   const b=e.target.closest('button[data-act]'); if(!b) return;
-  const act=b.getAttribute('data-act');
-  const art=b.closest('.post'); if(!art) return;
-  const id=art.getAttribute('data-id');
-  let p=posts(); const i=p.findIndex(x=>x.id===id); if(i<0) return;
+  const act=b.getAttribute('data-act'); const art=b.closest('.post'); if(!art) return;
+  const id=art.getAttribute('data-id'); let p=posts(); const i=p.findIndex(x=>x.id===id); if(i<0) return;
   ensureCmts(p[i]);
 
   if(act==='like'){
     p[i].likes++; setPosts(p);
     art.querySelector('[data-role="counts"]').textContent = `${p[i].likes} likes • ${p[i].cmts.length} comments`;
+    RemoteFeed.like(id); // fire-and-forget
   } else if(act==='toggleComments'){
-    const box=art.querySelector('[data-role="cmts"]');
-    if(box) box.hidden = !box.hidden;
-    if(box && !box.hidden){ const inp=box.querySelector('[data-role="input"]'); if(inp) inp.focus(); }
+    const box=art.querySelector('[data-role="cmts"]'); box.hidden=!box.hidden; if(!box.hidden){ box.querySelector('[data-role="input"]').focus(); }
   } else if(act==='sendComment'){
-    const box=art.querySelector('[data-role="cmts"]');
-    const inp=box && box.querySelector('[data-role="input"]');
-    const val=(inp && inp.value.trim())||'';
-    if(!val) return;
-    const me='Me';
-    p[i].cmts.push({author:me, avatar:face(me), text:val, time:nowISO()});
-    p[i].comments = p[i].cmts.length;
-    setPosts(p);
-    const list=box.querySelector('[data-role="list"]');
-    list.insertAdjacentHTML('beforeend', cmtHtml(p[i].cmts[p[i].cmts.length-1]));
-    art.querySelector('[data-role="counts"]').textContent = `${p[i].likes} likes • ${p[i].cmts.length} comments`;
-    inp.value='';
+    const box=art.querySelector('[data-role="cmts"]'), inp=box.querySelector('[data-role="input"]'); const val=(inp.value||'').trim(); if(!val) return;
+    const me='Me'; const c={author:me,avatar:face(me),text:val,time:nowISO()}; p[i].cmts.push(c); setPosts(p);
+    box.querySelector('[data-role="list"]').insertAdjacentHTML('beforeend', cmtHtml(c));
+    art.querySelector('[data-role="counts"]').textContent = `${p[i].likes} likes • ${p[i].cmts.length} comments`; inp.value='';
+    RemoteFeed.comment(id,val); // fire-and-forget
   } else if(act==='delete'){
     p.splice(i,1); setPosts(p); renderFeed();
   } else if(act==='message'){
     const name=b.getAttribute('data-name')||p[i].author;
-    if(window.ChatternetMessenger?.open) ChatternetMessenger.open();
-    else if(window.ctOpen) ctOpen();
-    else location.href='messages.html';
+    if(window.ChatternetMessenger?.open) ChatternetMessenger.open(name);
+    else if(window.ctMessage) ctMessage(name);
+    else location.href='messages.html?with='+encodeURIComponent(name);
   }
 });
-
-/* Submit comment on Enter */
-document.getElementById('feedList').addEventListener('keydown',(e)=>{
+/* Enter to submit comment */
+$('#feedList').addEventListener('keydown',(e)=>{
   if(e.key!=='Enter') return;
-  const inp=e.target.closest('.cmt-input'); if(!inp) return;
-  e.preventDefault();
-  const art=e.target.closest('.post'); if(!art) return;
-  const sendBtn=art.querySelector('button[data-act="sendComment"]');
-  if(sendBtn) sendBtn.click();
+  if(!e.target.classList.contains('cmt-input')) return;
+  e.preventDefault(); e.target.closest('.post').querySelector('button[data-act="sendComment"]').click();
 });
 
-/* Suggestions (right column) */
+/* Suggestions (right) */
 (function suggestions(){
-  const box=document.getElementById('suggestions'); const u=load(LS.USERS,[]).filter(x=>x.name!=='Me').slice(0,6);
+  const u=load(LS.USERS,[]).filter(x=>x.name!=='Me').slice(0,8);
+  const box=$('#suggestions');
   box.innerHTML=u.map(x=>`
     <div class="person">
-      <img class="picon" src="${x.avatar||face(x.name)}" alt="">
+      <img class="picon" src="${x.avatar||face(x.name)}" alt="" referrerpolicy="no-referrer">
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700">${x.name}</div>
-        <div class="muted" style="font-size:12px">@${x.name.toLowerCase().replace(/\s+/g,'.')}</div>
+        <div style="font-weight:700">${esc(x.name)}</div>
+        <div class="muted" style="font-size:12px">@${esc(x.name.toLowerCase().replace(/\s+/g,'.'))}</div>
       </div>
-      <button class="btn" data-add="${x.name}">Add</button>
+      <div class="row">
+        <button class="btn js-msg" data-name="${esc(x.name)}">Message</button>
+        <a class="btn" href="profile.html" data-profile-name="${esc(x.name)}">View</a>
+      </div>
     </div>`).join('');
   box.addEventListener('click',(e)=>{
-    const b=e.target.closest('button[data-add]'); if(!b) return;
-    const name=b.getAttribute('data-add'); try{
-      const k='ct_friend_requests_out_v2'; const out=load(k,[]); if(!out.includes(name)) out.unshift(name); save(k,out);
-      const n=load(LS.NOTIF,[]); n.unshift({text:`Friend request sent to ${name}.`,time:nowISO()}); save(LS.NOTIF,n);
-      b.textContent='Sent'; b.disabled=true;
-    }catch{}
+    const m=e.target.closest('.js-msg'); if(m){ const n=m.getAttribute('data-name');
+      if(window.ChatternetMessenger?.open) ChatternetMessenger.open(n); else if(window.ctMessage) ctMessage(n); else location.href='messages.html?with='+encodeURIComponent(n);
+    }
+    const a=e.target.closest('[data-profile-name]'); if(a){ try{ localStorage.setItem('ct_profile_view_v1', JSON.stringify({name:a.getAttribute('data-profile-name')})); }catch{} }
   });
 })();
 
 /* Quick actions */
-document.getElementById('qaToFriends').onclick=()=>location.href='friends.html';
-document.getElementById('qaToMessages').onclick=()=>{ if(window.ChatternetMessenger?.open) ChatternetMessenger.open(); else if(window.ctOpen) ctOpen(); else location.href='messages.html'; };
-document.getElementById('qaClearFeed').onclick=()=>{ save(LS.FEED,[]); renderFeed(); };
+$('#qaToFriends').onclick=()=>location.href='friends.html';
+$('#qaToMessages').onclick=()=>{ if(window.ChatternetMessenger?.open) ChatternetMessenger.open(""); else if(window.ctOpen) ctOpen(); else location.href='messages.html'; };
+$('#qaClearFeed').onclick=()=>{ save(LS.FEED,[]); renderFeed(); };
 </script>
 
-<!-- Universal messenger loader (keeps your Render base) -->
+<!-- Messenger loader (no nav hijack; only targeted buttons open overlay) -->
 <script>
 (function(){
   "use strict";
-  var BASE=(window.CT_API_BASE || localStorage.getItem('ct_api_base') || 'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
-  window.CT_API_BASE = BASE; try{ localStorage.setItem('ct_api_base', BASE); }catch{}
-  function tryLoad(list, done){
-    (function next(i){ if(i>=list.length){ done(false); return; }
-      var s=document.createElement('script'); s.src=list[i]; s.async=true;
-      s.onload=function(){ done(true); }; s.onerror=function(){ s.remove(); next(i+1); };
-      (document.head||document.documentElement).appendChild(s);
-    })(0);
-  }
-  var paths=[ BASE+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js' ];
-  tryLoad(paths, function(ok){
+  var BASE=(window.CT_API_BASE||localStorage.getItem('ct_api_base')||'https://chatternet-backend-1.onrender.com').replace(/\/+$/,'');
+  window.CT_API_BASE=BASE; try{ localStorage.setItem('ct_api_base', BASE); }catch{}
+  function chain(arr,done){(function n(i){if(i>=arr.length){done(false);return}var s=document.createElement('script');s.src=arr[i];s.async=true;s.onload=function(){done(true)};s.onerror=function(){s.remove();n(i+1)};(document.head||document.documentElement).appendChild(s)})(0)}
+  var CAND=[BASE+'/assets/messenger.js','/assets/messenger.js','assets/messenger.js','/messenger.js','messenger.js'];
+  chain(CAND,function(ok){
     if(ok && window.ChatternetMessenger && typeof window.ChatternetMessenger.open==='function'){
-      window.ctOpen    = window.ctOpen    || function(){ window.ChatternetMessenger.open(); };
-      window.ctMessage = window.ctMessage || function(){ window.ChatternetMessenger.open(); };
+      window.ctOpen=window.ctOpen||function(){ ChatternetMessenger.open(""); };
+      window.ctMessage=window.ctMessage||function(n){ ChatternetMessenger.open(n||""); };
     }
   });
-  document.addEventListener('click', function(e){
-    var a=e.target.closest && e.target.closest('a[href*="messages.html"]'); if(!a) return;
-    if(window.ctOpen || (window.ChatternetMessenger && window.ChatternetMessenger.open)){
-      e.preventDefault(); (window.ctOpen || window.ChatternetMessenger.open)();
-    }
-  }, true);
+  // IMPORTANT: no global click hijack of <a href="messages.html"> links.
 })();
 </script>
 
